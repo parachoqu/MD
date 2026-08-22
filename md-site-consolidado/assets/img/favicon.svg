@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <rect width="120" height="120" rx="24" fill="#07172F"/>
+  <defs>
+    <mask id="favHole">
+      <rect x="0" y="0" width="120" height="120" fill="#ffffff"/>
+      <circle cx="62" cy="60" r="21" fill="#000000"/>
+    </mask>
+  </defs>
+  <g mask="url(#favHole)">
+    <rect x="16" y="20" width="54" height="54" rx="8" fill="#18A7E0" transform="rotate(45 43 47)"/>
+    <rect x="46" y="20" width="54" height="54" rx="8" fill="#0A72B8" transform="rotate(45 73 47)"/>
+    <rect x="58" y="26" width="50" height="50" rx="8" fill="#F57C00" transform="rotate(45 83 51)"/>
+  </g>
+</svg>

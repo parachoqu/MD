@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Evento | M&amp;D Projetos e Eventos Desportivos</title>
+  <meta name="description" content="Detalhe de evento esportivo da M&D Projetos e Eventos Desportivos.">
+  <link rel="icon" type="image/png" href="assets/logo/logo.png">
+  <link rel="apple-touch-icon" href="assets/logo/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/sections.css">
+  <link rel="stylesheet" href="css/events.css">
+  <link rel="stylesheet" href="css/registration.css">
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo principal</a>
+
+  <div class="scroll-progress" id="scrollProgress" aria-hidden="true">
+    <div class="scroll-progress__bar" id="scrollProgressBar"></div>
+  </div>
+
+  <header class="site-header" id="siteHeader">
+    <div class="container header__inner">
+      <a class="brand" href="index.html" aria-label="M&D Projetos e Eventos Desportivos - Início">
+        <img src="assets/logo/logo.png" alt="M&D Projetos e Eventos Desportivos" width="40" height="40">
+        <span class="brand__text">M&amp;D <span>Projetos e Eventos</span></span>
+      </a>
+
+      <nav class="nav" id="mainNav" aria-label="Navegação principal">
+        <a href="index.html#inicio">Início</a>
+        <a href="index.html#sobre">Sobre</a>
+        <a href="index.html#atuacao">Atuação</a>
+        <a href="inscricoes.html" class="is-active" aria-current="page">Eventos</a>
+        <a href="index.html#projetos">Projetos</a>
+        <a href="index.html#impacto">Impacto</a>
+        <a href="index.html#contato">Contato</a>
+      </nav>
+
+      <div class="header__actions">
+        <a class="btn btn--primary" href="inscricoes.html">Inscrições</a>
+        <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="mainNav" aria-label="Abrir menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <div id="eventDetailRoot"></div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="index.html" aria-label="M&D Projetos e Eventos Desportivos - Início">
+            <img src="assets/logo/logo.png" alt="M&D Projetos e Eventos Desportivos" width="40" height="40">
+            <span class="brand__text">M&amp;D <span>Projetos e Eventos</span></span>
+          </a>
+          <p class="footer-tagline">Planejamento e realização de projetos e eventos esportivos para empresas, escolas e comunidades.</p>
+        </div>
+        <div class="footer-col">
+          <h3>Navegação</h3>
+          <div class="footer-links">
+            <a href="index.html#sobre">Sobre</a>
+            <a href="inscricoes.html">Eventos</a>
+            <a href="index.html#atuacao">Atuação</a>
+            <a href="index.html#projetos">Projetos</a>
+            <a href="index.html#impacto">Impacto</a>
+            <a href="index.html#contato">Contato</a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h3>Públicos</h3>
+          <div class="footer-links">
+            <a href="index.html#atuacao">Empresas</a>
+            <a href="index.html#atuacao">Escolas</a>
+            <a href="index.html#atuacao">Comunidades</a>
+            <a href="index.html#atuacao">Parceiros</a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h3>Contato</h3>
+          <div class="footer-links">
+            <a href="https://www.instagram.com/mdprojetoseeventos/" target="_blank" rel="noopener">Instagram</a>
+            <a href="mailto:contato@mdprojetoseeventos.com.br">E-mail a validar</a>
+            <a href="https://wa.me/5500000000000" target="_blank" rel="noopener">WhatsApp a validar</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 M&amp;D Projetos e Eventos Desportivos.</span>
+        <span>Portal frontend demonstrativo - sem backend nesta fase.</span>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <a class="whatsapp-float" href="https://wa.me/5500000000000" target="_blank" rel="noopener" aria-label="Abrir WhatsApp da M&D em nova aba">
+    <svg width="23" height="23" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12.04 2a9.89 9.89 0 0 0-8.5 14.95L2.2 22l5.18-1.32A9.92 9.92 0 1 0 12.04 2Zm0 1.8a8.12 8.12 0 0 1 6.87 12.46 8.08 8.08 0 0 1-9.88 2.8l-.36-.17-3.2.82.84-3.1-.2-.37A8.1 8.1 0 0 1 12.04 3.8Zm-3.3 4.2c-.16 0-.42.06-.65.3-.22.23-.86.84-.86 2.04 0 1.2.88 2.37 1 2.53.12.16 1.72 2.62 4.17 3.68.58.25 1.03.4 1.38.5.58.18 1.1.16 1.52.1.46-.07 1.44-.6 1.64-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.46-.28-.24-.12-1.44-.71-1.66-.79-.22-.08-.38-.12-.54.12-.16.24-.63.78-.77.94-.14.16-.28.18-.52.06-.24-.12-1.02-.37-1.95-1.2-.72-.64-1.2-1.44-1.35-1.68-.14-.24-.02-.37.1-.5.1-.1.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.2-.47-.4-.4-.54-.4l-.46-.01Z"></path>
+    </svg>
+    <span>WhatsApp</span>
+  </a>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

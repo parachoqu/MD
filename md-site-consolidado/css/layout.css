@@ -1,0 +1,321 @@
+/* ============================================================
+   Layout e primitivas editoriais
+   Linhas, faixas, colunas e módulos - nunca coleções de cards.
+   ============================================================ */
+
+.container {
+  width: 100%;
+  max-width: calc(var(--container-max) + (var(--container-pad) * 2));
+  margin-inline: auto;
+  padding-inline: var(--container-pad);
+}
+
+.section {
+  padding-block: clamp(var(--space-64), 8vw, var(--space-96));
+}
+
+.section--compact {
+  padding-block: clamp(var(--space-48), 6vw, var(--space-80));
+}
+
+.section--white {
+  background: var(--surface-plain);
+}
+
+.section--alt {
+  background: var(--surface-alt);
+}
+
+.section--dark {
+  background: var(--structure-deep);
+  color: var(--on-dark);
+}
+
+.section--dark h2,
+.section--dark h3 {
+  color: var(--on-dark-strong);
+}
+
+.grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--gutter);
+}
+
+/* --- Metadado em mono ------------------------------------------------ */
+.meta,
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: var(--space-12);
+  color: var(--action-ink);
+}
+
+.section--dark .eyebrow,
+.hero .eyebrow,
+.internal-hero .eyebrow,
+.event-hero .eyebrow {
+  color: var(--motion);
+}
+
+.meta {
+  color: var(--muted);
+}
+
+/* --- Cabeçalho de seção: índice + título + régua ---------------------- */
+.section-heading {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(260px, 4fr);
+  gap: var(--space-32) var(--space-48);
+  align-items: end;
+  margin-bottom: var(--space-48);
+  padding-bottom: var(--space-16);
+  border-bottom: var(--line-strong) solid var(--line-strong-color);
+}
+
+.section-heading::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: calc(var(--line-strong) * -1);
+  width: clamp(72px, 14vw, 176px);
+  height: var(--line-emphasis);
+  background: var(--section-accent);
+}
+
+.section--dark .section-heading {
+  border-bottom-color: var(--on-dark-line);
+}
+
+.section-heading--center {
+  display: block;
+  max-width: 780px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+/* Padrão claro: Azul Ação (AA sobre neve, fog e branco).
+   Sobre Azul Noite o papel de trilha passa ao Ciano. */
+.section-index {
+  display: block;
+  margin-bottom: var(--space-12);
+  color: var(--section-accent-ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 700;
+  letter-spacing: var(--tracking-meta);
+}
+
+.section--dark .section-index,
+.hero .section-index,
+.internal-hero .section-index,
+.event-hero .section-index {
+  color: var(--motion);
+}
+
+.section-title {
+  font-size: var(--text-h2);
+  letter-spacing: var(--tracking-title);
+  text-transform: uppercase;
+}
+
+.section-title--plain {
+  text-transform: none;
+}
+
+.section-copy {
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: var(--text-lead);
+}
+
+.section--dark .section-copy {
+  color: var(--on-dark-muted);
+}
+
+/* --- Régua ------------------------------------------------------------ */
+.rule {
+  height: var(--line-soft);
+  border: 0;
+  margin: 0;
+  background: var(--line);
+}
+
+.rule--strong {
+  height: var(--line-strong);
+  background: var(--line-strong-color);
+}
+
+/* --- Índice editorial: lista de linhas -------------------------------- */
+.editorial-list {
+  border-top: var(--line-strong) solid var(--line-strong-color);
+}
+
+.section--dark .editorial-list {
+  border-top-color: var(--on-dark-line);
+}
+
+.editorial-row {
+  position: relative;
+  display: grid;
+  align-items: center;
+  gap: var(--space-12) var(--space-24);
+  padding-block: clamp(var(--space-20), 2.6vw, var(--space-28));
+  border-bottom: var(--line-soft) solid var(--line);
+  text-decoration: none;
+}
+
+.section--dark .editorial-row {
+  border-bottom-color: var(--on-dark-line-soft);
+}
+
+.editorial-row__index {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 700;
+  letter-spacing: var(--tracking-meta);
+}
+
+.editorial-row__title {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2.4vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: var(--tracking-title);
+  line-height: 1.08;
+}
+
+.editorial-row__text {
+  color: var(--muted);
+  max-width: 54ch;
+}
+
+/* --- Grade exposta de módulos planos ---------------------------------- */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--module-columns, 4), minmax(0, 1fr));
+  border-top: var(--line-strong) solid var(--line-strong-color);
+  border-left: var(--line-soft) solid var(--line);
+}
+
+.module {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: clamp(var(--space-20), 2.4vw, var(--space-28));
+  border-right: var(--line-soft) solid var(--line);
+  border-bottom: var(--line-soft) solid var(--line);
+  background: var(--surface-plain);
+}
+
+.module__meta {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 700;
+  letter-spacing: var(--tracking-meta);
+}
+
+/* --- Faixa diagonal: uma direção de leitura por dobra ------------------ */
+.diagonal-band {
+  position: relative;
+  isolation: isolate;
+  border-top: var(--line-soft) solid var(--line);
+  background: var(--surface-alt);
+}
+
+.diagonal-band::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  z-index: -1;
+  height: 46%;
+  background: var(--surface-plain);
+  clip-path: polygon(0 18%, 100% 0, 100% 100%, 0 100%);
+}
+
+.kinetic-line {
+  position: absolute;
+  z-index: 2;
+  height: var(--line-strong);
+  background: var(--motion);
+  transform: rotate(calc(var(--angle-motion) * -1)) scaleX(1);
+  transform-origin: left center;
+  pointer-events: none;
+  transition: transform var(--motion-reveal) var(--ease-out);
+}
+
+html.has-motion [data-animate] .kinetic-line {
+  transform: rotate(calc(var(--angle-motion) * -1)) scaleX(0);
+}
+
+html.has-motion [data-animate].is-visible .kinetic-line {
+  transform: rotate(calc(var(--angle-motion) * -1)) scaleX(1);
+}
+
+/* --- Faixa de ritmo estática (sem marquee) ---------------------------- */
+.rhythm-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8) var(--space-32);
+  padding-block: var(--space-16);
+  border-top: var(--line-soft) solid var(--line);
+  border-bottom: var(--line-soft) solid var(--line);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+}
+
+.rhythm-strip > span {
+  position: relative;
+}
+
+.rhythm-strip > span::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: var(--space-10);
+  background: var(--section-accent);
+  vertical-align: 1px;
+}
+
+@media (max-width: 1023px) {
+  .grid-12 {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+
+  .section-heading {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .module-grid {
+    --module-columns: 2;
+  }
+}
+
+@media (max-width: 767px) {
+  .grid-12 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .section {
+    padding-block: var(--space-64);
+  }
+
+  .module-grid {
+    --module-columns: 1;
+  }
+}

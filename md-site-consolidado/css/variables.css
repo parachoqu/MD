@@ -1,0 +1,210 @@
+/* ============================================================
+   M&D - Cadência Estruturada
+   Azul organiza. Laranja convoca. Movimento conduz.
+   Fundação única de tokens: cor, tipografia, geometria e tempo.
+   ============================================================ */
+
+:root {
+  /* --- Paleta bruta ------------------------------------------------ */
+  --color-azul-profundo: #0b2346;
+  --color-azul-noite: #07172f;
+  --color-azul-acao: #0a72b8;
+  --color-ciano-movimento: #18a7e0;
+  --color-laranja-impulso: #f57c00;
+  --color-ambar-quadra: #f2b705;
+  --color-coral-evento: #e85d3f;
+  --color-teal-comunidade: #00a884;
+  --color-violeta-estrategia: #6d5df6;
+  --color-neve: #f6f8fb;
+  --color-fog: #eaf3f8;
+  --color-mist: #d8e7ef;
+  --color-ink: #102033;
+  --color-muted: #5e6b7a;
+  --color-white: #ffffff;
+
+  /* --- Papéis de superfície e estrutura ---------------------------- */
+  --surface: var(--color-neve);
+  --surface-alt: var(--color-fog);
+  --surface-plain: var(--color-white);
+  --structure: var(--color-azul-profundo);
+  --structure-deep: var(--color-azul-noite);
+  --line: var(--color-mist);
+  --line-strong-color: var(--color-azul-profundo);
+  --ink: var(--color-ink);
+  --muted: var(--color-muted);
+
+  /* Superfícies escuras: texto e linhas sobre Azul Noite */
+  --on-dark: rgba(255, 255, 255, 0.82);
+  --on-dark-strong: var(--color-white);
+  --on-dark-muted: rgba(255, 255, 255, 0.62);
+  --on-dark-nav: rgba(255, 255, 255, 0.74);
+  --on-dark-link: rgba(255, 255, 255, 0.76);
+  --on-dark-line: rgba(255, 255, 255, 0.18);
+  --on-dark-line-soft: rgba(255, 255, 255, 0.1);
+  --on-dark-surface: rgba(255, 255, 255, 0.06);
+
+  /* --- Papéis funcionais ------------------------------------------- */
+  --action: var(--color-laranja-impulso);
+  --action-hover: #d96e00;
+  --action-ink: #7a3d00;          /* laranja legível como texto sobre claro */
+  /* Texto sobre Laranja Impulso: Azul Noite mantém o hex exato da marca
+     e atinge AA (~5.9:1). Branco sobre o mesmo laranja fica em 2.7:1. */
+  --action-on: var(--color-azul-noite);
+  --motion: var(--color-ciano-movimento);
+  --focus: var(--color-azul-acao);
+
+  /* Composição editorial clara: calor sem trocar a paleta oficial */
+  --warm-surface: rgba(245, 124, 0, 0.08);
+  --warm-surface-strong: rgba(242, 183, 5, 0.16);
+  --warm-line: rgba(245, 124, 0, 0.42);
+  --amber-ink: #6b4d00;
+  --amber-line: rgba(242, 183, 5, 0.58);
+  --amber-surface: rgba(242, 183, 5, 0.13);
+  --violet-ink: #453a9e;
+  --violet-line: rgba(109, 93, 246, 0.4);
+  --violet-surface: rgba(109, 93, 246, 0.09);
+  --teal-ink: #046b53;
+  --teal-line: rgba(0, 168, 132, 0.42);
+  --teal-surface: rgba(0, 168, 132, 0.1);
+  --section-accent: var(--action);
+  --section-accent-ink: var(--action-ink);
+  --section-accent-line: var(--warm-line);
+
+  /* Tintas e camadas centralizadas para superfícies escuras */
+  --on-dark-open: #4fd8b6;
+  --on-dark-alert: #ff8f75;
+  --on-dark-warning: #ffb3a1;
+  --on-dark-demo: #b3a8ff;
+  --on-dark-demo-line: rgba(109, 93, 246, 0.6);
+  --scrim: rgba(7, 23, 47, 0.82);
+  --scrim-strong: rgba(7, 23, 47, 0.84);
+
+  /* --- Estados: sempre trio ink / line / surface -------------------- */
+  /* aberto - Teal confirma */
+  --status-open-ink: var(--teal-ink);
+  --status-open-line: var(--teal-line);
+  --status-open-surface: var(--teal-surface);
+
+  /* em breve - Âmbar antecipa (ink escurecido: âmbar puro não passa AA) */
+  --status-soon-ink: var(--amber-ink);
+  --status-soon-line: var(--amber-line);
+  --status-soon-surface: var(--amber-surface);
+
+  /* encerrado / realizado / lotado - neutro */
+  --status-closed-ink: var(--color-muted);
+  --status-closed-line: var(--color-mist);
+  --status-closed-surface: rgba(94, 107, 122, 0.08);
+
+  /* erro / cancelado - Coral alerta */
+  --status-alert-ink: #a5321a;
+  --status-alert-line: rgba(232, 93, 63, 0.46);
+  --status-alert-surface: rgba(232, 93, 63, 0.1);
+  --status-alert-surface-strong: rgba(232, 93, 63, 0.14);
+
+  /* demonstrativo / estratégia - Violeta */
+  --status-demo-ink: var(--violet-ink);
+  --status-demo-line: var(--violet-line);
+  --status-demo-surface: var(--violet-surface);
+
+  /* Canal externo: verde reconhecível do WhatsApp, escurecido para AA */
+  --whatsapp: #1f7a4d;
+  --whatsapp-line: #157a43;
+
+  /* Sinônimos usados por formulários */
+  --color-error: var(--status-alert-ink);
+  --color-success: var(--status-open-ink);
+
+  /* --- Tipografia --------------------------------------------------- */
+  --font-display: "Sora", "Segoe UI", sans-serif;
+  --font-body: "Inter", "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --text-display: clamp(2.9rem, 7.4vw, 5.6rem);
+  --text-display-thin: clamp(2.35rem, 6vw, 4.4rem);
+  --text-h1: clamp(2.2rem, 4.4vw, 3.5rem);
+  --text-h2: clamp(1.75rem, 3.1vw, 2.6rem);
+  --text-h3: clamp(1.18rem, 1.8vw, 1.45rem);
+  --text-body: 1rem;
+  --text-lead: clamp(1.02rem, 1.35vw, 1.16rem);
+  --text-label: 0.875rem;
+  --text-small: 0.8rem;
+  --text-meta: 0.72rem;
+
+  --tracking-meta: 0.14em;
+  --tracking-title: -0.03em;
+  --tracking-display: -0.045em;
+
+  /* --- Espaço e grid ------------------------------------------------ */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-28: 28px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+  --space-64: 64px;
+  --space-80: 80px;
+  --space-96: 96px;
+
+  --container-max: 1240px;
+  --container-pad: clamp(20px, 5vw, 64px);
+  --gutter: 24px;
+
+  /* --- Geometria: superfícies planas, bordas firmes ----------------- */
+  --radius-control: 4px;
+  --radius-surface: 0px;
+  --line-soft: 1px;
+  --line-strong: 2px;
+  --line-emphasis: 3px;
+  --solid-offset: 4px;
+  --angle-motion: 14deg;
+
+  /* Aliases herdados - mantidos planos para não reintroduzir cantos */
+  --radius-xs: var(--radius-control);
+  --radius-sm: var(--radius-control);
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-control);
+  --radius-pill: var(--radius-control);
+  --color-soft: var(--surface-alt);
+  --color-line: var(--line);
+
+  /* --- Movimento ---------------------------------------------------- */
+  --motion-feedback: 140ms;   /* clique e hover de controle */
+  --motion-list: 190ms;       /* listas e filtros */
+  --motion-step: 260ms;       /* etapas e modal */
+  --motion-dialog: 220ms;     /* entrada e saída de superfícies modais */
+  --motion-reveal: 420ms;     /* entrada de apoio, nunca de título */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Aliases herdados */
+  --duration-hover: var(--motion-feedback);
+  --duration-entry: var(--motion-reveal);
+  --ease-standard: var(--ease-out);
+
+  --reveal-shift: 14px;
+
+  /* --- Camadas ------------------------------------------------------ */
+  --header-height: 72px;
+  --z-progress: 90;
+  --z-header: 100;
+  --z-floating: 400;
+  --z-modal: 900;
+  --z-toast: 1000;
+}
+
+@media (max-width: 1199px) {
+  :root {
+    --gutter: 20px;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --gutter: 16px;
+    --header-height: 64px;
+  }
+}

@@ -1,0 +1,583 @@
+/* ============================================================
+   Componentes planos: bordas firmes, raio 0-4px, sem sombra difusa
+   ============================================================ */
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-12);
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand img {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  object-fit: contain;
+  display: block;
+}
+
+.brand__text {
+  display: grid;
+  gap: 2px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: var(--tracking-title);
+  line-height: 1.02;
+}
+
+.brand__text span {
+  color: var(--motion);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+}
+
+/* --- Botões ----------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  min-height: 48px;
+  min-width: 48px;
+  padding: 13px 24px;
+  border: var(--line-soft) solid transparent;
+  border-radius: var(--radius-control);
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  text-decoration: none;
+  transition: transform var(--motion-feedback) var(--ease-out),
+    background-color var(--motion-feedback) var(--ease-out),
+    border-color var(--motion-feedback) var(--ease-out),
+    color var(--motion-feedback) var(--ease-out);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn:active {
+  transform: translate(2px, 2px);
+}
+
+.btn--primary {
+  background: var(--action);
+  border-color: var(--action-on);
+  color: var(--action-on);
+  box-shadow: var(--solid-offset) var(--solid-offset) 0 var(--action-on);
+}
+
+.btn--primary:hover {
+  background: var(--action-hover);
+  border-color: var(--action-hover);
+}
+
+.btn--primary:active {
+  box-shadow: 1px 1px 0 var(--action-on);
+}
+
+.hero .btn--primary,
+.section--dark .btn--primary,
+.internal-hero .btn--primary,
+.event-hero .btn--primary {
+  box-shadow: var(--solid-offset) var(--solid-offset) 0 var(--on-dark-line);
+}
+
+.btn--secondary {
+  background: var(--structure);
+  border-color: var(--structure);
+  color: var(--color-white);
+}
+
+.btn--secondary:hover {
+  background: var(--structure-deep);
+  border-color: var(--structure-deep);
+}
+
+.btn--light {
+  background: transparent;
+  border-color: var(--on-dark-line);
+  color: var(--color-white);
+}
+
+.btn--light:hover {
+  background: var(--color-white);
+  border-color: var(--color-white);
+  color: var(--structure);
+}
+
+.btn--ghost {
+  background: var(--surface-plain);
+  border-color: var(--line);
+  color: var(--structure);
+}
+
+.btn--ghost:hover {
+  border-color: var(--action);
+  color: var(--action-ink);
+}
+
+.btn--soon {
+  background: var(--status-soon-surface);
+  border-color: var(--status-soon-line);
+  border-left-width: var(--line-strong);
+  color: var(--status-soon-ink);
+}
+
+.btn--closed {
+  background: var(--status-closed-surface);
+  border-color: var(--status-closed-line);
+  border-left-width: var(--line-strong);
+  color: var(--status-closed-ink);
+}
+
+/* Sobre Azul Noite a tinta escura do estado perde contraste: a cor viva
+   passa a ser o próprio texto, com borda como segundo sinal. */
+.event-hero .btn--soon,
+.section--dark .btn--soon {
+  background: var(--on-dark-surface);
+  border-color: var(--color-ambar-quadra);
+  color: var(--color-ambar-quadra);
+}
+
+.event-hero .btn--closed,
+.section--dark .btn--closed {
+  background: var(--on-dark-surface);
+  border-color: var(--on-dark-line);
+  color: var(--on-dark);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"],
+button:disabled {
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn:disabled:not(.btn--soon):not(.btn--closed),
+button:disabled:not(.btn--soon):not(.btn--closed) {
+  opacity: 0.6;
+}
+
+/* --- Link de ação com seta ------------------------------------------- */
+.link-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--action-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-label);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.link-action::after {
+  content: "→";
+  transition: transform var(--motion-feedback) var(--ease-out);
+}
+
+.link-action:hover::after {
+  transform: translateX(4px);
+}
+
+.link-action--dark {
+  color: var(--action);
+}
+
+/* --- Tags e status: cor + texto + borda ------------------------------- */
+.tag,
+.event-sport,
+.event-demo-label,
+.event-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 28px;
+  padding: 3px 10px;
+  border: var(--line-soft) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface-alt);
+  color: var(--structure);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tag--demo,
+.event-demo-label {
+  border-color: var(--status-demo-line);
+  background: var(--status-demo-surface);
+  color: var(--status-demo-ink);
+}
+
+.tag--dark {
+  border-color: var(--on-dark-line);
+  background: var(--on-dark-surface);
+  color: var(--color-white);
+}
+
+.event-status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  background: currentColor;
+}
+
+.event-status--success {
+  border-color: var(--status-open-line);
+  background: var(--status-open-surface);
+  color: var(--status-open-ink);
+}
+
+.event-status--warning {
+  border-color: var(--status-soon-line);
+  background: var(--status-soon-surface);
+  color: var(--status-soon-ink);
+}
+
+.event-status--neutral {
+  border-color: var(--status-closed-line);
+  background: var(--status-closed-surface);
+  color: var(--status-closed-ink);
+}
+
+.event-status--danger {
+  border-color: var(--status-alert-line);
+  background: var(--status-alert-surface);
+  color: var(--status-alert-ink);
+}
+
+/* Status sobre superfície escura */
+.section--dark .event-status,
+.event-hero .event-status,
+.internal-hero .event-status {
+  background: var(--on-dark-surface);
+}
+
+.event-hero .event-status--success,
+.section--dark .event-status--success {
+  border-color: var(--color-teal-comunidade);
+  color: var(--on-dark-open);
+}
+
+.event-hero .event-status--warning,
+.section--dark .event-status--warning {
+  border-color: var(--color-ambar-quadra);
+  color: var(--color-ambar-quadra);
+}
+
+.event-hero .event-status--neutral,
+.section--dark .event-status--neutral {
+  border-color: var(--on-dark-line);
+  color: var(--on-dark-muted);
+}
+
+.event-hero .event-status--danger,
+.section--dark .event-status--danger {
+  border-color: var(--color-coral-evento);
+  color: var(--on-dark-alert);
+}
+
+.event-hero .event-sport,
+.section--dark .event-sport,
+.internal-hero .event-sport {
+  border-color: var(--on-dark-line);
+  background: var(--on-dark-surface);
+  color: var(--motion);
+}
+
+.event-hero .event-demo-label,
+.section--dark .event-demo-label {
+  border-color: var(--on-dark-demo-line);
+  background: var(--on-dark-surface);
+  color: var(--on-dark-demo);
+}
+
+/* --- Placeholders ----------------------------------------------------- */
+.photo-placeholder,
+.logo-placeholder {
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+  border: var(--line-soft) dashed var(--line);
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  letter-spacing: var(--tracking-meta);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* --- Imagem dentro da estrutura --------------------------------------- */
+.media-frame {
+  position: relative;
+  overflow: hidden;
+  border: var(--line-soft) solid var(--line);
+  background: var(--structure-deep);
+}
+
+.media-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--motion-step) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .media-frame:hover img {
+    transform: scale(1.025) translateY(-2px);
+  }
+}
+
+.card {
+  border: var(--line-soft) solid var(--line);
+  border-radius: var(--radius-surface);
+  background: var(--surface-plain);
+}
+
+/* --- Progresso de rolagem --------------------------------------------- */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--z-progress);
+  width: 100%;
+  height: var(--line-strong);
+  background: transparent;
+  pointer-events: none;
+}
+
+.scroll-progress__bar {
+  height: 100%;
+  width: 100%;
+  background: var(--motion);
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+}
+
+/* --- Toast ------------------------------------------------------------ */
+.toast {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(88px, env(safe-area-inset-bottom));
+  z-index: var(--z-toast);
+  max-width: min(390px, calc(100vw - 40px));
+  padding: 14px 16px;
+  border: var(--line-soft) solid var(--status-open-line);
+  border-left-width: var(--line-strong);
+  border-left-color: var(--color-teal-comunidade);
+  border-radius: var(--radius-control);
+  background: var(--surface-plain);
+  color: var(--ink);
+  font-size: var(--text-label);
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  box-shadow: var(--solid-offset) var(--solid-offset) 0 var(--status-open-ink);
+  transition: opacity var(--motion-step) var(--ease-out),
+    transform var(--motion-step) var(--ease-out);
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --- WhatsApp flutuante ------------------------------------------------ */
+.whatsapp-float {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: var(--z-floating);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-10);
+  min-height: 52px;
+  padding: 0 16px;
+  border: var(--line-soft) solid var(--whatsapp-line);
+  border-radius: var(--radius-control);
+  background: var(--whatsapp);
+  color: var(--color-white);
+  font-size: var(--text-label);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* --- Modal de projetos -------------------------------------------------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--space-24);
+  background: transparent;
+  overflow-y: auto;
+  visibility: hidden;
+  pointer-events: none;
+  transition: background-color var(--motion-dialog) var(--ease-out),
+    visibility 0s linear var(--motion-dialog);
+}
+
+.modal.is-open {
+  background: var(--scrim);
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+.modal__dialog {
+  width: min(900px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  border: var(--line-strong) solid var(--structure);
+  border-radius: var(--radius-surface);
+  background: var(--surface-plain);
+  box-shadow: 0 0 0 transparent;
+  transition: border-color var(--motion-dialog) var(--ease-out),
+    box-shadow var(--motion-dialog) var(--ease-out);
+}
+
+.modal.is-open .modal__dialog {
+  border-color: var(--color-violeta-estrategia);
+  box-shadow: var(--solid-offset) var(--solid-offset) 0 var(--color-violeta-estrategia);
+}
+
+.modal__top {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.85fr) 1.15fr;
+  gap: 0;
+}
+
+.modal__media {
+  min-height: 300px;
+  border: 0;
+  border-right: var(--line-soft) solid var(--line);
+}
+
+.modal__media img {
+  min-height: 300px;
+}
+
+.modal__body {
+  display: grid;
+  align-content: start;
+  gap: var(--space-16);
+  padding: var(--space-32);
+}
+
+.modal__body .modal__facts {
+  display: grid;
+  gap: var(--space-8);
+  padding-block: var(--space-16);
+  border-top: var(--line-soft) solid var(--line);
+  border-bottom: var(--line-soft) solid var(--line);
+}
+
+.modal__facts p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+
+.modal__facts strong {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+}
+
+.modal__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.modal__close {
+  position: sticky;
+  top: var(--space-16);
+  float: right;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: var(--space-16);
+  border: var(--line-soft) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface-plain);
+  color: var(--structure);
+}
+
+.modal__close:hover {
+  border-color: var(--action);
+  color: var(--action-ink);
+}
+
+@media (max-width: 720px) {
+  .modal {
+    padding: 0;
+  }
+
+  .modal__dialog {
+    min-height: 100vh;
+    max-height: none;
+    border: 0;
+  }
+
+  .modal.is-open .modal__dialog {
+    box-shadow: none;
+  }
+
+  .modal__top {
+    grid-template-columns: 1fr;
+  }
+
+  .modal__media {
+    min-height: 220px;
+    border-right: 0;
+    border-bottom: var(--line-soft) solid var(--line);
+  }
+
+  .modal__media img {
+    min-height: 220px;
+  }
+
+  .modal__body {
+    padding: var(--space-24);
+  }
+
+  .whatsapp-float span {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal,
+  .modal__dialog,
+  .media-frame img {
+    transition: none;
+  }
+}
