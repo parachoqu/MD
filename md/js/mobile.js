@@ -78,6 +78,7 @@ function mount() {
   cleanups.push(() => document.documentElement.classList.remove("md-shell"));
 
   const shell = revealShell(cleanups);
+  initResponsiveCopy(cleanups);
   initTabs(shell.tabbar, observe);
   initMenu(add, observe, cleanups);
   const eventNav = initEventNav(cleanups);
@@ -126,6 +127,27 @@ function revealShell(cleanups) {
   });
 
   return { elements, tabbar: document.getElementById("mdTabBar") };
+}
+
+/**
+ * A nota curta da imagem existe apenas no mobile. `hidden` garante
+ * que as duas versões nunca sejam anunciadas ao mesmo tempo e a
+ * limpeza restaura exatamente a cópia completa do desktop.
+ */
+function initResponsiveCopy(cleanups) {
+  const desktopNote = document.querySelector('[data-hero-note="desktop"]');
+  const mobileNote = document.querySelector('[data-hero-note="mobile"]');
+  if (!desktopNote || !mobileNote) return;
+
+  const desktopWasHidden = desktopNote.hidden;
+  const mobileWasHidden = mobileNote.hidden;
+  desktopNote.hidden = true;
+  mobileNote.hidden = false;
+
+  cleanups.push(() => {
+    desktopNote.hidden = desktopWasHidden;
+    mobileNote.hidden = mobileWasHidden;
+  });
 }
 
 /**

@@ -142,10 +142,11 @@ export function createEventRow(event, variant = "list") {
   return row;
 }
 
-export function appendDefinition(parent, label, value, pending = false) {
+export function appendDefinition(parent, label, value, pending = false, field = "") {
   if (!value) return;
   const item = document.createElement("div");
   item.className = pending ? "event-definition event-definition--pending" : "event-definition";
+  if (field) item.dataset.eventField = field;
 
   const term = document.createElement("dt");
   term.textContent = label;

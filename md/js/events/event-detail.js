@@ -83,7 +83,7 @@ function renderBreadcrumb(event) {
 
 function renderHero(event, status, registrationModal) {
   const section = document.createElement("section");
-  section.className = "event-hero";
+  section.className = event.demo ? "event-hero event-hero--demo" : "event-hero";
   section.setAttribute("aria-labelledby", "eventTitle");
 
   const inner = document.createElement("div");
@@ -119,7 +119,9 @@ function renderHero(event, status, registrationModal) {
 function renderHeroActions(event, status, registrationModal) {
   const actions = document.createElement("div");
   actions.className = "event-hero__actions";
-  actions.append(primaryAction(event, status, registrationModal));
+  const primary = primaryAction(event, status, registrationModal);
+  primary.dataset.eventAction = "primary";
+  actions.append(primary);
 
   if (!status.canRegister) {
     // Inscrição indisponível: caminho real de contato, sem simular
@@ -128,6 +130,7 @@ function renderHeroActions(event, status, registrationModal) {
     contact.className = "btn btn--light";
     contact.href = CONTACT_URL;
     contact.textContent = "Falar com a M&D";
+    contact.dataset.eventAction = "contact";
     actions.append(contact);
   }
 
@@ -135,6 +138,7 @@ function renderHeroActions(event, status, registrationModal) {
   back.className = "link-action link-action--dark";
   back.href = "inscricoes.html";
   back.textContent = "Ver todos os eventos";
+  back.dataset.eventAction = "back";
   actions.append(back);
 
   if (event.status === "cancelled") {
@@ -186,15 +190,22 @@ function renderQuickInfo(event) {
   const regulation = regulationRenderer
     ? regulationLink("Disponível")
     : "A confirmar";
+  list.dataset.regulation = regulationRenderer ? "available" : "pending";
 
-  appendDefinition(list, "Data", dateLabel, !event.date?.label);
-  appendDefinition(list, "Modalidade", event.sport);
-  appendDefinition(list, "Categorias", eventCategoriesLabel(event));
-  appendDefinition(list, "Local", location, location === "A confirmar");
-  appendDefinition(list, "Inscrição", registration, registration === "A confirmar");
-  appendDefinition(list, "Regulamento", regulation, !regulationRenderer);
-  appendDefinition(list, "Status", getEventStatus(event.status).label);
-  appendDefinition(list, "Organização", event.organization || "M&D Projetos e Eventos Desportivos");
+  appendDefinition(list, "Data", dateLabel, !event.date?.label, "date");
+  appendDefinition(list, "Modalidade", event.sport, false, "sport");
+  appendDefinition(list, "Categorias", eventCategoriesLabel(event), false, "categories");
+  appendDefinition(list, "Local", location, location === "A confirmar", "location");
+  appendDefinition(list, "Inscrição", registration, registration === "A confirmar", "registration");
+  appendDefinition(list, "Regulamento", regulation, !regulationRenderer, "regulation");
+  appendDefinition(list, "Status", getEventStatus(event.status).label, false, "status");
+  appendDefinition(
+    list,
+    "Organização",
+    event.organization || "M&D Projetos e Eventos Desportivos",
+    false,
+    "organization"
+  );
 
   inner.append(list);
   section.append(inner);
@@ -410,11 +421,13 @@ function renderMobileBar(event, status, registrationModal) {
   const bar = document.createElement("div");
   bar.className = "event-mobile-cta";
   const label = document.createElement("span");
+  label.className = "event-mobile-cta__title";
   label.textContent = event.shortTitle || event.title;
   const button = document.createElement("button");
   button.className = "btn btn--primary";
   button.type = "button";
   button.textContent = status.cta;
+  button.dataset.eventAction = "primary";
   button.addEventListener("click", () => registrationModal.open(button));
   bar.append(label, button);
   return bar;

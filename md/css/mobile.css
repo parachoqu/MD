@@ -20,7 +20,7 @@
   :root {
     --md-appbar-h: 56px;
     --md-tabbar-h: 60px;
-    --md-dock-h: 64px;
+    --md-dock-h: calc(var(--space-48) + var(--space-16) + var(--line-strong));
     --md-tabbar-total: calc(var(--md-tabbar-h) + env(safe-area-inset-bottom, 0px));
     --md-dock-total: calc(var(--md-dock-h) + env(safe-area-inset-bottom, 0px));
 
@@ -263,6 +263,11 @@
     overflow-wrap: break-word;
   }
 
+  .module h3,
+  .project-row__text {
+    overflow-wrap: anywhere;
+  }
+
   /* Feedback tátil: sem hover, o estado pressionado é o sinal. */
   @media (hover: none), (pointer: coarse) {
     .btn:hover,
@@ -304,7 +309,8 @@
   }
 
   .site-header .brand {
-    min-width: 0;
+    min-width: 44px;
+    min-height: 44px;
     gap: var(--space-10);
   }
 
@@ -692,7 +698,7 @@
   }
 
   .hero__meta {
-    display: grid;
+    display: none;
     gap: 3px;
     padding-bottom: var(--space-10);
     margin-bottom: var(--space-16);
@@ -735,6 +741,10 @@
     font-size: 0.64rem;
   }
 
+  .hero__note [data-hero-note="desktop"] {
+    display: none;
+  }
+
   @media (max-width: 359px) {
     :root {
       --text-display: 2rem;
@@ -761,6 +771,10 @@
     padding-block: 0;
     border-bottom: 0;
     border-top: var(--line-strong) solid var(--line-strong-color);
+  }
+
+  .rhythm-strip--hero {
+    display: none;
   }
 
   .rhythm-strip > span {
@@ -882,6 +896,7 @@
   }
 
   .event-row__summary {
+    display: none;
     grid-column: 1 / -1;
     max-width: none;
     font-size: 0.9rem;
@@ -919,7 +934,7 @@
   }
 
   .door .module__meta {
-    display: flex;
+    display: none;
     align-items: center;
     gap: var(--space-10);
     width: 100%;
@@ -1071,6 +1086,10 @@
     font-size: 1.15rem;
   }
 
+  .contact-panel__meta {
+    display: none;
+  }
+
   .contact-list a {
     position: relative;
     align-content: center;
@@ -1144,18 +1163,30 @@
     max-width: none;
   }
 
+  .site-footer .brand {
+    min-height: 44px;
+  }
+
+  .footer-col--navigation,
+  .footer-col--audiences,
+  .footer-bottom__technical {
+    display: none;
+  }
+
   /* ==========================================================
      15. CATÁLOGO
      ========================================================== */
 
   .breadcrumb {
+    display: none;
     padding-top: calc(var(--header-height) + var(--space-8));
     padding-bottom: var(--space-8);
     font-size: 0.6rem;
   }
 
   .internal-hero {
-    padding-block: var(--space-8) var(--space-20);
+    padding-top: calc(var(--header-height) + var(--space-16));
+    padding-bottom: var(--space-20);
   }
 
   .internal-hero__grid {
@@ -1163,6 +1194,7 @@
   }
 
   .internal-hero .eyebrow {
+    display: none;
     margin-bottom: var(--space-8);
   }
 
@@ -1177,6 +1209,7 @@
   }
 
   .internal-hero__panel {
+    display: none;
     gap: 2px;
     padding: var(--space-10) var(--space-12);
     font-size: 0.8rem;
@@ -1192,9 +1225,29 @@
     padding-top: var(--space-24);
   }
 
-  .events-catalog .section-heading {
-    margin-bottom: var(--space-12);
-    padding-bottom: var(--space-10);
+  .events-catalog .section-heading--events-catalog {
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .events-catalog .section-heading--events-catalog::after,
+  .section-heading--events-catalog .section-index,
+  .section-heading--events-catalog .section-copy {
+    display: none;
+  }
+
+  .section-heading--events-catalog .section-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
   }
 
   .events-catalog .section-copy {
@@ -1206,6 +1259,11 @@
     gap: var(--space-12);
     padding-bottom: var(--space-16);
     margin-bottom: var(--space-12);
+  }
+
+  .events-tools input,
+  .events-tools select {
+    font-size: var(--text-body);
   }
 
   /* A busca é o controle principal da tela. */
@@ -1264,7 +1322,8 @@
      ========================================================== */
 
   .event-hero {
-    padding-block: var(--space-12) var(--space-28);
+    padding-top: calc(var(--header-height) + var(--space-16));
+    padding-bottom: var(--space-28);
   }
 
   .event-hero__grid {
@@ -1275,10 +1334,23 @@
     gap: var(--space-8);
   }
 
+  .event-hero__meta .event-status,
+  .event-hero__meta .event-sport {
+    display: none;
+  }
+
+  .event-hero:not(.event-hero--demo) .event-hero__meta {
+    display: none;
+  }
+
   .event-hero h1 {
     max-width: none;
     margin-top: var(--space-12);
     font-size: clamp(1.65rem, 6.6vw, 2.2rem);
+  }
+
+  .event-hero:not(.event-hero--demo) h1 {
+    margin-top: 0;
   }
 
   .event-hero__lead {
@@ -1295,6 +1367,14 @@
 
   .event-hero__actions .link-action {
     justify-self: start;
+  }
+
+  .event-hero__actions [data-event-action="back"] {
+    display: none;
+  }
+
+  body.has-event-mobile-cta .event-hero__actions {
+    display: none;
   }
 
   .event-hero__visual {
@@ -1315,7 +1395,10 @@
 
   .event-quick__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--line-soft);
+    padding: 0 var(--line-soft) var(--line-soft);
     border-left: 0;
+    background: var(--line);
   }
 
   .event-definition {
@@ -1323,13 +1406,37 @@
     padding: var(--space-12);
   }
 
-  .event-definition:nth-child(2n) {
-    border-right: 0;
+  .event-quick__grid > .event-definition {
+    border: 0;
+    background: var(--surface-plain);
+  }
+
+  .event-quick__grid > [data-event-field="date"] { order: 1; }
+  .event-quick__grid > [data-event-field="location"] { order: 2; }
+  .event-quick__grid > [data-event-field="categories"] { order: 3; }
+  .event-quick__grid > [data-event-field="registration"] { order: 4; }
+  .event-quick__grid > [data-event-field="status"] { order: 5; }
+  .event-quick__grid > [data-event-field="regulation"] { order: 6; }
+
+  .event-quick__grid > [data-event-field="sport"],
+  .event-quick__grid > [data-event-field="organization"],
+  .event-quick__grid > [data-event-field="regulation"].event-definition--pending {
+    display: none;
+  }
+
+  .event-quick__grid[data-regulation="pending"] > [data-event-field="status"] {
+    grid-column: 1 / -1;
   }
 
   .event-definition dd {
     font-size: 0.92rem;
     overflow-wrap: anywhere;
+  }
+
+  .event-quick__grid [data-event-field="regulation"] a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
   }
 
   @media (max-width: 379px) {
@@ -1435,6 +1542,7 @@
   }
 
   .event-sidebar {
+    display: none;
     gap: var(--space-12);
     padding: var(--space-16);
     border-width: var(--line-strong);
@@ -1457,21 +1565,20 @@
     display: flex;
     gap: var(--space-12);
     min-height: var(--md-dock-h);
-    padding: var(--space-10) var(--container-pad);
-    padding-bottom: calc(var(--space-10) + env(safe-area-inset-bottom, 0px));
+    padding-top: var(--space-8);
+    padding-right: max(var(--container-pad), env(safe-area-inset-right, 0px));
+    padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
+    padding-left: max(var(--container-pad), env(safe-area-inset-left, 0px));
     border-top: var(--line-strong) solid var(--structure);
   }
 
-  .event-mobile-cta span {
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .event-mobile-cta__title {
+    display: none;
   }
 
   .event-mobile-cta .btn {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    width: 100%;
     min-height: 48px;
     padding-inline: var(--space-16);
     box-shadow: none;
@@ -1494,17 +1601,16 @@
   .whatsapp-float {
     right: max(var(--space-12), env(safe-area-inset-right));
     bottom: calc(var(--md-tabbar-total) + var(--space-12));
+    width: 48px;
+    height: 48px;
     min-height: 48px;
     min-width: 48px;
-    padding: 0 var(--space-16);
+    padding: 0;
+    justify-content: center;
   }
 
-  .whatsapp-float span {
-    display: inline;
-    font-family: var(--font-mono);
-    font-size: 0.66rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+  .whatsapp-float__label {
+    display: none;
   }
 
   body.has-event-mobile-cta .whatsapp-float {
@@ -1515,12 +1621,6 @@
   body.modal-open .whatsapp-float,
   body.md-doc-open .whatsapp-float {
     display: none;
-  }
-
-  @media (max-width: 359px) {
-    .whatsapp-float span {
-      display: none;
-    }
   }
 
   .toast {

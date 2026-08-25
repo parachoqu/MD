@@ -74,6 +74,16 @@ Consequência útil: um page box A4 mede cerca de 794px, então `mobile.css` nun
 
 Um bloco de reflow trava em `minmax(0, 1fr)` as grades de coluna única e libera quebra em títulos de display e metadados em mono, que são os primeiros a estourar sob fonte ampliada. Com isso nenhuma rota gera rolagem horizontal em zoom de texto de 200%.
 
+### Polimento de densidade mobile
+
+Até `767px`, a interface remove da apresentação informações repetidas pelo App Shell ou por outra região da mesma tela: metadata do hero, faixa conceitual inicial, códigos `SRV`, resumos das linhas de evento, metadata do painel de contato, breadcrumb, eyebrow e painel técnico do catálogo, cabeçalho visual repetido da listagem, sidebar do detalhe, colunas de navegação e públicos do rodapé e notas técnicas de ambiente. O WhatsApp conserva o link e o `aria-label`, mas apresenta apenas o ícone em um alvo de `48px`.
+
+Permanecem visíveis e funcionais os índices editoriais da home, a faixa de serviços, métricas e seções institucionais, labels e controles nativos dos filtros, contagem, aviso demonstrativo, status, data, local, categorias, valor ou período de inscrição, regulamento disponível, cancelamentos, perguntas, contato e todo o fluxo transacional. No detalhe, a ficha rápida usa `data-event-field` para ordenar somente no mobile os campos `date`, `location`, `categories`, `registration`, `status` e `regulation`; `data-regulation` fecha a última linha quando o documento está pendente. Modalidade, organização e regulamento pendente são redundantes nesse contexto. As ações usam `data-event-action`, e `.event-hero--demo` impede que `.event-demo-label` seja confundido com status ou modalidade.
+
+Os hooks `.rhythm-strip--hero`, `.section-heading--events-catalog`, `.footer-col--navigation`, `.footer-col--audiences`, `.footer-col--contact`, `.footer-bottom__technical`, `.event-mobile-cta__title`, `.whatsapp-float__label` e `[data-hero-note]` evitam seletores posicionais. O `h2` do catálogo fica visualmente oculto, mas continua nomeando a seção para tecnologias assistivas. A nota curta da imagem da home e a versão completa do desktop alternam por `hidden`, de modo que apenas uma seja exibida e anunciada.
+
+Em `768px` ou mais, `mobile.css` deixa de ser aplicado e `js/mobile.js` restaura a cópia desktop, os elementos `[hidden]`, listeners, observers e classes transitórias. As classes e os atributos novos são neutros fora do breakpoint; o desktop permanece congelado.
+
 ## Como executar
 
 Use servidor local, pois o projeto usa ES Modules:
