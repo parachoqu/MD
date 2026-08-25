@@ -426,6 +426,8 @@ export function createRegistrationModal(event, root = document.body) {
       text: "Remover",
       attrs: {
         type: "button",
+        // "Remover" sozinho não diz qual atleta sai da lista.
+        "aria-label": `Remover atleta ${index + 1}`,
         disabled: state.participants.length === 1 ? "" : null,
       },
       on: {

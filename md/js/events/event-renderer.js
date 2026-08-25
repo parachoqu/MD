@@ -151,7 +151,11 @@ export function appendDefinition(parent, label, value, pending = false) {
   term.textContent = label;
 
   const description = document.createElement("dd");
-  description.textContent = value;
+  if (value?.nodeType === 1) {
+    description.append(value);
+  } else {
+    description.textContent = value;
+  }
 
   item.append(term, description);
   parent.append(item);

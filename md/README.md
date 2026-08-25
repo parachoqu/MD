@@ -42,6 +42,38 @@ Títulos (`h1`, `h2`, `h3`, títulos editoriais e títulos dinâmicos de evento)
 
 O estado inicial oculto do reveal só existe sob `html.has-motion`, classe aplicada pelo próprio JS. Sem JavaScript, com JavaScript quebrado ou em `prefers-reduced-motion`, todo o conteúdo permanece visível e nada translada.
 
+## Camada mobile: App Shell M&D
+
+Abaixo de 768px o site deixa de ser a composição de desktop empilhada e passa a funcionar como um aplicativo: app bar contextual, navegação inferior persistente, telas com uma prioridade cada, modais em tela cheia, regulamento como visualizador de documento e inscrição como fluxo transacional. Continua sendo o mesmo site estático multipágina — sem PWA, service worker, manifest, SPA, framework ou dependência nova.
+
+### Isolamento
+
+O desktop a partir de 768px é referência congelada. Três camadas garantem isso:
+
+1. `css/mobile.css` é carregado por último com `media="(max-width: 767px)"`;
+2. todo o conteúdo do arquivo vive dentro de `@media (max-width: 767px)`;
+3. a marcação exclusiva do shell nasce com o atributo `hidden`. `js/mobile.js` o remove ao montar e o devolve ao desmontar, então em 768px ou mais o elemento não sai de `display: none`, não recebe foco e não existe na árvore de acessibilidade.
+
+Um script inline no `<head>` das três páginas aplica `html.md-shell` antes do primeiro paint, e é sob essa classe que o espaço das barras fixas é reservado — sem JavaScript a classe não existe, nenhuma faixa vazia aparece e não há CLS.
+
+Consequência útil: um page box A4 mede cerca de 794px, então `mobile.css` nunca alcança a impressão. As três folhas do regulamento continuam saindo pelo `@media print` de `css/regulation.css`.
+
+`js/mobile.js` monta e desmonta por `matchMedia("(max-width: 767px)")`. Ao cruzar o breakpoint remove listeners, desconecta observers, limpa classes de `body`, fecha sheets e restaura atributos e foco. Redimensionar não duplica instância nem listener.
+
+### App shell
+
+- **App bar** — `.site-header` reestilizada em 56px mais safe area. Reage ao scroll pela classe `is-scrolled` que `navigation.js` já mantém, sem segundo listener. Slots contextuais por página: identificação compacta na home, rótulo `Eventos` no catálogo e um botão real de voltar no detalhe. O `h1` nunca é duplicado ali.
+- **Tab bar** — quatro destinos que continuam links reais (`index.html#inicio`, `inscricoes.html`, `index.html#projetos`, `index.html#contato`), ícones SVG próprios de traço reto, rótulo sempre visível e estado ativo por forma, peso e cor. Na home o destino ativo espelha, via `MutationObserver`, a classe que o `IntersectionObserver` de `navigation.js` já escreve: uma única fonte de verdade. Recolhe sob `has-event-mobile-cta`, `modal-open` e `md-doc-open` — nunca duas barras inferiores ao mesmo tempo.
+- **Menu** — reaproveita `#mainNav` e `#menuToggle`. `navigation.js` segue dono do toggle, do `aria-expanded`, do `body.menu-open` e do Escape; `mobile.js` acrescenta foco preso, foco inicial, retorno de foco, alternância do rótulo do acionador e a linha "Fechar menu" na base do sheet.
+- **Action dock** — `.event-mobile-cta` vira a zona inferior contextual do evento com inscrição aberta e substitui a tab bar. O botão principal duplicado dentro do painel lateral é ocultado; status, data e categorias permanecem.
+- **Visualizador de regulamento** — `mobile.js` observa a classe `is-expanded` que `regulation.js` já escreve e converte a seção em tela cheia com toolbar própria. Fechar e imprimir acionam `#regulationToggle` e `#regulationPrint`: nenhuma lógica duplicada. Escape, retorno de foco, `#regulamento` e o botão voltar do navegador funcionam; o documento, o texto e o redirecionamento antigo permanecem intocados.
+
+### Fundação
+
+`mobile.css` reescreve `--header-height`, e com isso `.site-header`, `.hero`, `.breadcrumb`, `.event-sidebar` e o `scroll-padding-top` de `reset.css` herdam o offset da app bar sem regra nova. Define ainda `--md-tabbar-total`, `--md-dock-total` e o gutter da faixa (16px até 479px, 20px de 480px a 767px). Faixas: até 359px compacto, 360–479 principal, 480–767 largo — sempre em coluna única.
+
+Um bloco de reflow trava em `minmax(0, 1fr)` as grades de coluna única e libera quebra em títulos de display e metadados em mono, que são os primeiros a estourar sob fonte ampliada. Com isso nenhuma rota gera rolagem horizontal em zoom de texto de 200%.
+
 ## Como executar
 
 Use servidor local, pois o projeto usa ES Modules:
@@ -53,7 +85,7 @@ python3 -m http.server 4173
 Acesse:
 
 ```text
-http://127.0.0.1:4173/md-site-consolidado/
+http://127.0.0.1:4173/
 ```
 
 Se a porta estiver ocupada, use outra porta e mantenha o mesmo caminho da pasta.
@@ -63,22 +95,25 @@ Se a porta estiver ocupada, use outra porta e mantenha o mesmo caminho da pasta.
 - `index.html`: homepage institucional com eventos em destaque.
 - `inscricoes.html`: catálogo/listagem pública de eventos, busca e filtros.
 - `evento.html`: template único de detalhe, usando query string.
+- `regulamento-taca-vale-handebol-2026.html`: redirecionamento de compatibilidade para o regulamento dentro do evento.
 
 Exemplo:
 
 ```text
 evento.html?evento=taca-vale-handebol-2026
+evento.html?evento=taca-vale-handebol-2026#regulamento
 ```
 
-Não há páginas individuais por competição. Todo detalhe vem de `data/events.js`.
+Não há páginas individuais por competição: o detalhe de qualquer evento vem sempre de `data/events.js`. O regulamento pertence exclusivamente ao registro da Taça Vale e é renderizado dentro do mesmo detalhe dinâmico.
 
 ## Estrutura
 
 ```text
-md-site-consolidado/
+md/
 ├── index.html
 ├── inscricoes.html
 ├── evento.html
+├── regulamento-taca-vale-handebol-2026.html
 ├── data/
 │   └── events.js
 ├── css/
@@ -88,17 +123,24 @@ md-site-consolidado/
 │   ├── components.css
 │   ├── sections.css
 │   ├── events.css
-│   └── registration.css
+│   ├── registration.css
+│   ├── regulation.css
+│   └── mobile.css
 ├── js/
 │   ├── main.js
 │   ├── navigation.js
+│   ├── mobile.js
 │   ├── motion.js
 │   ├── projects.js
 │   ├── form.js
+│   ├── regulation.js
 │   ├── events/
 │   │   ├── event-list.js
 │   │   ├── event-detail.js
-│   │   └── event-renderer.js
+│   │   ├── event-renderer.js
+│   │   └── regulations/
+│   │       ├── index.js
+│   │       └── taca-vale-handebol-2026.js
 │   └── registration/
 │       ├── registration-modal.js
 │       ├── registration-form.js
@@ -141,9 +183,28 @@ O status salvo é semântico. As frases exibidas são responsabilidade da interf
 
 Na interface: `open` recebe Teal, `soon` recebe Âmbar, `closed`/`finished`/`full` ficam neutros e `cancelled` recebe Coral. Eventos sem inscrição aberta exibem o botão de status desabilitado com rótulo textual e um caminho real de contato ("Falar com a M&D"), nunca um fluxo que simule inscrição disponível.
 
+## Regulamento
+
+O regulamento oficial da 1ª Taça Vale do Mucuri de Handebol Júnior é renderizado dentro de `evento.html?evento=taca-vale-handebol-2026#regulamento`: Capítulos I a VIII, artigos 1º a 19º e as três folhas do documento original. Não há `iframe`, backend ou PDF hospedado; "salvar em PDF" usa o diálogo nativo de impressão.
+
+Integração:
+
+- `data/events.js` associa o documento por `regulation: { available, id, title, label, pages }`, sem URL institucional paralela.
+- `js/events/regulations/index.js` resolve o identificador para um renderizador específico; sem registro válido, a interface falha de forma neutra com "Regulamento disponível em breve".
+- O documento completo existe somente em `js/events/regulations/taca-vale-handebol-2026.js`. A URL HTML antiga contém apenas redirecionamento automático, canonical e link manual.
+- Não existe item global de Regulamento em menu ou rodapé. O acesso ocorre na ficha rápida ou na seção interna do evento.
+
+Estilo e impressão:
+
+- `css/regulation.css` é carregado apenas por `evento.html` e todo seletor visual fica sob `.event-regulation`, usando somente tokens de `variables.css`.
+- `js/regulation.js` controla expansão/recolhimento, `#regulamento`, tabela responsiva e o ciclo `beforeprint`/`afterprint`, restaurando o estado anterior da interface.
+- `@media print` usa `@page { size: A4 }`, esconde header, footer, breadcrumb, hero, barra de ações, WhatsApp e barra de progresso, e força quebra após as folhas 1 e 2. **O resultado tem exatamente três páginas A4**, com `Página 1/3`, `2/3` e `3/3` preservados. Ao alterar o texto do documento, reconfira a contagem de páginas na pré-visualização de impressão.
+
+O texto foi migrado literalmente. Termos, valores e numerações do arquivo de origem foram preservados sem correção jurídica, esportiva ou gramatical.
+
 ## Conteúdo atual
 
-- Taça Vale de Handebol Júnior: evento real modelado com informações confirmadas pelas artes. Status `soon`. Dados ainda ausentes aparecem como `A confirmar` ou ficam condicionais.
+- 1ª Taça Vale do Mucuri de Handebol Júnior: evento real. Nome, data (17 e 18 de outubro de 2026), local (Ginásio Poliesportivo, Itambacuri/MG), limite de 12 equipes, categorias masculina e feminina e faixa de nascimento 2005–2013 são informações confirmadas pelo regulamento oficial. Status `soon`. Dados ainda ausentes aparecem como `A confirmar` ou ficam condicionais.
 - Evento Demonstrativo - Inscrições Abertas: registro fictício para testar inscrição completa.
 - Evento Demonstrativo - Inscrições Encerradas: registro fictício para testar estado encerrado.
 
@@ -192,20 +253,20 @@ Pastas preparadas:
 - `assets/img/institutional/`: fotografias institucionais, equipe, bastidores e públicos.
 - `assets/img/generated/`: imagens fictícias geradas por IA para demonstração, sem marcas, logos ou dados oficiais. Devem ser substituídas por registros autorizados antes da publicação final.
 
-Não foram baixadas imagens aleatórias nem recriadas logos oficiais ausentes. A Ópticas Tecnotica está modelada como patrocinador da Taça Vale com placeholder sinalizado.
+Não foram baixadas imagens aleatórias nem recriadas logos oficiais ausentes. Patrocinadores permanecem como `A confirmar`; nenhuma marca nominal é apresentada sem confirmação na fonte autorizada.
 
 ## Conteúdos pendentes
 
 Validar antes de publicação:
 
 - fotografias oficiais;
-- logo oficial de patrocinador;
-- regulamento da Taça Vale;
-- endereço, cidade e local;
-- datas e horários exatos;
-- regras oficiais de elenco;
+- patrocinadores e respectivas logos oficiais;
+- endereço completo do ginásio;
+- período de inscrições e horários das partidas;
 - contatos definitivos;
 - backend de inscrição.
+
+O regulamento da Taça Vale, a data, a cidade, o local e as regras de elenco deixaram de ser pendências: estão confirmados pelo documento oficial publicado. O regulamento define o valor de inscrição (R$ 350,00 por equipe), mas nenhum fluxo de pagamento existe nesta fase.
 
 ## Comportamentos preservados
 
@@ -214,6 +275,7 @@ Validar antes de publicação:
 - menu mobile;
 - busca, filtros, estado vazio e contagem do catálogo;
 - detalhe por query string e status semânticos;
+- regulamento oficial condicional dentro do detalhe da Taça Vale, com impressão isolada em três páginas A4;
 - inscrição em quatro etapas, validações, consentimento, revisão, rascunho e protocolo local;
 - filtros e modal de projetos institucionais, com Escape, foco preso e retorno de foco;
 - formulário de contato e toast;
@@ -222,4 +284,5 @@ Validar antes de publicação:
 - WhatsApp;
 - skip link, landmarks, `aria-live` e foco visível;
 - `prefers-reduced-motion`;
-- JavaScript modular em ES Modules.
+- JavaScript modular em ES Modules;
+- app shell mobile abaixo de 768px, sem qualquer diferença no desktop.

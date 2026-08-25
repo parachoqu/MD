@@ -737,7 +737,8 @@ html.has-motion [data-animate].is-visible {
 }
 
 /* --- Responsivo ----------------------------------------------------------------- */
-@media (max-width: 1060px) {
+/* Oito itens de navegação: o menu horizontal deixa de caber antes de 1200px. */
+@media (max-width: 1199px) {
   .nav,
   .header__actions > .btn {
     display: none;

@@ -10,6 +10,7 @@ import {
 import { createRegistrationModal } from "../registration/registration-modal.js";
 import { getRegistrationsByEvent } from "../registration/registration-storage.js";
 import { revealScope } from "../motion.js";
+import { getRegulationRenderer } from "./regulations/index.js";
 
 const CONTACT_URL = "index.html#contato";
 
@@ -175,15 +176,23 @@ function renderQuickInfo(event) {
 
   const dateLabel = event.date?.label || "A confirmar";
   const location = eventLocationLabel(event);
-  const registration = event.registrationPeriod?.label || "A confirmar";
-  const regulation = event.regulation?.available ? "Disponível" : "A confirmar";
+  const registration =
+    event.registrationDetails?.feePerTeam ||
+    event.registrationPeriod?.label ||
+    "A confirmar";
+  const regulationRenderer = event.regulation?.available
+    ? getRegulationRenderer(event.regulation.id)
+    : null;
+  const regulation = regulationRenderer
+    ? regulationLink("Disponível")
+    : "A confirmar";
 
-  appendDefinition(list, "Previsão", dateLabel, !event.date?.label);
+  appendDefinition(list, "Data", dateLabel, !event.date?.label);
   appendDefinition(list, "Modalidade", event.sport);
   appendDefinition(list, "Categorias", eventCategoriesLabel(event));
   appendDefinition(list, "Local", location, location === "A confirmar");
   appendDefinition(list, "Inscrição", registration, registration === "A confirmar");
-  appendDefinition(list, "Regulamento", regulation, !event.regulation?.available);
+  appendDefinition(list, "Regulamento", regulation, !regulationRenderer);
   appendDefinition(list, "Status", getEventStatus(event.status).label);
   appendDefinition(list, "Organização", event.organization || "M&D Projetos e Eventos Desportivos");
 
@@ -205,7 +214,9 @@ function renderContent(event, status, registrations, registrationModal) {
     renderAbout(event),
     renderCategories(event),
     renderSchedule(event),
+    renderRegistrationDetails(event),
     renderRegulation(event),
+    renderHighlights(event),
     renderSponsors(event),
     renderQuestions(event),
     renderStoredRegistrations(registrations)
@@ -224,11 +235,13 @@ function renderContent(event, status, registrations, registrationModal) {
 }
 
 function renderAbout(event) {
-  return contentBlock("Sobre o evento", [textElement("p", "", event.description)]);
+  return contentBlock("Sobre o evento", [textElement("p", "", event.description)], "evt-sobre");
 }
 
 function renderCategories(event) {
-  if (!event.categories.length) return contentBlock("Categorias", [textElement("p", "", "Categorias a confirmar.")]);
+  if (!event.categories.length) {
+    return contentBlock("Categorias", [textElement("p", "", "Categorias a confirmar.")], "evt-categorias");
+  }
 
   const list = document.createElement("div");
   list.className = "category-list";
@@ -242,12 +255,12 @@ function renderCategories(event) {
     list.append(item);
   });
 
-  return contentBlock("Categorias", [list]);
+  return contentBlock("Categorias", [list], "evt-categorias");
 }
 
 function renderSchedule(event) {
   if (!event.schedule.length) {
-    return contentBlock("Cronograma", [textElement("p", "", "Cronograma disponível em breve.")]);
+    return contentBlock("Formato e cronograma", [textElement("p", "", "Cronograma disponível em breve.")], "evt-cronograma");
   }
 
   const list = document.createElement("dl");
@@ -255,23 +268,64 @@ function renderSchedule(event) {
   event.schedule.forEach((item) => {
     appendDefinition(list, item.label, item.value);
   });
-  return contentBlock("Cronograma", [list]);
+  return contentBlock("Formato e cronograma", [list], "evt-cronograma");
+}
+
+function renderRegistrationDetails(event) {
+  const details = event.registrationDetails;
+  if (!details) return document.createDocumentFragment();
+
+  const list = document.createElement("dl");
+  list.className = "schedule-list registration-details";
+  appendDefinition(list, "Inscrição", details.feePerTeam);
+  appendDefinition(list, "Duas equipes", details.dualInstitutionFee);
+  appendDefinition(list, "Capacidade", event.capacity?.label || "A confirmar", !event.capacity?.label);
+  appendDefinition(
+    list,
+    "Composição máxima",
+    `${details.maxMembers} integrantes: até ${details.maxAthletes} atletas e ${details.maxStaff} membros da comissão técnica`
+  );
+  appendDefinition(list, "Por partida", `Até ${details.matchRosterLimit} atletas relacionados`);
+  appendDefinition(list, "Período de inscrição", details.period, details.period === "A confirmar");
+  return contentBlock("Inscrição e composição das equipes", [list], "evt-inscricao");
 }
 
 function renderRegulation(event) {
-  if (!event.regulation?.available) {
-    return contentBlock("Regulamento", [textElement("p", "", "Regulamento disponível em breve.")]);
+  if (!event.regulation) return document.createDocumentFragment();
+
+  const renderer = event.regulation.available
+    ? getRegulationRenderer(event.regulation.id)
+    : null;
+
+  if (!renderer) {
+    return contentBlock("Regulamento", [textElement("p", "", "Regulamento disponível em breve.")], "evt-regulamento");
   }
 
-  const link = document.createElement("a");
-  link.className = "btn btn--secondary";
-  link.href = event.regulation.url;
-  link.textContent = "Acessar regulamento";
-  return contentBlock("Regulamento", [link]);
+  return renderer(event);
+}
+
+function renderHighlights(event) {
+  if (!event.highlights?.length) return document.createDocumentFragment();
+
+  const list = document.createElement("div");
+  list.className = "highlight-list";
+  event.highlights.forEach((highlight) => {
+    const item = document.createElement("article");
+    item.className = "highlight-item";
+    item.append(
+      textElement("h3", "", highlight.title),
+      textElement("p", "", highlight.detail)
+    );
+    list.append(item);
+  });
+
+  return contentBlock("Premiações e destaques confirmados", [list], "evt-premiacoes");
 }
 
 function renderSponsors(event) {
-  if (!event.sponsors.length) return contentBlock("Patrocinadores", [textElement("p", "", "Patrocinadores a confirmar.")]);
+  if (!event.sponsors.length) {
+    return contentBlock("Patrocinadores", [textElement("p", "", "Patrocinadores a confirmar.")], "evt-patrocinadores");
+  }
 
   const list = document.createElement("div");
   list.className = "sponsor-list";
@@ -285,20 +339,20 @@ function renderSponsors(event) {
     list.append(item);
   });
 
-  return contentBlock("Patrocinadores", [list]);
+  return contentBlock("Patrocinadores", [list], "evt-patrocinadores");
 }
 
 function renderQuestions(event) {
   const text = event.demo
     ? "Este evento existe apenas para teste do fluxo de inscrição. Em produção, dúvidas devem usar os canais oficiais da M&D."
-    : "Dúvidas sobre inscrições, regulamento e datas serão respondidas pelos canais oficiais da M&D quando as informações forem confirmadas.";
+    : "Dúvidas sobre o período de inscrição, horários e demais informações operacionais devem ser encaminhadas pelos canais oficiais da M&D.";
 
   const link = document.createElement("a");
   link.className = "link-action";
   link.href = CONTACT_URL;
   link.textContent = "Falar com a M&D";
 
-  return contentBlock("Dúvidas", [textElement("p", "", text), link]);
+  return contentBlock("Dúvidas", [textElement("p", "", text), link], "evt-duvidas");
 }
 
 function renderStoredRegistrations(registrations) {
@@ -315,10 +369,11 @@ function renderStoredRegistrations(registrations) {
     list.append(item);
   });
 
-  return contentBlock("Inscrições demonstrativas salvas", [
-    textElement("p", "", "Registros locais encontrados neste navegador."),
-    list,
-  ]);
+  return contentBlock(
+    "Inscrições demonstrativas salvas",
+    [textElement("p", "", "Registros locais encontrados neste navegador."), list],
+    "evt-inscricoes-salvas"
+  );
 }
 
 function renderSidebar(event, status, registrationModal) {
@@ -337,7 +392,7 @@ function renderSidebar(event, status, registrationModal) {
     note.className = "event-sidebar__note";
     note.textContent =
       event.status === "soon"
-        ? "Datas, local e regulamento serão publicados após confirmação oficial."
+        ? "Data, local e regulamento estão confirmados. Período de inscrição e horários permanecem a confirmar."
         : "Este evento não recebe novas inscrições.";
     aside.append(note);
 
@@ -365,9 +420,15 @@ function renderMobileBar(event, status, registrationModal) {
   return bar;
 }
 
-function contentBlock(title, children) {
+/**
+ * O `id` é âncora estável das seções do evento. Ele não altera
+ * layout nem comportamento; serve à navegação local do mobile e a
+ * links diretos como #regulamento.
+ */
+function contentBlock(title, children, id) {
   const block = document.createElement("section");
   block.className = "event-content-block";
+  if (id) block.id = id;
   children.forEach((child) => {
     if (child.nodeType !== Node.ELEMENT_NODE) return;
     if (child.matches("h1, h2, h3") || child.querySelector("h1, h2, h3")) return;
@@ -380,6 +441,13 @@ function contentBlock(title, children) {
 function breadcrumbLink(href, label) {
   const link = document.createElement("a");
   link.href = href;
+  link.textContent = label;
+  return link;
+}
+
+function regulationLink(label) {
+  const link = document.createElement("a");
+  link.href = "#regulamento";
   link.textContent = label;
   return link;
 }

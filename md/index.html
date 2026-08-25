@@ -16,6 +16,8 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/sections.css">
   <link rel="stylesheet" href="css/events.css">
+  <link rel="stylesheet" href="css/mobile.css" media="(max-width: 767px)">
+  <script>if(window.matchMedia("(max-width: 767px)").matches)document.documentElement.classList.add("md-shell")</script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo principal</a>
@@ -475,6 +477,29 @@
     </svg>
     <span>WhatsApp</span>
   </a>
+
+
+  <!-- Navegação inferior do app shell. Nasce oculta: em >=768px o
+       atributo hidden a mantém fora do layout e da árvore de
+       acessibilidade. js/mobile.js a libera apenas no mobile. -->
+  <nav class="md-tabbar" id="mdTabBar" aria-label="Navegação principal do aplicativo" hidden>
+    <a href="index.html#inicio" data-md-tab="inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M3 10.5 12 4l9 6.5"/><path d="M6 11v8h12v-8"/><path d="M4 20h16" stroke-width="3"/></svg>
+      <span>Início</span>
+    </a>
+    <a href="inscricoes.html" data-md-tab="eventos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M4 6h16v14H4z"/><path d="M4 10.5h16"/><path d="M8.5 3v4M15.5 3v4"/><rect x="6.5" y="13" width="5" height="4" fill="currentColor" stroke="none"/></svg>
+      <span>Eventos</span>
+    </a>
+    <a href="index.html#projetos" data-md-tab="projetos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M4 6.5h16"/><path d="M4 12h12"/><path d="M4 17.5h8"/><rect x="16" y="15.5" width="4" height="4" fill="currentColor" stroke="none"/></svg>
+      <span>Projetos</span>
+    </a>
+    <a href="index.html#contato" data-md-tab="contato">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9.5h8"/><path d="M8 12.5h5"/></svg>
+      <span>Contato</span>
+    </a>
+  </nav>
 
   <script type="module" src="js/main.js"></script>
 </body>
