@@ -1,0 +1,8 @@
+App Shell M&D_files/
+docs/
+test/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
