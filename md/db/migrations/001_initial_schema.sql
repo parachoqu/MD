@@ -75,6 +75,7 @@ CREATE TABLE projects (
   id text PRIMARY KEY,
   slug text NOT NULL UNIQUE,
   sort_order integer NOT NULL DEFAULT 0 CHECK (sort_order >= 0),
+  published_sort_order integer CHECK (published_sort_order IS NULL OR published_sort_order >= 0),
   draft_data jsonb NOT NULL,
   published_data jsonb,
   editorial_status text NOT NULL DEFAULT 'draft' CHECK (editorial_status IN ('draft', 'published', 'archived')),
