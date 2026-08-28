@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Entrar | Painel administrativo M&amp;D</title>
+  <link rel="icon" type="image/png" href="../assets/logo/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-auth-body">
+  <a class="skip-link" href="#loginForm">Pular para o formulário de acesso</a>
+
+  <main class="admin-auth" id="conteudo">
+    <div class="admin-auth__card">
+      <div class="admin-auth__brand">
+        <img src="../assets/logo/logo.png" alt="M&amp;D Projetos e Eventos Desportivos" width="40" height="40">
+        <span class="admin-auth__brand-text">M&amp;D <small>Área administrativa</small></span>
+      </div>
+
+      <h1 class="admin-auth__title">Entrar no painel</h1>
+      <p class="admin-auth__lead">
+        Acesse com a conta administrativa para gerenciar eventos, conteúdo institucional, projetos, mídia e configurações do site.
+      </p>
+
+      <p class="admin-banner" role="note">
+        Ambiente administrativo demonstrativo. A autenticação, a publicação e o armazenamento definitivo serão ativados com o backend.
+      </p>
+
+      <p class="admin-auth__notice" id="sessionExpiredNotice" role="status" hidden>
+        Sua sessão expirou por inatividade. Entre novamente para continuar.
+      </p>
+
+      <form id="loginForm" novalidate autocomplete="on">
+        <p class="admin-form-error" id="loginError" role="alert" aria-live="assertive" hidden></p>
+
+        <div class="admin-field">
+          <label for="loginEmail">Usuário</label>
+          <input id="loginEmail" name="email" type="text" autocomplete="username" required aria-describedby="loginEmailError">
+          <span class="admin-field__error" id="loginEmailError" aria-live="polite"></span>
+        </div>
+
+        <div class="admin-field">
+          <label for="loginPassword">Senha</label>
+          <div class="admin-field__password">
+            <input id="loginPassword" name="password" type="password" autocomplete="current-password" required aria-describedby="loginPasswordError">
+            <button type="button" class="admin-field__toggle" id="togglePassword" aria-pressed="false">Mostrar</button>
+          </div>
+          <span class="admin-field__error" id="loginPasswordError" aria-live="polite"></span>
+        </div>
+
+        <label class="admin-checkbox">
+          <input type="checkbox" id="rememberEmail" name="rememberEmail">
+          <span>Lembrar usuário neste navegador</span>
+        </label>
+
+        <button class="admin-btn admin-btn--primary admin-btn--block" type="submit" id="loginSubmit">
+          <span id="loginSubmitLabel">Entrar</span>
+        </button>
+      </form>
+
+      <button type="button" class="admin-link-btn" id="forgotPasswordToggle" aria-expanded="false" aria-controls="forgotPasswordPanel">
+        Esqueci minha senha
+      </button>
+
+      <div id="forgotPasswordPanel" class="admin-panel" hidden>
+        <h2 class="admin-panel__title">Recuperação de senha</h2>
+        <p class="admin-panel__text">
+          Nesta fase demonstrativa não existe envio real de e-mail. Quando o backend for conectado, esta tela passará a enviar
+          um link de redefinição seguro e com expiração para o e-mail informado.
+        </p>
+        <form id="forgotPasswordForm" novalidate>
+          <div class="admin-field">
+            <label for="forgotEmail">E-mail</label>
+            <input id="forgotEmail" name="email" type="email" autocomplete="username">
+          </div>
+          <button class="admin-btn admin-btn--secondary" type="submit">Simular solicitação</button>
+        </form>
+        <p id="forgotPasswordStatus" class="admin-panel__status" role="status" aria-live="polite"></p>
+      </div>
+
+      <a class="admin-back-link" href="../index.html">Voltar ao site</a>
+    </div>
+  </main>
+
+  <script type="module" src="js/login-page.js"></script>
+</body>
+</html>

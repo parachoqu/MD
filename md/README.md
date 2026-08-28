@@ -296,3 +296,112 @@ O regulamento da Taça Vale, a data, a cidade, o local e as regras de elenco dei
 - `prefers-reduced-motion`;
 - JavaScript modular em ES Modules;
 - app shell mobile abaixo de 768px, sem qualquer diferença no desktop.
+
+## Painel administrativo frontend — modo demonstrativo
+
+Área administrativa isolada em `admin/`, protótipo funcional para editar eventos, conteúdo institucional, projetos, mídia e configurações antes de existir backend. **Não é um sistema com segurança real**: login, sessão, publicação e armazenamento são inteiramente simulados no navegador. Nenhuma tela do painel afirma o contrário — todas exibem o aviso:
+
+> Ambiente administrativo demonstrativo. A autenticação, a publicação e o armazenamento definitivo serão ativados com o backend.
+
+### Acesso
+
+```text
+admin/login.html
+```
+
+Conta demonstrativa fixa (não representa credencial real):
+
+```text
+Usuário: admin
+Senha:   admin
+```
+
+Após autenticar, o painel roda em `admin/index.html`, com rotas por hash:
+
+```text
+#dashboard
+#events
+#events/new
+#events/edit/<id>
+#content/home       (abas internas: Página inicial / Catálogo de eventos)
+#projects
+#media
+#settings
+```
+
+Uma rota desconhecida redireciona para `#dashboard`. Todas as páginas do painel têm `<meta name="robots" content="noindex, nofollow">` — isso impede indexação, **não é mecanismo de segurança**. O painel não é referenciado em nenhum link do site público.
+
+### Sessão simulada
+
+`auth-service.js` valida a conta fixa e grava `{ email, issuedAt, expiresAt }` em `sessionStorage["md.admin.session.v1"]`, com TTL de 30 minutos desde a emissão. Nunca grava senha. "Lembrar e-mail" grava só o e-mail em `localStorage["md.admin.rememberedEmail"]`. `auth-guard.js` (`requireSession`/`redirectIfAuthenticated`) reavalia a sessão a cada troca de rota e a cada 60s — **isso é proteção apenas de interface**: qualquer pessoa pode abrir o DevTools, editar `sessionStorage` ou remover o script para contornar o guard. Não há validação server-side nesta fase.
+
+### Módulos
+
+```text
+admin/
+├── login.html, index.html
+├── css/admin.css                       tokens herdados de css/variables.css + css/reset.css, sem redefinir cores
+├── js/
+│   ├── admin-app.js, admin-router.js, admin-shell.js
+│   ├── dom.js, dirty-guard.js, storage-adapter.js, result.js, utils.js, icons.js
+│   ├── auth/{auth-guard.js, auth-service.js}
+│   ├── repositories/{event, content, project, media, settings, activity}-repository.js
+│   ├── views/{dashboard, events, event-editor, event-preview, content, projects, media, settings}-view.js
+│   ├── components/{dialog-shell, confirm-dialog, media-picker, preview-panel, form-field, repeatable-list, reorder-list}.js
+│   └── data/{admin-seed.js, content-schema.js}
+```
+
+`storage-adapter.js` é o único módulo que toca `localStorage`/`sessionStorage`/`indexedDB` diretamente; repositórios são o único ponto que as views podem importar para dados. Todo método de repositório é assíncrono e simula latência de rede (120–260 ms), devolvendo `{ ok: true, data }` ou `{ ok: false, error }` — formato já compatível com uma futura troca por `fetch()`.
+
+### Armazenamento e chaves
+
+```text
+md.admin.session.v1          sessionStorage — sessão simulada (TTL 30 min)
+md.admin.rememberedEmail     localStorage — só o e-mail lembrado no login
+md.admin.events.v1           localStorage — eventos (clone de data/events.js + editorialStatus)
+md.admin.projects.v1         localStorage — projetos (cópia de js/projects.js + editorialStatus/order)
+md.admin.content.v1          localStorage — conteúdo institucional editável (home + catálogo)
+md.admin.settings.v1         localStorage — configurações globais
+md.admin.activity.v1         localStorage — log de atividade (últimas ~200 mutações)
+md.admin.media.v1            localStorage — metadados de mídia (nunca o binário)
+md-admin-media (IndexedDB)   object store "blobs" — binário dos uploads, nunca em localStorage/base64
+```
+
+Seed idempotente: `admin-seed.js` só semeia uma chave se ela ainda não existir; nunca resemeia sozinho. Em **Configurações → Restaurar dados demonstrativos**, com confirmação destrutiva, limpa essas chaves e o IndexedDB e semeia de novo a partir de `data/events.js` (importado ao vivo, clonado, nunca mutado) e de uma cópia manual dos 3 projetos de `js/projects.js` (arquivo público intocado — decisão registrada no código para não acoplar o schema do admin, que ganha `editorialStatus`, a um arquivo que deve continuar congelado).
+
+**Nunca lido, alterado ou apagado pelo painel**: `md.registration.drafts.v1` e `md.registrations.v1` (fluxo de inscrição pública, pode conter dados pessoais reais de teste).
+
+### O que "Publicar no modo local" significa
+
+Eventos e projetos têm um `editorialStatus` (`draft`/`published`/`archived`) que existe **só no admin** — o modelo público de `data/events.js` não tem esse campo e não é alterado por nenhuma ação do painel. Ao publicar, o painel exibe explicitamente:
+
+> Esta publicação existe apenas no painel demonstrativo e não altera o site público.
+
+Nenhuma ação do admin escreve em `data/events.js`, `js/projects.js` ou qualquer arquivo do site público — o `git diff` fora de `admin/` e desta seção do README é sempre vazio.
+
+### Contratos de repositório (prontos para virar chamadas de API)
+
+```text
+auth.signIn(credentials) / signOut() / getSession() / requestPasswordReset(email)
+events.list(filters) / getById(id) / create(data) / update(id,data) / duplicate(id) / archive(id) / delete(id) / publish(id)
+content.getPage(pageId) / updateSection(pageId, sectionId, data) / restore(pageId)
+projects.list(filters) / getById(id) / create(data) / update(id,data) / duplicate(id) / archive(id) / delete(id) / reorder(id, direction)
+media.list(filters) / get(id) / upload(file, metadata) / update(id, metadata) / replace(id, file) / delete(id) / getUsage(id)
+settings.get() / update(data)
+```
+
+### Mídia
+
+Upload aceita apenas JPEG/PNG/WebP até 5 MB, com validação real de decodificação (`Image().decode()`) — um arquivo renomeado sem ser uma imagem de verdade é recusado mesmo passando no filtro de mimetype/extensão. SVG enviado pelo usuário é sempre recusado; SVGs já existentes do site aparecem na biblioteca como ativos somente leitura. Blobs ficam só no IndexedDB; metadados (incluindo texto alternativo, sempre obrigatório) ficam em `localStorage`. "Locais de uso" é calculado sob demanda varrendo eventos/projetos/conteúdo/configurações — nunca um índice mantido manualmente — e uma mídia em uso não pode ser excluída. Object URLs de preview são revogados ao trocar de tela.
+
+### Limitações desta fase
+
+- Sem autenticação, autorização, publicação ou armazenamento reais — tudo roda no navegador de quem está com a aba aberta.
+- Sem editor livre de HTML/CSS/JS: conteúdo institucional segue um schema fixo (`content-schema.js`); nada além dos campos declarados é editável.
+- O texto oficial do regulamento (`js/events/regulations/taca-vale-handebol-2026.js`) não é editado nem duplicado — o editor de evento só grava metadados (versão, referência, data de publicação, etc.).
+- A lista de mídias estáticas é curada manualmente no seed (o navegador não lista diretórios do servidor sem backend).
+- Sem sincronização entre abas/dispositivos: os dados vivem só naquele navegador.
+
+### Requisitos de segurança da fase de backend
+
+Quando o backend existir, a autenticação e a autorização atuais devem ser substituídas por: sessão em cookie `HttpOnly`, `Secure` e `SameSite`; autorização e validação no servidor; RBAC; proteção CSRF; rate limiting; logs de auditoria; upload para armazenamento de objetos com verificação server-side (não apenas decodificação no cliente); URLs assinadas quando necessário; e versionamento formal de regulamentos e termos de consentimento. Nada disso está implementado nesta fase — o `auth-guard.js` atual é só uma conveniência de navegação, nunca uma barreira de segurança.

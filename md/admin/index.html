@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Painel administrativo | M&amp;D</title>
+  <link rel="icon" type="image/png" href="../assets/logo/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-body">
+  <a class="skip-link" href="#adminMain">Pular para o conteúdo principal</a>
+
+  <div class="admin-scrim" id="adminScrim" hidden></div>
+
+  <header class="admin-topbar">
+    <button class="admin-drawer-toggle" id="adminDrawerToggle" type="button" aria-expanded="false" aria-controls="adminSidebar" aria-label="Abrir menu administrativo">
+      <span class="admin-drawer-toggle__icon" data-icon="menu"></span>
+    </button>
+    <a class="admin-topbar__brand" href="#dashboard">
+      <img src="../assets/logo/logo.png" alt="" width="28" height="28">
+      <span>M&amp;D <small>Admin</small></span>
+    </a>
+    <div class="admin-topbar__spacer"></div>
+    <div class="admin-topbar__account">
+      <span class="admin-topbar__email" id="accountEmail"></span>
+      <button class="admin-btn admin-btn--ghost admin-btn--small" id="logoutButton" type="button">Sair</button>
+    </div>
+  </header>
+
+  <p class="admin-demo-banner" role="note">
+    Ambiente administrativo demonstrativo. A autenticação, a publicação e o armazenamento definitivo serão ativados com o backend.
+  </p>
+
+  <div class="admin-layout">
+    <nav class="admin-sidebar" id="adminSidebar" aria-label="Navegação administrativa">
+      <ul class="admin-nav" id="adminNavList"></ul>
+    </nav>
+
+    <div class="admin-shell-body">
+      <div class="admin-breadcrumb" id="adminBreadcrumb" aria-label="Caminho"></div>
+      <div class="admin-page-header">
+        <h1 id="adminPageTitle">Painel administrativo</h1>
+        <div class="admin-page-actions" id="adminPageActions"></div>
+      </div>
+      <main class="admin-main" id="adminMain" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <div id="adminDialogRoot"></div>
+  <div class="admin-toast" id="adminToast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="js/admin-app.js"></script>
+</body>
+</html>
