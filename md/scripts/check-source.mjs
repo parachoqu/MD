@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
-const SKIP = new Set(["node_modules", ".vercel", "coverage"]);
+const SKIP = new Set(["node_modules", ".vercel", ".vercel-static", "coverage"]);
 
 async function collect(directory) {
   const entries = await readdir(directory, { withFileTypes: true });

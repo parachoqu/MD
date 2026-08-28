@@ -1,5 +1,5 @@
 // Dialogo de confirmacao acessivel e generico, usado para toda acao destrutiva
-// ou sensivel (excluir, arquivar, publicar no modo local, restaurar seed).
+// ou sensivel (excluir, arquivar, publicar ou restaurar seed).
 
 import { element } from "../dom.js";
 import { openDialog } from "./dialog-shell.js";

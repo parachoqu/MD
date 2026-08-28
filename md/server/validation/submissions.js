@@ -65,6 +65,17 @@ export const mediaMetadataSchema = z
     originalFilename: plainText(160, { min: 1 }),
     mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]),
     size: z.coerce.number().int().positive().max(5 * 1024 * 1024),
+    width: z.coerce.number().int().positive().max(20_000).optional(),
+    height: z.coerce.number().int().positive().max(20_000).optional(),
     operation: z.enum(["upload", "replace"]).default("upload"),
+    revision: z.coerce.number().int().positive().optional(),
+  })
+  .strict();
+
+export const mediaUpdateSchema = z
+  .object({
+    label: plainText(160, { min: 1 }),
+    alt: plainText(500, { min: 1 }),
+    revision: z.coerce.number().int().positive(),
   })
   .strict();

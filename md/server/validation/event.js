@@ -128,6 +128,8 @@ export const eventDraftSchema = z
         image: optionalText(600),
         imageAlt: plainText(500, { min: 1 }),
         mediaId: nullableText(160),
+        focalX: z.coerce.number().min(0).max(100).optional(),
+        focalY: z.coerce.number().min(0).max(100).optional(),
       })
       .strict(),
   })

@@ -1,42 +1,7 @@
 import { revealScope } from "./motion.js";
+import { projects as staticProjects } from "../data/projects.js";
 
-const projects = [
-  {
-    id: "corporativo-placeholder",
-    category: "empresas",
-    title: "Projeto corporativo a validar",
-    status: "Placeholder",
-    date: "Data pendente",
-    description: "Espaço reservado para case corporativo real, com imagem, data, escopo e resultados confirmados.",
-    note: "Substituir por projeto validado pela M&D antes da publicação.",
-    image: "assets/img/generated/projeto-empresas-ficticio.webp",
-    imageAlt: "Imagem demonstrativa gerada por IA de uma atividade esportiva leve para uma equipe corporativa",
-  },
-  {
-    id: "escolar-placeholder",
-    category: "escolas",
-    title: "Projeto escolar a validar",
-    status: "Placeholder",
-    date: "Calendário pendente",
-    description: "Estrutura preparada para festival, circuito ou ação esportiva em escola, sem inventar dados de realização.",
-    note: "Inserir faixa etária, escola/rede, objetivos e registros reais.",
-    image: "assets/img/generated/projeto-escolas-ficticio.webp",
-    imageAlt: "Imagem demonstrativa gerada por IA de um circuito recreativo esportivo em uma escola",
-  },
-  {
-    id: "comunitario-placeholder",
-    category: "comunidades",
-    title: "Iniciativa comunitária a validar",
-    status: "Placeholder",
-    date: "Status pendente",
-    description: "Área destinada a ações de território, lazer e pertencimento com documentação e fotos autorizadas.",
-    note: "Validar nome, local, parceiros, fotos e indicadores.",
-    image: "assets/img/generated/projeto-comunidades-ficticio.webp",
-    imageAlt: "Imagem demonstrativa gerada por IA de uma atividade esportiva comunitária em uma quadra pública",
-  },
-];
-
-export function initProjects() {
+export function initProjects(projects = staticProjects) {
   const grid = document.getElementById("projectsGrid");
   const filters = Array.from(document.querySelectorAll("[data-filter]"));
   const modal = createProjectModal();

@@ -48,7 +48,7 @@ form.addEventListener("submit", async (event) => {
   const password = passwordInput.value;
 
   if (!email) {
-    emailError.textContent = "Informe seu usuário.";
+    emailError.textContent = "Informe seu e-mail.";
     emailInput.focus();
     return;
   }
@@ -82,10 +82,11 @@ forgotToggle.addEventListener("click", () => {
 
 forgotForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  forgotStatus.textContent = "Enviando solicitação simulada…";
-  await authService.requestPasswordReset(forgotEmailInput.value.trim());
-  forgotStatus.textContent =
-    "Solicitação registrada apenas neste protótipo. Nenhum e-mail foi enviado — este fluxo será conectado ao backend futuramente.";
+  forgotStatus.textContent = "Registrando solicitação…";
+  const result = await authService.requestPasswordReset(forgotEmailInput.value.trim());
+  forgotStatus.textContent = result.ok
+    ? result.data.message
+    : result.error.message;
 });
 
 async function init() {
@@ -95,6 +96,10 @@ async function init() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("expired") === "1") {
     sessionExpiredNotice.hidden = false;
+  }
+  if (params.get("unavailable") === "1") {
+    sessionExpiredNotice.hidden = false;
+    sessionExpiredNotice.textContent = "O backend administrativo esta indisponivel. Nenhum dado local foi usado como alternativa.";
   }
 
   const rememberedEmail = authService.getRememberedEmail();

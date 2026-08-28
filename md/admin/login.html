@@ -29,7 +29,7 @@
       </p>
 
       <p class="admin-banner" role="note">
-        Ambiente administrativo demonstrativo. A autenticação, a publicação e o armazenamento definitivo serão ativados com o backend.
+        Ambiente administrativo conectado ao backend temporário da Vercel. O acesso exige uma conta ativa criada no banco.
       </p>
 
       <p class="admin-auth__notice" id="sessionExpiredNotice" role="status" hidden>
@@ -40,8 +40,8 @@
         <p class="admin-form-error" id="loginError" role="alert" aria-live="assertive" hidden></p>
 
         <div class="admin-field">
-          <label for="loginEmail">Usuário</label>
-          <input id="loginEmail" name="email" type="text" autocomplete="username" required aria-describedby="loginEmailError">
+          <label for="loginEmail">E-mail</label>
+          <input id="loginEmail" name="email" type="email" autocomplete="username" required aria-describedby="loginEmailError">
           <span class="admin-field__error" id="loginEmailError" aria-live="polite"></span>
         </div>
 
@@ -56,7 +56,7 @@
 
         <label class="admin-checkbox">
           <input type="checkbox" id="rememberEmail" name="rememberEmail">
-          <span>Lembrar usuário neste navegador</span>
+          <span>Lembrar e-mail neste navegador</span>
         </label>
 
         <button class="admin-btn admin-btn--primary admin-btn--block" type="submit" id="loginSubmit">
@@ -71,15 +71,15 @@
       <div id="forgotPasswordPanel" class="admin-panel" hidden>
         <h2 class="admin-panel__title">Recuperação de senha</h2>
         <p class="admin-panel__text">
-          Nesta fase demonstrativa não existe envio real de e-mail. Quando o backend for conectado, esta tela passará a enviar
-          um link de redefinição seguro e com expiração para o e-mail informado.
+          A resposta nunca revela se a conta existe. A entrega automatizada de e-mail permanece indisponível até a configuração
+          explícita de um provedor.
         </p>
         <form id="forgotPasswordForm" novalidate>
           <div class="admin-field">
             <label for="forgotEmail">E-mail</label>
             <input id="forgotEmail" name="email" type="email" autocomplete="username">
           </div>
-          <button class="admin-btn admin-btn--secondary" type="submit">Simular solicitação</button>
+          <button class="admin-btn admin-btn--secondary" type="submit">Solicitar recuperação</button>
         </form>
         <p id="forgotPasswordStatus" class="admin-panel__status" role="status" aria-live="polite"></p>
       </div>

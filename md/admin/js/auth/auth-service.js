@@ -1,82 +1,60 @@
-// Autenticacao simulada. NAO E SEGURANCA REAL: a conta fixa abaixo e so um par
-// de credenciais de demonstracao comparado em JavaScript executado no navegador
-// do proprio usuario. Qualquer pessoa com DevTools pode ler este arquivo, editar
-// sessionStorage manualmente ou pular a validacao. Ver README para os requisitos
-// de autenticacao real da fase de backend (cookie HttpOnly/Secure/SameSite,
-// autorizacao server-side, RBAC, CSRF, rate limiting).
+import { apiRequest, setSessionState } from "../api-client.js";
 
-import { sessionStore, localStore, withLatency } from "../storage-adapter.js";
-import { STORAGE_KEYS } from "../data/admin-seed.js";
-import { ok, fail } from "../result.js";
-
-const SESSION_KEY = "md.admin.session.v1";
-const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutos, reduza aqui para testar expiracao
-
-// Conta demonstrativa fixa (ver README "Painel administrativo frontend"). Nunca
-// referenciada em value/placeholder/autocomplete do HTML de login.
-const FIXED_ACCOUNT = {
-  email: "admin",
-  password: "admin",
-};
+const REMEMBERED_EMAIL_KEY = "md.admin.rememberedEmail";
 
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
 
-function readSession() {
-  const session = sessionStore.read(SESSION_KEY, null);
-  if (!session) return null;
-  if (!session.expiresAt || Date.now() > session.expiresAt) {
-    sessionStore.remove(SESSION_KEY);
-    return null;
-  }
-  return session;
-}
-
 export const authService = {
   async signIn(credentials) {
-    return withLatency(() => {
-      const email = normalizeEmail(credentials && credentials.email);
-      const password = String((credentials && credentials.password) || "");
-      const matches = email === FIXED_ACCOUNT.email && password === FIXED_ACCOUNT.password;
-      if (!matches) {
-        return fail("invalid_credentials", "Usuário ou senha inválidos.");
-      }
-      const issuedAt = Date.now();
-      const session = { email, issuedAt, expiresAt: issuedAt + SESSION_TTL_MS };
-      sessionStore.write(SESSION_KEY, session);
-      return ok(session);
+    const result = await apiRequest("/api/auth/login", {
+      method: "POST",
+      body: {
+        email: normalizeEmail(credentials?.email),
+        password: String(credentials?.password || ""),
+      },
+      csrf: false,
+      timeoutMs: 20_000,
     });
+    if (result.ok) setSessionState(result.data);
+    return result;
   },
 
   async signOut() {
-    return withLatency(() => {
-      sessionStore.remove(SESSION_KEY);
-      return ok(true);
-    });
+    const result = await apiRequest("/api/auth/logout", { method: "POST", body: {} });
+    setSessionState(null);
+    return result;
   },
 
   async getSession() {
-    return withLatency(() => ok(readSession()));
+    const result = await apiRequest("/api/auth/session", { timeoutMs: 10_000 });
+    if (result.ok) setSessionState(result.data);
+    return result;
   },
 
-  // Sempre resolve { ok: true } independente do e-mail existir, para nao expor
-  // enumeracao de contas mesmo em modo demonstrativo.
-  async requestPasswordReset() {
-    return withLatency(() => ok(true), { minMs: 300, maxMs: 500 });
+  async requestPasswordReset(email) {
+    return apiRequest("/api/auth/password-reset", {
+      method: "POST",
+      body: { email: normalizeEmail(email) },
+      csrf: false,
+    });
   },
 
   getRememberedEmail() {
-    return localStore.read(STORAGE_KEYS.rememberedEmail, "");
-  },
-
-  setRememberedEmail(email) {
-    if (email) {
-      localStore.write(STORAGE_KEYS.rememberedEmail, normalizeEmail(email));
-    } else {
-      localStore.remove(STORAGE_KEYS.rememberedEmail);
+    try {
+      return window.localStorage.getItem(REMEMBERED_EMAIL_KEY) || "";
+    } catch {
+      return "";
     }
   },
 
-  readSessionSync: readSession,
+  setRememberedEmail(email) {
+    try {
+      if (email) window.localStorage.setItem(REMEMBERED_EMAIL_KEY, normalizeEmail(email));
+      else window.localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+    } catch {
+      // Lembrar o e-mail e opcional e nunca afeta a sessao HttpOnly.
+    }
+  },
 };

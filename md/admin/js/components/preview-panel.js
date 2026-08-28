@@ -42,7 +42,7 @@ export function createPreviewPanel(config) {
 
   const toolbar = element("div", { className: "admin-preview__toolbar" }, [
     element("div", { className: "admin-preview__sizes", role: "group", "aria-label": "Largura da pré-visualização" }, sizeButtons),
-    element("span", { className: "admin-tag admin-tag--demo", text: "Rascunho local" }),
+    element("span", { className: "admin-tag admin-tag--demo", text: "Rascunho não publicado" }),
   ]);
 
   const children = [toolbar, element("div", { className: "admin-preview__viewport" }, [frame])];

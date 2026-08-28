@@ -1,8 +1,10 @@
 # M&D Site Consolidado
 
-Site institucional e portal frontend de eventos da M&D Projetos e Eventos Desportivos.
+Site institucional, portal de eventos e implementacao local do backend temporario da M&D Projetos e Eventos Desportivos.
 
-Esta versão preserva a base aprovada em HTML, CSS e JavaScript ES Modules, sem framework, sem bundler e sem backend nesta fase. A evolução adiciona catálogo de eventos, página dinâmica de evento e inscrição demonstrativa de equipes com rascunho em `localStorage`.
+O site publico continua em HTML, CSS e JavaScript ES Modules, sem framework. O painel administrativo ja usa APIs same-origin; a leitura publica, o formulario de inscricao e o contato ainda aguardam o corte final para essas APIs. Instalacao, seguranca, operacao, testes, deploy e limitacoes do backend estao em [README-BACKEND.md](README-BACKEND.md).
+
+> As secoes historicas abaixo descrevem a base visual e o fluxo publico demonstrativo. Quando houver divergencia sobre banco, autenticacao, painel ou deploy, `README-BACKEND.md` e a referencia atual.
 
 ## Direção visual: Cadência Estruturada
 
@@ -56,7 +58,7 @@ O desktop a partir de 768px é referência congelada. Três camadas garantem iss
 
 Um script inline no `<head>` das três páginas aplica `html.md-shell` antes do primeiro paint, e é sob essa classe que o espaço das barras fixas é reservado — sem JavaScript a classe não existe, nenhuma faixa vazia aparece e não há CLS.
 
-Consequência útil: um page box A4 mede cerca de 794px, então `mobile.css` nunca alcança a impressão. As três folhas do regulamento continuam saindo pelo `@media print` de `css/regulation.css`.
+Consequência útil: um page box A4 mede cerca de 794px, então `mobile.css` nunca alcança a impressão. A impressao continua isolada no `@media print` de `css/regulation.css`, mas a contagem atual precisa ser corrigida de 4 para 3 paginas.
 
 `js/mobile.js` monta e desmonta por `matchMedia("(max-width: 767px)")`. Ao cruzar o breakpoint remove listeners, desconecta observers, limpa classes de `body`, fecha sheets e restaura atributos e foco. Redimensionar não duplica instância nem listener.
 
@@ -208,7 +210,7 @@ Estilo e impressão:
 
 - `css/regulation.css` é carregado apenas por `evento.html` e todo seletor visual fica sob `.event-regulation`, usando somente tokens de `variables.css`.
 - `js/regulation.js` controla expansão/recolhimento, `#regulamento`, tabela responsiva e o ciclo `beforeprint`/`afterprint`, restaurando o estado anterior da interface.
-- `@media print` usa `@page { size: A4 }`, esconde header, footer, breadcrumb, hero, barra de ações, WhatsApp e barra de progresso, e força quebra após as folhas 1 e 2. **O resultado tem exatamente três páginas A4**, com `Página 1/3`, `2/3` e `3/3` preservados. Ao alterar o texto do documento, reconfira a contagem de páginas na pré-visualização de impressão.
+- `@media print` usa `@page { size: A4 }`, esconde header, footer, breadcrumb, hero, barra de ações, WhatsApp e barra de progresso, e força quebra após as folhas 1 e 2. A verificacao automatizada de 28/08/2026 gerou **4 paginas A4**, portanto o requisito de exatamente 3 paginas esta reprovado e precisa de correcao visual antes de Production.
 
 O texto foi migrado literalmente. Termos, valores e numerações do arquivo de origem foram preservados sem correção jurídica, esportiva ou gramatical.
 
@@ -229,9 +231,7 @@ O fluxo atual implementa `registrationType: "team"`:
 3. Categoria e atletas.
 4. Revisão.
 
-O modal valida campos obrigatórios, e-mail, WhatsApp, categoria, atletas, consentimento e regras configuradas no evento. A confirmação gera um protocolo local no formato `MD-DEMO-XXXXXX`.
-
-Nenhum dado é enviado a servidor nesta fase.
+O modal ainda valida campos obrigatórios, e-mail, WhatsApp, categoria, atletas, consentimento e regras configuradas no evento. Nesta etapa de rollout, a confirmação publica continua gerando um protocolo local `MD-DEMO-XXXXXX`; a API oficial ja gera o protocolo no servidor, mas o modal ainda precisa ser ligado a ela.
 
 ## Storage local
 
@@ -244,15 +244,16 @@ md.registrations.v1
 
 Os rascunhos são vinculados ao slug do evento. Para limpar a demonstração manualmente, remova essas chaves pelo DevTools do navegador.
 
-## Backend futuro
+## Backend temporario
 
-Pontos preparados para substituição posterior:
+O backend Node/Vercel ja esta implementado localmente com Neon, Blob, autenticacao e APIs administrativas/publicas. A referencia operacional e [README-BACKEND.md](README-BACKEND.md).
 
-- `data/events.js` pode ser trocado por `GET /events` e `GET /events/:slug`.
-- `registration-storage.js` pode ser trocado por `POST /registrations`.
-- `registrationConfig` já concentra regras como mínimo/máximo de atletas e obrigatoriedade de data de nascimento ou número de camisa.
+- o painel administrativo ja usa `/api/auth/*` e `/api/admin/*`;
+- `/api/public/events`, `/api/public/registrations` e `/api/public/contact` ja existem;
+- o site publico ainda precisa concluir o corte de `data/events.js`, inscricao e contato para a API;
+- `registrationConfig` concentra regras repetidas e reforcadas no servidor.
 
-Não há login, pagamento, dashboard, tabela de campeonato, chaveamento ou API fake nesta etapa.
+Nao ha pagamento, tabela de campeonato ou chaveamento.
 
 ## Assets
 
@@ -274,7 +275,7 @@ Validar antes de publicação:
 - endereço completo do ginásio;
 - período de inscrições e horários das partidas;
 - contatos definitivos;
-- backend de inscrição.
+- integracao final do formulario publico com o backend de inscricao.
 
 O regulamento da Taça Vale, a data, a cidade, o local e as regras de elenco deixaram de ser pendências: estão confirmados pelo documento oficial publicado. O regulamento define o valor de inscrição (R$ 350,00 por equipe), mas nenhum fluxo de pagamento existe nesta fase.
 
@@ -285,7 +286,7 @@ O regulamento da Taça Vale, a data, a cidade, o local e as regras de elenco dei
 - menu mobile;
 - busca, filtros, estado vazio e contagem do catálogo;
 - detalhe por query string e status semânticos;
-- regulamento oficial condicional dentro do detalhe da Taça Vale, com impressão isolada em três páginas A4;
+- regulamento oficial condicional dentro do detalhe da Taça Vale, com impressao isolada atualmente reprovada em 4 paginas A4;
 - inscrição em quatro etapas, validações, consentimento, revisão, rascunho e protocolo local;
 - filtros e modal de projetos institucionais, com Escape, foco preso e retorno de foco;
 - formulário de contato e toast;
@@ -297,11 +298,11 @@ O regulamento da Taça Vale, a data, a cidade, o local e as regras de elenco dei
 - JavaScript modular em ES Modules;
 - app shell mobile abaixo de 768px, sem qualquer diferença no desktop.
 
-## Painel administrativo frontend — modo demonstrativo
+## Painel administrativo frontend — APIs same-origin
 
-Área administrativa isolada em `admin/`, protótipo funcional para editar eventos, conteúdo institucional, projetos, mídia e configurações antes de existir backend. **Não é um sistema com segurança real**: login, sessão, publicação e armazenamento são inteiramente simulados no navegador. Nenhuma tela do painel afirma o contrário — todas exibem o aviso:
+Área administrativa isolada em `admin/` para editar eventos, conteudo institucional, projetos, midia e configuracoes. Login, sessao, autorizacao, publicacao e persistencia passam pelas APIs same-origin; o painel nao usa `localStorage` como fallback de gravacao.
 
-> Ambiente administrativo demonstrativo. A autenticação, a publicação e o armazenamento definitivo serão ativados com o backend.
+Sem banco ou API, o painel falha fechado.
 
 ### Acesso
 
@@ -309,12 +310,7 @@ O regulamento da Taça Vale, a data, a cidade, o local e as regras de elenco dei
 admin/login.html
 ```
 
-Conta demonstrativa fixa (não representa credencial real):
-
-```text
-Usuário: admin
-Senha:   admin
-```
+Nao existe conta fixa. Crie o primeiro usuario com `npm run db:create-admin` depois de configurar o banco.
 
 Após autenticar, o painel roda em `admin/index.html`, com rotas por hash:
 
@@ -331,9 +327,9 @@ Após autenticar, o painel roda em `admin/index.html`, com rotas por hash:
 
 Uma rota desconhecida redireciona para `#dashboard`. Todas as páginas do painel têm `<meta name="robots" content="noindex, nofollow">` — isso impede indexação, **não é mecanismo de segurança**. O painel não é referenciado em nenhum link do site público.
 
-### Sessão simulada
+### Sessao
 
-`auth-service.js` valida a conta fixa e grava `{ email, issuedAt, expiresAt }` em `sessionStorage["md.admin.session.v1"]`, com TTL de 30 minutos desde a emissão. Nunca grava senha. "Lembrar e-mail" grava só o e-mail em `localStorage["md.admin.rememberedEmail"]`. `auth-guard.js` (`requireSession`/`redirectIfAuthenticated`) reavalia a sessão a cada troca de rota e a cada 60s — **isso é proteção apenas de interface**: qualquer pessoa pode abrir o DevTools, editar `sessionStorage` ou remover o script para contornar o guard. Não há validação server-side nesta fase.
+`auth-service.js` usa `/api/auth/*`. O token permanece em cookie `HttpOnly`; o banco guarda apenas seu hash. O navegador pode guardar somente `localStorage["md.admin.rememberedEmail"]`. `auth-guard.js` melhora a navegacao, mas toda autorizacao e repetida no servidor.
 
 ### Módulos
 
@@ -343,7 +339,7 @@ admin/
 ├── css/admin.css                       tokens herdados de css/variables.css + css/reset.css, sem redefinir cores
 ├── js/
 │   ├── admin-app.js, admin-router.js, admin-shell.js
-│   ├── dom.js, dirty-guard.js, storage-adapter.js, result.js, utils.js, icons.js
+│   ├── api-client.js, dom.js, dirty-guard.js, result.js, utils.js, icons.js
 │   ├── auth/{auth-guard.js, auth-service.js}
 │   ├── repositories/{event, content, project, media, settings, activity}-repository.js
 │   ├── views/{dashboard, events, event-editor, event-preview, content, projects, media, settings}-view.js
@@ -351,35 +347,23 @@ admin/
 │   └── data/{admin-seed.js, content-schema.js}
 ```
 
-`storage-adapter.js` é o único módulo que toca `localStorage`/`sessionStorage`/`indexedDB` diretamente; repositórios são o único ponto que as views podem importar para dados. Todo método de repositório é assíncrono e simula latência de rede (120–260 ms), devolvendo `{ ok: true, data }` ou `{ ok: false, error }` — formato já compatível com uma futura troca por `fetch()`.
+As views importam repositorios assincronos, e os repositorios usam `api-client.js`. O contrato permanece `{ ok: true, data }` ou `{ ok: false, error }`, com timeout, sessao expirada, CSRF e falha de rede.
 
-### Armazenamento e chaves
+### Armazenamento local remanescente
 
 ```text
-md.admin.session.v1          sessionStorage — sessão simulada (TTL 30 min)
 md.admin.rememberedEmail     localStorage — só o e-mail lembrado no login
-md.admin.events.v1           localStorage — eventos (clone de data/events.js + editorialStatus)
-md.admin.projects.v1         localStorage — projetos (cópia de js/projects.js + editorialStatus/order)
-md.admin.content.v1          localStorage — conteúdo institucional editável (home + catálogo)
-md.admin.settings.v1         localStorage — configurações globais
-md.admin.activity.v1         localStorage — log de atividade (últimas ~200 mutações)
-md.admin.media.v1            localStorage — metadados de mídia (nunca o binário)
-md-admin-media (IndexedDB)   object store "blobs" — binário dos uploads, nunca em localStorage/base64
 ```
 
-Seed idempotente: `admin-seed.js` só semeia uma chave se ela ainda não existir; nunca resemeia sozinho. Em **Configurações → Restaurar dados demonstrativos**, com confirmação destrutiva, limpa essas chaves e o IndexedDB e semeia de novo a partir de `data/events.js` (importado ao vivo, clonado, nunca mutado) e de uma cópia manual dos 3 projetos de `js/projects.js` (arquivo público intocado — decisão registrada no código para não acoplar o schema do admin, que ganha `editorialStatus`, a um arquivo que deve continuar congelado).
+O seed agora e manual e server-side. Dados administrativos antigos do navegador nao sao fallback e nao sao importados automaticamente.
 
 **Nunca lido, alterado ou apagado pelo painel**: `md.registration.drafts.v1` e `md.registrations.v1` (fluxo de inscrição pública, pode conter dados pessoais reais de teste).
 
-### O que "Publicar no modo local" significa
+### Publicacao
 
-Eventos e projetos têm um `editorialStatus` (`draft`/`published`/`archived`) que existe **só no admin** — o modelo público de `data/events.js` não tem esse campo e não é alterado por nenhuma ação do painel. Ao publicar, o painel exibe explicitamente:
+Eventos, projetos, paginas e configuracoes mantem rascunho e snapshot publicado no Postgres. A API publica le apenas o snapshot. O site publico estatico ainda precisa consumir essa API para refletir a publicacao na interface.
 
-> Esta publicação existe apenas no painel demonstrativo e não altera o site público.
-
-Nenhuma ação do admin escreve em `data/events.js`, `js/projects.js` ou qualquer arquivo do site público — o `git diff` fora de `admin/` e desta seção do README é sempre vazio.
-
-### Contratos de repositório (prontos para virar chamadas de API)
+### Contratos de repositorio
 
 ```text
 auth.signIn(credentials) / signOut() / getSession() / requestPasswordReset(email)
@@ -392,16 +376,16 @@ settings.get() / update(data)
 
 ### Mídia
 
-Upload aceita apenas JPEG/PNG/WebP até 5 MB, com validação real de decodificação (`Image().decode()`) — um arquivo renomeado sem ser uma imagem de verdade é recusado mesmo passando no filtro de mimetype/extensão. SVG enviado pelo usuário é sempre recusado; SVGs já existentes do site aparecem na biblioteca como ativos somente leitura. Blobs ficam só no IndexedDB; metadados (incluindo texto alternativo, sempre obrigatório) ficam em `localStorage`. "Locais de uso" é calculado sob demanda varrendo eventos/projetos/conteúdo/configurações — nunca um índice mantido manualmente — e uma mídia em uso não pode ser excluída. Object URLs de preview são revogados ao trocar de tela.
+Upload aceita apenas JPEG/PNG/WebP ate 5 MB. O navegador valida a decodificacao e envia diretamente ao Vercel Blob; o servidor valida autorizacao, MIME, tamanho e assinatura binaria antes de registrar metadados no Postgres. SVG enviado pelo usuario e recusado; SVGs estaticos existentes sao somente leitura. Uma midia em uso nao pode ser excluida.
 
 ### Limitações desta fase
 
-- Sem autenticação, autorização, publicação ou armazenamento reais — tudo roda no navegador de quem está com a aba aberta.
+- Sem infraestrutura real configurada na Vercel; o codigo local nao equivale a Production pronta.
 - Sem editor livre de HTML/CSS/JS: conteúdo institucional segue um schema fixo (`content-schema.js`); nada além dos campos declarados é editável.
 - O texto oficial do regulamento (`js/events/regulations/taca-vale-handebol-2026.js`) não é editado nem duplicado — o editor de evento só grava metadados (versão, referência, data de publicação, etc.).
-- A lista de mídias estáticas é curada manualmente no seed (o navegador não lista diretórios do servidor sem backend).
-- Sem sincronização entre abas/dispositivos: os dados vivem só naquele navegador.
+- A lista de midias estaticas e curada manualmente no seed.
+- Leitura publica, inscricao e contato ainda precisam concluir a integracao com a API.
 
-### Requisitos de segurança da fase de backend
+### Seguranca
 
-Quando o backend existir, a autenticação e a autorização atuais devem ser substituídas por: sessão em cookie `HttpOnly`, `Secure` e `SameSite`; autorização e validação no servidor; RBAC; proteção CSRF; rate limiting; logs de auditoria; upload para armazenamento de objetos com verificação server-side (não apenas decodificação no cliente); URLs assinadas quando necessário; e versionamento formal de regulamentos e termos de consentimento. Nada disso está implementado nesta fase — o `auth-guard.js` atual é só uma conveniência de navegação, nunca uma barreira de segurança.
+Sessao `HttpOnly`/`Secure`/`SameSite=Strict`, autorizacao server-side, CSRF, rate limit, logs de auditoria e verificacao server-side do upload estao implementados. O uso real ainda depende da configuracao externa e da revisao de privacidade descritas em `README-BACKEND.md`.

@@ -1,6 +1,6 @@
 // Biblioteca de midia: imagens existentes do projeto (somente leitura) + uploads
-// demonstrativos (JPEG/PNG/WebP ate 5MB, decodificados de verdade antes de
-// aceitar, blobs no IndexedDB). Busca, filtro por formato, preview, locais de
+// diretos ao Vercel Blob (JPEG/PNG/WebP ate 5MB, decodificados antes de
+// autorizar). Busca, filtro por formato, preview, locais de
 // uso, substituir e excluir quando nao estiver em uso.
 
 import { element, clearChildren } from "../dom.js";
@@ -58,7 +58,7 @@ function openUploadDialog(shell) {
 
       return element("div", {}, [
         element("div", { className: "admin-dialog__header" }, [element("h2", { className: "admin-dialog__title", text: "Enviar imagem" }), cancelButton]),
-        element("p", { className: "admin-field-hint", text: "Aceita JPEG, PNG ou WebP, até 5 MB. SVG enviado pelo usuário é recusado. O upload existe apenas neste navegador." }),
+        element("p", { className: "admin-field-hint", text: "Aceita JPEG, PNG ou WebP, até 5 MB. SVG é recusado. O arquivo segue diretamente do navegador para o Vercel Blob." }),
         element("div", { className: "admin-field" }, [element("label", { text: "Arquivo" }), fileInput]),
         altField.root,
         labelField.root,
@@ -252,14 +252,14 @@ async function buildCard(item, shell, refresh) {
           onClick: async () => {
             const confirmed = await showConfirmDialog(shell.getDialogRoot(), {
               title: "Excluir mídia",
-              message: 'Esta ação remove "' + item.label + '" definitivamente deste navegador.',
+              message: 'Esta ação remove "' + item.label + '" do banco e do Vercel Blob. Não é possível desfazer.',
               confirmLabel: "Excluir",
               destructive: true,
             });
             if (!confirmed) return;
             const result = await mediaRepository.delete(item.id);
             if (!result.ok) {
-              if (result.error.code === "in_use") {
+              if (result.error.code === "media_in_use") {
                 shell.showToast("Não é possível excluir: mídia em uso.");
               } else {
                 shell.showToast(result.error.message);

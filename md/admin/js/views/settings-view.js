@@ -7,6 +7,7 @@ import { settingsRepository } from "../repositories/settings-repository.js";
 import { mediaRepository } from "../repositories/media-repository.js";
 import { createTextField, createTextareaField, createCheckboxField } from "../components/form-field.js";
 import { openMediaPicker } from "../components/media-picker.js";
+import { showConfirmDialog } from "../components/confirm-dialog.js";
 import { dirtyGuard } from "../dirty-guard.js";
 import { clone } from "../utils.js";
 
@@ -141,10 +142,37 @@ export const settingsView = {
       [element("span", { text: "Salvar configurações" })]
     );
 
+    const publishButton = element(
+      "button",
+      {
+        type: "button",
+        className: "admin-btn admin-btn--secondary",
+        onClick: async () => {
+          if (JSON.stringify(formState) !== snapshot) {
+            shell.showToast("Salve as configurações antes de publicar.");
+            return;
+          }
+          const confirmed = await showConfirmDialog(shell.getDialogRoot(), {
+            title: "Publicar configurações",
+            message: "As configurações salvas ficarão disponíveis no site público.",
+            confirmLabel: "Publicar",
+          });
+          if (!confirmed) return;
+          const result = await settingsRepository.publish();
+          if (result.ok) {
+            Object.assign(formState, result.data);
+            snapshot = JSON.stringify(formState);
+            shell.showToast("Configurações publicadas.");
+          } else shell.showToast(result.error.message);
+        },
+      },
+      [element("span", { text: "Publicar" })]
+    );
+
     clearChildren(container);
     container.appendChild(errorBox);
     container.appendChild(form);
-    container.appendChild(element("div", { className: "admin-form-actions" }, [saveButton]));
+    container.appendChild(element("div", { className: "admin-form-actions" }, [saveButton, publishButton]));
   },
 
   unmount() {

@@ -14,7 +14,7 @@ export { STATUS_LABELS };
 
 export const EDITORIAL_LABELS = {
   draft: "Rascunho",
-  published: "Publicado (local)",
+  published: "Publicado",
   archived: "Arquivado",
 };
 
@@ -60,31 +60,53 @@ function buildRow(event, shell, refresh) {
     [createIcon("duplicate", { size: 16 })]
   );
 
-  const isArchived = event.editorialStatus === "archived";
-  const archiveButton = element(
+  const needsPublish = event.editorialStatus !== "published" || event.revision > event.publishedRevision;
+  const publishButton = needsPublish
+    ? element(
+        "button",
+        {
+          type: "button",
+          className: "admin-icon-btn",
+          "aria-label": "Publicar " + event.title,
+          onClick: async () => {
+            const confirmed = await showConfirmDialog(shell.getDialogRoot(), {
+              title: "Publicar evento",
+              message: 'O rascunho atual de "' + event.title + '" ficará disponível no site público.',
+              confirmLabel: "Publicar",
+            });
+            if (!confirmed) return;
+            const result = await eventRepository.publish(event.id);
+            if (result.ok) {
+              shell.showToast("Evento publicado.");
+              refresh();
+            } else shell.showToast(result.error.message);
+          },
+        },
+        [createIcon("check", { size: 16 })]
+      )
+    : null;
+  const archiveButton = event.editorialStatus !== "archived" ? element(
     "button",
     {
       type: "button",
       className: "admin-icon-btn",
-      "aria-label": (isArchived ? "Publicar " : "Arquivar ") + event.title,
+      "aria-label": "Arquivar " + event.title,
       onClick: async () => {
         const confirmed = await showConfirmDialog(shell.getDialogRoot(), {
-          title: isArchived ? "Publicar evento no modo local" : "Arquivar evento",
-          message: isArchived
-            ? "Esta publicação existe apenas no painel demonstrativo e não altera o site público."
-            : 'O evento "' + event.title + '" deixará de aparecer como publicado no modo local do painel.',
-          confirmLabel: isArchived ? "Publicar" : "Arquivar",
+          title: "Arquivar evento",
+          message: 'O evento "' + event.title + '" deixará de aparecer no site público.',
+          confirmLabel: "Arquivar",
         });
         if (!confirmed) return;
-        const result = isArchived ? await eventRepository.publish(event.id) : await eventRepository.archive(event.id);
+        const result = await eventRepository.archive(event.id);
         if (result.ok) {
           shell.showToast("Estado editorial atualizado.");
           refresh();
-        }
+        } else shell.showToast(result.error.message);
       },
     },
-    [createIcon(isArchived ? "check" : "archive", { size: 16 })]
-  );
+    [createIcon("archive", { size: 16 })]
+  ) : null;
 
   const deleteButton = element(
     "button",
@@ -104,7 +126,7 @@ function buildRow(event, shell, refresh) {
         if (result.ok) {
           shell.showToast("Evento excluído.");
           refresh();
-        }
+        } else shell.showToast(result.error.message);
       },
     },
     [createIcon("trash", { size: 16 })]
@@ -116,7 +138,7 @@ function buildRow(event, shell, refresh) {
       element("span", { className: "admin-row__meta", text: (event.sport || "") + " · " + formatDateBR(event.date && event.date.start) }),
     ]),
     element("div", { className: "admin-row__badges" }, [statusBadge(event.status), editorialBadge(event.editorialStatus)]),
-    element("div", { className: "admin-row__actions" }, [previewButton, editLink, duplicateButton, archiveButton, deleteButton]),
+    element("div", { className: "admin-row__actions" }, [previewButton, editLink, duplicateButton, publishButton, archiveButton, deleteButton]),
   ]);
 }
 

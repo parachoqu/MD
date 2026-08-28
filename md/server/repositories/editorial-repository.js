@@ -1,5 +1,6 @@
 import { conflictError, notFoundError, AppError } from "../http/errors.js";
 import { recordAudit } from "./audit-repository.js";
+import { syncMediaUsages } from "./media-usage-repository.js";
 import { randomToken } from "../security/crypto.js";
 
 const DEFINITIONS = Object.freeze({
@@ -60,6 +61,7 @@ function normalizeDraft(data) {
   delete copy.publishedRevision;
   delete copy.createdAt;
   delete copy.updatedAt;
+  delete copy.seededAt;
   delete copy.publishedAt;
   delete copy.archivedAt;
   delete copy.order;
@@ -153,18 +155,21 @@ export function createEditorialRepository(database, name, validateDraft) {
     }
     const placeholders = values.map((_, index) => `$${index + 1}${index === 1 ? "::jsonb" : ""}`);
     try {
-      const result = await database.query(
-        `INSERT INTO ${config.table} (${columns.join(", ")}) VALUES (${placeholders.join(", ")}) RETURNING *`,
-        values
-      );
-      await recordAudit(database, {
-        actorUserId,
-        action: `${config.entityType}.create`,
-        entityType: config.entityType,
-        entityId: id,
-        newRevision: 1,
+      return await database.transaction(async (tx) => {
+        const result = await tx.query(
+          `INSERT INTO ${config.table} (${columns.join(", ")}) VALUES (${placeholders.join(", ")}) RETURNING *`,
+          values
+        );
+        await syncMediaUsages(tx, config.entityType, id, data);
+        await recordAudit(tx, {
+          actorUserId,
+          action: `${config.entityType}.create`,
+          entityType: config.entityType,
+          entityId: id,
+          newRevision: 1,
+        });
+        return adminDto(result.rows[0], config);
       });
-      return adminDto(result.rows[0], config);
     } catch (error) {
       if (isUniqueViolation(error)) throw new AppError("SLUG_CONFLICT", "Ja existe um recurso com este slug.", 409);
       throw error;
@@ -182,26 +187,30 @@ export function createEditorialRepository(database, name, validateDraft) {
     }
     values.push(id, expectedRevision);
     try {
-      const result = await database.query(
-        `UPDATE ${config.table} SET ${assignments.join(", ")}
-         WHERE id = $${values.length - 1} AND revision = $${values.length}${deletedWhere}
-         RETURNING *`,
-        values
-      );
-      if (!result.rows[0]) {
-        if (!(await getRow(id))) throw notFoundError();
-        throw conflictError();
-      }
-      const dto = adminDto(result.rows[0], config);
-      await recordAudit(database, {
-        actorUserId,
-        action: `${config.entityType}.update`,
-        entityType: config.entityType,
-        entityId: id,
-        previousRevision: expectedRevision,
-        newRevision: dto.revision,
+      return await database.transaction(async (tx) => {
+        const result = await tx.query(
+          `UPDATE ${config.table} SET ${assignments.join(", ")}
+           WHERE id = $${values.length - 1} AND revision = $${values.length}${deletedWhere}
+           RETURNING *`,
+          values
+        );
+        if (!result.rows[0]) {
+          if (!(await getRow(id, tx))) throw notFoundError();
+          throw conflictError();
+        }
+        const row = result.rows[0];
+        const dto = adminDto(row, config);
+        await syncMediaUsages(tx, config.entityType, id, data, row.published_data);
+        await recordAudit(tx, {
+          actorUserId,
+          action: `${config.entityType}.update`,
+          entityType: config.entityType,
+          entityId: id,
+          previousRevision: expectedRevision,
+          newRevision: dto.revision,
+        });
+        return dto;
       });
-      return dto;
     } catch (error) {
       if (isUniqueViolation(error)) throw new AppError("SLUG_CONFLICT", "Ja existe um recurso com este slug.", 409);
       throw error;
@@ -223,6 +232,7 @@ export function createEditorialRepository(database, name, validateDraft) {
          WHERE id = $1 RETURNING *`,
         [id, actorUserId || null]
       );
+      await syncMediaUsages(tx, config.entityType, id, row.draft_data);
       await recordAudit(tx, {
         actorUserId,
         action: `${config.entityType}.publish`,
@@ -236,51 +246,56 @@ export function createEditorialRepository(database, name, validateDraft) {
   }
 
   async function archive(id, expectedRevision, actorUserId) {
-    const result = await database.query(
-      `UPDATE ${config.table}
-       SET editorial_status = 'archived', archived_at = now(), updated_at = now(), updated_by = $3
-       WHERE id = $1 AND revision = $2${deletedWhere} RETURNING *`,
-      [id, expectedRevision, actorUserId || null]
-    );
-    if (!result.rows[0]) {
-      if (!(await getRow(id))) throw notFoundError();
-      throw conflictError();
-    }
-    await recordAudit(database, {
-      actorUserId,
-      action: `${config.entityType}.archive`,
-      entityType: config.entityType,
-      entityId: id,
-      previousRevision: expectedRevision,
-      newRevision: expectedRevision,
+    return database.transaction(async (tx) => {
+      const result = await tx.query(
+        `UPDATE ${config.table}
+         SET editorial_status = 'archived', archived_at = now(), updated_at = now(), updated_by = $3
+         WHERE id = $1 AND revision = $2${deletedWhere} RETURNING *`,
+        [id, expectedRevision, actorUserId || null]
+      );
+      if (!result.rows[0]) {
+        if (!(await getRow(id, tx))) throw notFoundError();
+        throw conflictError();
+      }
+      await recordAudit(tx, {
+        actorUserId,
+        action: `${config.entityType}.archive`,
+        entityType: config.entityType,
+        entityId: id,
+        previousRevision: expectedRevision,
+        newRevision: expectedRevision,
+      });
+      return adminDto(result.rows[0], config);
     });
-    return adminDto(result.rows[0], config);
   }
 
   async function softDelete(id, expectedRevision, actorUserId) {
     if (!config.hasDeleted) throw new AppError("DELETE_NOT_SUPPORTED", "Exclusao nao permitida para este recurso.", 409);
-    const result = await database.query(
-      `UPDATE ${config.table}
-       SET deleted_at = now(), updated_at = now(), updated_by = $3
-       WHERE id = $1 AND revision = $2 AND editorial_status <> 'published' AND deleted_at IS NULL
-       RETURNING id`,
-      [id, expectedRevision, actorUserId || null]
-    );
-    if (!result.rows[0]) {
-      const row = await getRow(id);
-      if (!row) throw notFoundError();
-      if (Number(row.revision) !== Number(expectedRevision)) throw conflictError();
-      throw new AppError("RESOURCE_PUBLISHED", "Arquive o recurso antes de exclui-lo.", 409);
-    }
-    await recordAudit(database, {
-      actorUserId,
-      action: `${config.entityType}.delete`,
-      entityType: config.entityType,
-      entityId: id,
-      previousRevision: expectedRevision,
-      newRevision: expectedRevision,
+    return database.transaction(async (tx) => {
+      const result = await tx.query(
+        `UPDATE ${config.table}
+         SET deleted_at = now(), updated_at = now(), updated_by = $3
+         WHERE id = $1 AND revision = $2 AND editorial_status <> 'published' AND deleted_at IS NULL
+         RETURNING id`,
+        [id, expectedRevision, actorUserId || null]
+      );
+      if (!result.rows[0]) {
+        const row = await getRow(id, tx);
+        if (!row) throw notFoundError();
+        if (Number(row.revision) !== Number(expectedRevision)) throw conflictError();
+        throw new AppError("RESOURCE_PUBLISHED", "Arquive o recurso antes de exclui-lo.", 409);
+      }
+      await tx.query("DELETE FROM media_usages WHERE entity_type = $1 AND entity_id = $2", [config.entityType, id]);
+      await recordAudit(tx, {
+        actorUserId,
+        action: `${config.entityType}.delete`,
+        entityType: config.entityType,
+        entityId: id,
+        previousRevision: expectedRevision,
+        newRevision: expectedRevision,
+      });
+      return true;
     });
-    return true;
   }
 
   return {

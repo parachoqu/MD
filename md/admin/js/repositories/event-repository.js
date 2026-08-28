@@ -1,32 +1,16 @@
-// Repositorio de eventos do painel admin. Estado interno = array persistido em
-// md.admin.events.v1, semeado a partir de data/events.js (nunca mutado). Cada
-// evento ganha, so no admin, um `editorialStatus` ("draft"|"published"|"archived")
-// que nao existe no modelo publico -- create() sempre nasce "draft"; update()
-// nunca altera editorialStatus; so publish()/archive() mudam esse campo.
-
-import { localStore, withLatency } from "../storage-adapter.js";
-import { STORAGE_KEYS } from "../data/admin-seed.js";
-import { clone, generateId, isValidSlug, isSafeUrl, isNonNegativeNumber, slugify } from "../utils.js";
-import { ok, fail, failValidation } from "../result.js";
-import { record } from "./activity-repository.js";
+import { apiRequest, queryString } from "../api-client.js";
+import { isNonNegativeNumber, isSafeUrl, isValidSlug, slugify } from "../utils.js";
+import { failValidation } from "../result.js";
 
 export const OPERATIONAL_STATUSES = ["open", "soon", "closed", "finished", "cancelled", "full"];
 export const EDITORIAL_STATUSES = ["draft", "published", "archived"];
 
-function readAll() {
-  return localStore.read(STORAGE_KEYS.events, []);
-}
+const revisions = new Map();
 
-function writeAll(list) {
-  localStore.write(STORAGE_KEYS.events, list);
-}
-
-function findIndex(list, id) {
-  return list.findIndex((event) => event.id === id);
-}
-
-function isSlugTaken(list, slug, excludeId) {
-  return list.some((event) => event.slug === slug && event.id !== excludeId);
+function remember(value) {
+  const items = Array.isArray(value) ? value : [value];
+  items.filter(Boolean).forEach((item) => revisions.set(item.id, item.revision));
+  return value;
 }
 
 function toNumberOrUndefined(value) {
@@ -34,223 +18,132 @@ function toNumberOrUndefined(value) {
   return Number(value);
 }
 
-export function validateEvent(data, list, excludeId) {
+export function validateEvent(data) {
   const errors = [];
-
-  if (!data.title || !String(data.title).trim()) {
-    errors.push({ field: "title", message: "Informe o título do evento." });
-  }
-
+  if (!data.title || !String(data.title).trim()) errors.push({ field: "title", message: "Informe o título do evento." });
   if (!data.slug || !isValidSlug(data.slug)) {
     errors.push({ field: "slug", message: "Slug inválido. Use letras minúsculas, números e hífens." });
-  } else if (isSlugTaken(list, data.slug, excludeId)) {
-    errors.push({ field: "slug", message: "Já existe um evento com este slug." });
   }
-
-  if (data.status && !OPERATIONAL_STATUSES.includes(data.status)) {
-    errors.push({ field: "status", message: "Estado operacional desconhecido." });
-  }
-
-  const date = data.date || {};
-  if (date.start && date.end && date.end < date.start) {
+  if (data.status && !OPERATIONAL_STATUSES.includes(data.status)) errors.push({ field: "status", message: "Estado operacional desconhecido." });
+  if (data.date?.start && data.date?.end && data.date.end < data.date.start) {
     errors.push({ field: "date.end", message: "A data final deve ser igual ou posterior à inicial." });
   }
-
-  const registrationPeriod = data.registrationPeriod || {};
-  if (registrationPeriod.start && registrationPeriod.end && registrationPeriod.end < registrationPeriod.start) {
+  if (data.registrationPeriod?.start && data.registrationPeriod?.end && data.registrationPeriod.end < data.registrationPeriod.start) {
     errors.push({ field: "registrationPeriod.end", message: "O fim das inscrições deve ser igual ou posterior ao início." });
   }
-
-  const categories = data.categories || [];
-  const categoryIds = categories.map((category) => category.id).filter(Boolean);
-  if (new Set(categoryIds).size !== categoryIds.length) {
-    errors.push({ field: "categories", message: "Existem categorias com o mesmo ID." });
-  }
-
-  const registrationConfig = data.registrationConfig || {};
+  const categoryIds = (data.categories || []).map((category) => category.id).filter(Boolean);
+  if (new Set(categoryIds).size !== categoryIds.length) errors.push({ field: "categories", message: "Existem categorias com o mesmo ID." });
+  const config = data.registrationConfig || {};
   ["minParticipants", "maxParticipants"].forEach((key) => {
-    const value = toNumberOrUndefined(registrationConfig[key]);
-    if (value !== undefined && !isNonNegativeNumber(value)) {
-      errors.push({ field: `registrationConfig.${key}`, message: "Informe um número não negativo." });
-    }
+    const value = toNumberOrUndefined(config[key]);
+    if (value !== undefined && !isNonNegativeNumber(value)) errors.push({ field: `registrationConfig.${key}`, message: "Informe um número não negativo." });
   });
-  const minP = toNumberOrUndefined(registrationConfig.minParticipants);
-  const maxP = toNumberOrUndefined(registrationConfig.maxParticipants);
-  if (minP !== undefined && maxP !== undefined && maxP < minP) {
+  const minimum = toNumberOrUndefined(config.minParticipants);
+  const maximum = toNumberOrUndefined(config.maxParticipants);
+  if (minimum !== undefined && maximum !== undefined && maximum < minimum) {
     errors.push({ field: "registrationConfig.maxParticipants", message: "O máximo não pode ser menor que o mínimo." });
   }
-
   if (data.registrationDetails) {
     ["maxMembers", "maxAthletes", "maxStaff", "matchRosterLimit"].forEach((key) => {
       const value = toNumberOrUndefined(data.registrationDetails[key]);
-      if (value !== undefined && !isNonNegativeNumber(value)) {
-        errors.push({ field: `registrationDetails.${key}`, message: "Informe um número não negativo." });
-      }
+      if (value !== undefined && !isNonNegativeNumber(value)) errors.push({ field: `registrationDetails.${key}`, message: "Informe um número não negativo." });
     });
   }
-
   if (data.capacity) {
     const teams = toNumberOrUndefined(data.capacity.teams);
-    if (teams !== undefined && !isNonNegativeNumber(teams)) {
-      errors.push({ field: "capacity.teams", message: "Informe um número não negativo." });
-    }
+    if (teams !== undefined && !isNonNegativeNumber(teams)) errors.push({ field: "capacity.teams", message: "Informe um número não negativo." });
   }
-
   if (data.visual && (data.visual.mediaId || data.visual.image) && !data.visual.imageAlt) {
     errors.push({ field: "visual.imageAlt", message: "Informe o texto alternativo da imagem." });
   }
-
   (data.sponsors || []).forEach((sponsor, index) => {
-    if (sponsor.url && !isSafeUrl(sponsor.url)) {
-      errors.push({ field: `sponsors.${index}.url`, message: "URL inválida ou insegura." });
-    }
-    if (sponsor.logo && !sponsor.alt) {
-      errors.push({ field: `sponsors.${index}.alt`, message: "Informe o texto alternativo do patrocinador." });
-    }
+    if (sponsor.url && !isSafeUrl(sponsor.url)) errors.push({ field: `sponsors.${index}.url`, message: "URL inválida ou insegura." });
+    if (sponsor.logo && !sponsor.alt) errors.push({ field: `sponsors.${index}.alt`, message: "Informe o texto alternativo do patrocinador." });
   });
-
   return errors;
 }
 
+async function revisionFor(id) {
+  if (revisions.has(id)) return { ok: true, data: revisions.get(id) };
+  const result = await eventRepository.getById(id);
+  return result.ok ? { ok: true, data: result.data.revision } : result;
+}
+
+async function editorialAction(id, action) {
+  const revision = await revisionFor(id);
+  if (!revision.ok) return revision;
+  const result = await apiRequest(`/api/admin/events/${encodeURIComponent(id)}/${action}`, {
+    method: "POST",
+    body: { revision: revision.data },
+  });
+  if (result.ok) remember(result.data);
+  return result;
+}
+
 export const eventRepository = {
-  async list(filters) {
-    return withLatency(() => {
-      const f = filters || {};
-      let items = readAll().map(clone);
-      if (f.query) {
-        const q = String(f.query).toLowerCase();
-        items = items.filter((event) =>
-          [event.title, event.shortTitle, event.sport, event.summary]
-            .concat(event.keywords || [])
-            .filter(Boolean)
-            .some((text) => String(text).toLowerCase().includes(q))
-        );
-      }
-      if (f.status) items = items.filter((event) => event.status === f.status);
-      if (f.editorialStatus) items = items.filter((event) => event.editorialStatus === f.editorialStatus);
-      if (f.sportKey) items = items.filter((event) => event.sportKey === f.sportKey);
-      items.sort((a, b) => String((a.date && a.date.sort) || "").localeCompare(String((b.date && b.date.sort) || "")));
-      if (f.sort === "title-asc") items.sort((a, b) => a.title.localeCompare(b.title, "pt-BR"));
-      if (f.sort === "recent") items.sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
-      return ok(items);
-    });
+  async list(filters = {}) {
+    const result = await apiRequest(`/api/admin/events${queryString(filters)}`);
+    if (!result.ok) return result;
+    let items = remember(result.data).slice();
+    if (filters.sportKey) items = items.filter((item) => item.sportKey === filters.sportKey);
+    items.sort((a, b) => String(a.date?.sort || "").localeCompare(String(b.date?.sort || "")));
+    if (filters.sort === "title-asc") items.sort((a, b) => a.title.localeCompare(b.title, "pt-BR"));
+    if (filters.sort === "recent") items.sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+    return { ok: true, data: items };
   },
 
   async getById(id) {
-    return withLatency(() => {
-      const found = readAll().find((event) => event.id === id);
-      return found ? ok(clone(found)) : fail("not_found", "Evento não encontrado.");
-    });
+    const result = await apiRequest(`/api/admin/events/${encodeURIComponent(id)}`);
+    if (result.ok) remember(result.data);
+    return result;
   },
 
   async create(data) {
-    return withLatency(() => {
-      const list = readAll();
-      const payload = clone(data);
-      payload.slug = payload.slug ? slugify(payload.slug) : slugify(payload.title || "");
-      const errors = validateEvent(payload, list, null);
-      if (errors.length) return failValidation(errors);
-      const now = new Date().toISOString();
-      const event = Object.assign({}, payload, {
-        id: generateId("evt"),
-        editorialStatus: "draft",
-        createdAt: now,
-        updatedAt: now,
-      });
-      list.push(event);
-      writeAll(list);
-      record({ domain: "events", action: "create", label: "Evento criado: " + event.title });
-      return ok(clone(event));
-    });
+    const payload = structuredClone(data);
+    payload.slug = slugify(payload.slug || payload.title || "");
+    const errors = validateEvent(payload);
+    if (errors.length) return failValidation(errors);
+    const result = await apiRequest("/api/admin/events", { method: "POST", body: { data: payload } });
+    if (result.ok) remember(result.data);
+    return result;
   },
 
   async update(id, data) {
-    return withLatency(() => {
-      const list = readAll();
-      const index = findIndex(list, id);
-      if (index === -1) return fail("not_found", "Evento não encontrado.");
-      const payload = clone(data);
-      payload.slug = payload.slug ? slugify(payload.slug) : list[index].slug;
-      const errors = validateEvent(payload, list, id);
-      if (errors.length) return failValidation(errors);
-      const updated = Object.assign({}, list[index], payload, {
-        id: list[index].id,
-        editorialStatus: list[index].editorialStatus,
-        createdAt: list[index].createdAt,
-        updatedAt: new Date().toISOString(),
-      });
-      list[index] = updated;
-      writeAll(list);
-      record({ domain: "events", action: "update", label: "Rascunho salvo: " + updated.title });
-      return ok(clone(updated));
+    const payload = structuredClone(data);
+    payload.slug = slugify(payload.slug || "");
+    const errors = validateEvent(payload);
+    if (errors.length) return failValidation(errors);
+    const revision = Number(data.revision || revisions.get(id));
+    const result = await apiRequest(`/api/admin/events/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: { data: payload, revision },
     });
+    if (result.ok) remember(result.data);
+    return result;
   },
 
   async duplicate(id) {
-    return withLatency(() => {
-      const list = readAll();
-      const source = list.find((event) => event.id === id);
-      if (!source) return fail("not_found", "Evento não encontrado.");
-      let candidateSlug = source.slug + "-copia";
-      let attempt = 2;
-      while (isSlugTaken(list, candidateSlug, null)) {
-        candidateSlug = source.slug + "-copia-" + attempt;
-        attempt += 1;
-      }
-      const now = new Date().toISOString();
-      const duplicated = clone(source);
-      duplicated.id = generateId("evt");
-      duplicated.slug = candidateSlug;
-      duplicated.title = source.title + " (cópia)";
-      duplicated.editorialStatus = "draft";
-      duplicated.createdAt = now;
-      duplicated.updatedAt = now;
-      list.push(duplicated);
-      writeAll(list);
-      record({ domain: "events", action: "duplicate", label: "Evento duplicado: " + duplicated.title });
-      return ok(clone(duplicated));
-    });
+    const result = await apiRequest(`/api/admin/events/${encodeURIComponent(id)}/duplicate`, { method: "POST", body: {} });
+    if (result.ok) remember(result.data);
+    return result;
   },
 
-  async archive(id) {
-    return withLatency(() => {
-      const list = readAll();
-      const index = findIndex(list, id);
-      if (index === -1) return fail("not_found", "Evento não encontrado.");
-      list[index] = Object.assign({}, list[index], {
-        editorialStatus: "archived",
-        updatedAt: new Date().toISOString(),
-      });
-      writeAll(list);
-      record({ domain: "events", action: "archive", label: "Evento arquivado: " + list[index].title });
-      return ok(clone(list[index]));
-    });
+  archive(id) {
+    return editorialAction(id, "archive");
   },
 
-  async publish(id) {
-    return withLatency(() => {
-      const list = readAll();
-      const index = findIndex(list, id);
-      if (index === -1) return fail("not_found", "Evento não encontrado.");
-      list[index] = Object.assign({}, list[index], {
-        editorialStatus: "published",
-        updatedAt: new Date().toISOString(),
-      });
-      writeAll(list);
-      record({ domain: "events", action: "publish", label: "Publicado no modo local: " + list[index].title });
-      return ok(clone(list[index]));
-    });
+  publish(id) {
+    return editorialAction(id, "publish");
   },
 
   async delete(id) {
-    return withLatency(() => {
-      const list = readAll();
-      const index = findIndex(list, id);
-      if (index === -1) return fail("not_found", "Evento não encontrado.");
-      const removed = list.splice(index, 1)[0];
-      writeAll(list);
-      record({ domain: "events", action: "delete", label: "Evento excluído: " + removed.title });
-      return ok(true);
+    const revision = await revisionFor(id);
+    if (!revision.ok) return revision;
+    const result = await apiRequest(`/api/admin/events/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      body: { revision: revision.data },
     });
+    if (result.ok) revisions.delete(id);
+    return result;
   },
 };

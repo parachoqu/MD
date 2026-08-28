@@ -224,11 +224,39 @@ export const contentView = {
             "button",
             {
               type: "button",
+              className: "admin-btn admin-btn--primary",
+              onClick: async () => {
+                if (JSON.stringify(pageData[pageId]) !== snapshots[pageId]) {
+                  shell.showToast("Salve a seção em edição antes de publicar.");
+                  return;
+                }
+                const confirmed = await showConfirmDialog(shell.getDialogRoot(), {
+                  title: "Publicar conteúdo",
+                  message: 'O rascunho salvo de "' + pageSchema.label + '" ficará disponível no site público.',
+                  confirmLabel: "Publicar",
+                });
+                if (!confirmed) return;
+                const result = await contentRepository.publish(pageId);
+                if (result.ok) {
+                  pageData[pageId] = result.data;
+                  snapshots[pageId] = JSON.stringify(result.data);
+                  shell.showToast("Conteúdo publicado.");
+                } else shell.showToast(result.error.message);
+              },
+            },
+            [element("span", { text: "Publicar" })]
+          )
+        );
+        toolbar.appendChild(
+          element(
+            "button",
+            {
+              type: "button",
               className: "admin-btn admin-btn--ghost",
               onClick: async () => {
                 const confirmed = await showConfirmDialog(shell.getDialogRoot(), {
                   title: "Restaurar conteúdo ao seed",
-                  message: 'Todas as edições feitas em "' + pageSchema.label + '" serão substituídas pelos dados demonstrativos originais.',
+                  message: 'O rascunho de "' + pageSchema.label + '" será substituído pelos dados demonstrativos originais. A publicação atual não muda até uma nova publicação.',
                   confirmLabel: "Restaurar",
                   destructive: true,
                 });

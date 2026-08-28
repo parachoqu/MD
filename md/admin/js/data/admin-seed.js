@@ -1,28 +1,13 @@
-// Seed idempotente do painel admin. So semeia uma chave se ela ainda nao existir
-// (nunca resemeia sozinho). Eventos sao clonados ao vivo de data/events.js (fonte
-// unica do site publico, nunca mutada aqui). Projetos sao uma copia manual dos 3
-// objetos de js/projects.js -- ver decisao arquitetural no plano: js/projects.js
-// nao exporta os dados hoje e a duplicacao evita acoplar o schema do admin (que
-// ganha campos novos como editorialStatus) a um arquivo publico que deve
-// permanecer congelado.
+// Fonte pura do seed manual do banco. Este modulo nao persiste no navegador:
+// scripts/seed.mjs valida e grava os dados de forma transacional.
 //
 // Todos os textos institucionais abaixo (hero, sobre, atuacao, impacto, contato,
 // footer, catalogo) sao copiados literalmente de index.html/inscricoes.html --
 // nada foi inventado.
 
 import { events as publicEvents } from "../../../data/events.js";
+import { projects as publicProjects } from "../../../data/projects.js";
 import { clone } from "../utils.js";
-import { localStore, idb } from "../storage-adapter.js";
-
-export const STORAGE_KEYS = {
-  events: "md.admin.events.v1",
-  content: "md.admin.content.v1",
-  projects: "md.admin.projects.v1",
-  settings: "md.admin.settings.v1",
-  activity: "md.admin.activity.v1",
-  media: "md.admin.media.v1",
-  rememberedEmail: "md.admin.rememberedEmail",
-};
 
 const SEEDED_AT = () => new Date().toISOString();
 
@@ -158,7 +143,7 @@ function deriveLabel(path) {
 
 // --- Eventos --------------------------------------------------------------
 
-function buildEventsSeed() {
+export function buildEventsSeed() {
   return publicEvents.map((sourceEvent) => {
     const event = clone(sourceEvent);
     event.editorialStatus = "published";
@@ -171,49 +156,8 @@ function buildEventsSeed() {
   });
 }
 
-// --- Projetos (copia manual de js/projects.js, ver comentario no topo) ----
-
-const PROJECTS_SEED_SOURCE = [
-  {
-    id: "corporativo-placeholder",
-    category: "empresas",
-    title: "Projeto corporativo a validar",
-    status: "Placeholder",
-    date: "Data pendente",
-    description:
-      "Espaço reservado para case corporativo real, com imagem, data, escopo e resultados confirmados.",
-    note: "Substituir por projeto validado pela M&D antes da publicação.",
-    image: "assets/img/generated/projeto-empresas-ficticio.webp",
-    imageAlt: "Imagem demonstrativa gerada por IA de uma atividade esportiva leve para uma equipe corporativa",
-  },
-  {
-    id: "escolar-placeholder",
-    category: "escolas",
-    title: "Projeto escolar a validar",
-    status: "Placeholder",
-    date: "Calendário pendente",
-    description:
-      "Estrutura preparada para festival, circuito ou ação esportiva em escola, sem inventar dados de realização.",
-    note: "Inserir faixa etária, escola/rede, objetivos e registros reais.",
-    image: "assets/img/generated/projeto-escolas-ficticio.webp",
-    imageAlt: "Imagem demonstrativa gerada por IA de um circuito recreativo esportivo em uma escola",
-  },
-  {
-    id: "comunitario-placeholder",
-    category: "comunidades",
-    title: "Iniciativa comunitária a validar",
-    status: "Placeholder",
-    date: "Status pendente",
-    description:
-      "Área destinada a ações de território, lazer e pertencimento com documentação e fotos autorizadas.",
-    note: "Validar nome, local, parceiros, fotos e indicadores.",
-    image: "assets/img/generated/projeto-comunidades-ficticio.webp",
-    imageAlt: "Imagem demonstrativa gerada por IA de uma atividade esportiva comunitária em uma quadra pública",
-  },
-];
-
-function buildProjectsSeed() {
-  return PROJECTS_SEED_SOURCE.map((source, index) => {
+export function buildProjectsSeed() {
+  return publicProjects.map((source, index) => {
     const project = clone(source);
     project.mediaId = IMAGE_TO_MEDIA_ID[project.image] || null;
     project.order = index;
@@ -384,7 +328,7 @@ export function buildContentSeed() {
 
 // --- Configuracoes globais -------------------------------------------------
 
-function buildSettingsSeed() {
+export function buildSettingsSeed() {
   return {
     organizationName: "M&D Projetos e Eventos Desportivos",
     shortDescription: "Planejamento e realização de projetos e eventos esportivos para empresas, escolas e comunidades.",
@@ -409,7 +353,7 @@ function buildSettingsSeed() {
 
 // --- Midia -------------------------------------------------------------
 
-function buildMediaSeed() {
+export function buildMediaSeed() {
   return STATIC_MEDIA_SOURCE.map((source) => ({
     id: source.id,
     kind: "static",
@@ -423,40 +367,4 @@ function buildMediaSeed() {
     originalFilename: null,
     createdAt: SEEDED_AT(),
   }));
-}
-
-// --- Orquestracao ------------------------------------------------------
-
-async function seedIfMissing(key, builder) {
-  if (localStore.read(key, null) === null) {
-    localStore.write(key, builder());
-  }
-}
-
-export async function ensureSeeded() {
-  await seedIfMissing(STORAGE_KEYS.events, buildEventsSeed);
-  await seedIfMissing(STORAGE_KEYS.projects, buildProjectsSeed);
-  await seedIfMissing(STORAGE_KEYS.content, buildContentSeed);
-  await seedIfMissing(STORAGE_KEYS.settings, buildSettingsSeed);
-  await seedIfMissing(STORAGE_KEYS.media, buildMediaSeed);
-  await seedIfMissing(STORAGE_KEYS.activity, () => []);
-}
-
-// Limpa os dados administrativos (eventos/conteudo/projetos/settings/midia/atividade)
-// e resemeia a partir do zero. Nunca toca em md.admin.session.v1, rememberedEmail,
-// nem nas chaves do fluxo publico de inscricao (md.registration.*).
-export async function restoreAllSeeds() {
-  localStore.remove(STORAGE_KEYS.events);
-  localStore.remove(STORAGE_KEYS.projects);
-  localStore.remove(STORAGE_KEYS.content);
-  localStore.remove(STORAGE_KEYS.settings);
-  localStore.remove(STORAGE_KEYS.media);
-  localStore.remove(STORAGE_KEYS.activity);
-  try {
-    await idb.clear();
-  } catch {
-    // IndexedDB pode estar indisponivel (ex.: modo privado restrito); a
-    // restauracao dos dados em localStorage ja aconteceu e segue valendo.
-  }
-  await ensureSeeded();
 }

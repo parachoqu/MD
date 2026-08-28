@@ -1,4 +1,4 @@
-// Visao geral: metricas reais calculadas do repositorio simulado. Nada aqui e
+// Visao geral: metricas reais calculadas dos dados administrativos. Nada aqui e
 // inventado -- nenhuma contagem de inscritos, receita, acessos ou conversao.
 
 import { element, clearChildren } from "../dom.js";
@@ -80,7 +80,7 @@ export const dashboardView = {
 
     const integrationBadge = element("p", { className: "admin-integration-badge" }, [
       createIcon("info", { size: 16 }),
-      element("span", { text: "Modo local / Backend não conectado" }),
+      element("span", { text: "Backend Vercel conectado · publicação por snapshots" }),
     ]);
 
     clearChildren(container);
@@ -88,7 +88,7 @@ export const dashboardView = {
     container.appendChild(metricsGrid);
     container.appendChild(element("h2", { className: "admin-section-title", text: "Atalhos" }));
     container.appendChild(shortcuts);
-    container.appendChild(element("h2", { className: "admin-section-title", text: "Últimas alterações locais" }));
+    container.appendChild(element("h2", { className: "admin-section-title", text: "Últimas alterações auditadas" }));
     container.appendChild(element("ul", { className: "admin-activity-list" }, activityItems));
   },
 

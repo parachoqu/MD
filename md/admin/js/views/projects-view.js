@@ -15,7 +15,7 @@ import { createPreviewPanel } from "../components/preview-panel.js";
 
 const CATEGORY_LABELS = { empresas: "Empresas", escolas: "Escolas", comunidades: "Comunidades" };
 
-const EDITORIAL_LABELS = { draft: "Rascunho", published: "Publicado (local)", archived: "Arquivado" };
+const EDITORIAL_LABELS = { draft: "Rascunho", published: "Publicado", archived: "Arquivado" };
 
 const state = { query: "", category: "" };
 
@@ -235,6 +235,56 @@ function buildRow(project, shell, refresh, index, total) {
     [createIcon("moveDown", { size: 16 })]
   );
 
+  const publishButton = project.editorialStatus !== "published" || project.revision > project.publishedRevision
+    ? element(
+        "button",
+        {
+          type: "button",
+          className: "admin-icon-btn",
+          "aria-label": "Publicar " + project.title,
+          onClick: async () => {
+            const confirmed = await showConfirmDialog(shell.getDialogRoot(), {
+              title: "Publicar projeto",
+              message: 'O rascunho atual de "' + project.title + '" ficará disponível no site público.',
+              confirmLabel: "Publicar",
+            });
+            if (!confirmed) return;
+            const result = await projectRepository.publish(project.id);
+            if (result.ok) {
+              shell.showToast("Projeto publicado.");
+              refresh();
+            } else shell.showToast(result.error.message);
+          },
+        },
+        [createIcon("check", { size: 16 })]
+      )
+    : null;
+
+  const archiveButton = project.editorialStatus !== "archived"
+    ? element(
+        "button",
+        {
+          type: "button",
+          className: "admin-icon-btn",
+          "aria-label": "Arquivar " + project.title,
+          onClick: async () => {
+            const confirmed = await showConfirmDialog(shell.getDialogRoot(), {
+              title: "Arquivar projeto",
+              message: 'O projeto "' + project.title + '" deixará de aparecer no site público.',
+              confirmLabel: "Arquivar",
+            });
+            if (!confirmed) return;
+            const result = await projectRepository.archive(project.id);
+            if (result.ok) {
+              shell.showToast("Projeto arquivado.");
+              refresh();
+            } else shell.showToast(result.error.message);
+          },
+        },
+        [createIcon("archive", { size: 16 })]
+      )
+    : null;
+
   const deleteButton = element(
     "button",
     {
@@ -244,7 +294,7 @@ function buildRow(project, shell, refresh, index, total) {
       onClick: async () => {
         const confirmed = await showConfirmDialog(shell.getDialogRoot(), {
           title: "Excluir projeto",
-          message: 'Esta ação remove "' + project.title + '" definitivamente dos dados administrativos locais.',
+          message: 'Esta ação remove "' + project.title + '" definitivamente do banco administrativo.',
           confirmLabel: "Excluir",
           destructive: true,
         });
@@ -253,7 +303,7 @@ function buildRow(project, shell, refresh, index, total) {
         if (result.ok) {
           shell.showToast("Projeto excluído.");
           refresh();
-        }
+        } else shell.showToast(result.error.message);
       },
     },
     [createIcon("trash", { size: 16 })]
@@ -265,7 +315,7 @@ function buildRow(project, shell, refresh, index, total) {
       element("span", { className: "admin-row__meta", text: (CATEGORY_LABELS[project.category] || project.category) + " · " + project.date }),
     ]),
     element("div", { className: "admin-row__badges" }, [editorialBadge(project.editorialStatus)]),
-    element("div", { className: "admin-row__actions" }, [previewButton, editButton, duplicateButton, moveUpButton, moveDownButton, deleteButton]),
+    element("div", { className: "admin-row__actions" }, [previewButton, editButton, duplicateButton, publishButton, archiveButton, moveUpButton, moveDownButton, deleteButton]),
   ]);
 }
 

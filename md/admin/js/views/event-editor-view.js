@@ -741,34 +741,60 @@ export const eventEditorView = {
         )
       );
 
-      const isArchived = formState.editorialStatus === "archived";
-      actionsBar.appendChild(
-        element(
+      const needsPublish = formState.editorialStatus !== "published" || formState.revision > formState.publishedRevision;
+      if (needsPublish) {
+        const publishButton = element(
           "button",
           {
             type: "button",
             className: "admin-btn admin-btn--secondary",
             onClick: async () => {
               const confirmed = await showConfirmDialog(shell.getDialogRoot(), {
-                title: isArchived ? "Publicar evento no modo local" : "Arquivar evento",
-                message: isArchived
-                  ? "Esta publicação existe apenas no painel demonstrativo e não altera o site público."
-                  : "O evento deixará de aparecer como publicado no modo local do painel.",
-                confirmLabel: isArchived ? "Publicar" : "Arquivar",
+                title: "Publicar evento",
+                message: "O rascunho salvo ficará disponível imediatamente no site público.",
+                confirmLabel: "Publicar",
               });
               if (!confirmed) return;
-              const result = isArchived ? await eventRepository.publish(formState.id) : await eventRepository.archive(formState.id);
+              const result = await eventRepository.publish(formState.id);
               if (result.ok) {
-                formState.editorialStatus = result.data.editorialStatus;
+                formState = result.data;
                 snapshot = JSON.stringify(formState);
-                shell.showToast("Estado editorial atualizado.");
-                window.location.hash = "#events/edit/" + formState.id;
-              }
+                publishButton.disabled = true;
+                shell.showToast("Evento publicado.");
+              } else shell.showToast(result.error.message);
             },
           },
-          [element("span", { text: isArchived ? "Publicar no modo local" : "Arquivar" })]
-        )
-      );
+          [element("span", { text: "Publicar" })]
+        );
+        actionsBar.appendChild(publishButton);
+      }
+
+      if (formState.editorialStatus !== "archived") {
+        actionsBar.appendChild(
+          element(
+            "button",
+            {
+              type: "button",
+              className: "admin-btn admin-btn--secondary",
+              onClick: async () => {
+                const confirmed = await showConfirmDialog(shell.getDialogRoot(), {
+                  title: "Arquivar evento",
+                  message: "O evento deixará de aparecer no site público.",
+                  confirmLabel: "Arquivar",
+                });
+                if (!confirmed) return;
+                const result = await eventRepository.archive(formState.id);
+                if (result.ok) {
+                  formState = result.data;
+                  snapshot = JSON.stringify(formState);
+                  shell.showToast("Evento arquivado.");
+                } else shell.showToast(result.error.message);
+              },
+            },
+            [element("span", { text: "Arquivar" })]
+          )
+        );
+      }
 
       actionsBar.appendChild(
         element(
@@ -789,7 +815,7 @@ export const eventEditorView = {
                 dirtyGuard.clear();
                 shell.showToast("Evento excluído.");
                 window.location.hash = "#events";
-              }
+              } else shell.showToast(result.error.message);
             },
           },
           [createIcon("trash", { size: 16 }), element("span", { text: "Excluir" })]

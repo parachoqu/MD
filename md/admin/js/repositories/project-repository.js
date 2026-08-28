@@ -1,171 +1,106 @@
-// Repositorio de projetos institucionais. Estado interno = array persistido em
-// md.admin.projects.v1, semeado a partir de uma copia manual de js/projects.js
-// (ver admin-seed.js). Cada projeto ganha, so no admin, `editorialStatus` e
-// `order` (usado pela reordenacao por botoes "mover para cima/baixo").
-
-import { localStore, withLatency } from "../storage-adapter.js";
-import { STORAGE_KEYS } from "../data/admin-seed.js";
-import { clone, generateId } from "../utils.js";
-import { ok, fail, failValidation } from "../result.js";
-import { record } from "./activity-repository.js";
+import { apiRequest, queryString } from "../api-client.js";
+import { failValidation } from "../result.js";
 
 export const PROJECT_CATEGORIES = ["empresas", "escolas", "comunidades"];
 
-function readAll() {
-  return localStore.read(STORAGE_KEYS.projects, []);
-}
+const revisions = new Map();
 
-function writeAll(list) {
-  const sorted = list.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
-  localStore.write(STORAGE_KEYS.projects, sorted);
-}
-
-function findIndex(list, id) {
-  return list.findIndex((project) => project.id === id);
+function remember(value) {
+  const items = Array.isArray(value) ? value : [value];
+  items.filter(Boolean).forEach((item) => revisions.set(item.id, item.revision));
+  return value;
 }
 
 export function validateProject(data) {
   const errors = [];
-  if (!data.title || !String(data.title).trim()) {
-    errors.push({ field: "title", message: "Informe o título do projeto." });
-  }
-  if (!data.category || !PROJECT_CATEGORIES.includes(data.category)) {
-    errors.push({ field: "category", message: "Selecione uma categoria válida." });
-  }
-  if ((data.mediaId || data.image) && !data.imageAlt) {
-    errors.push({ field: "imageAlt", message: "Informe o texto alternativo da imagem." });
-  }
+  if (!data.title || !String(data.title).trim()) errors.push({ field: "title", message: "Informe o título do projeto." });
+  if (!data.category || !PROJECT_CATEGORIES.includes(data.category)) errors.push({ field: "category", message: "Selecione uma categoria válida." });
+  if ((data.mediaId || data.image) && !data.imageAlt) errors.push({ field: "imageAlt", message: "Informe o texto alternativo da imagem." });
   return errors;
 }
 
+async function revisionFor(id) {
+  if (revisions.has(id)) return { ok: true, data: revisions.get(id) };
+  const result = await projectRepository.getById(id);
+  return result.ok ? { ok: true, data: result.data.revision } : result;
+}
+
+async function editorialAction(id, action) {
+  const revision = await revisionFor(id);
+  if (!revision.ok) return revision;
+  const result = await apiRequest(`/api/admin/projects/${encodeURIComponent(id)}/${action}`, {
+    method: "POST",
+    body: { revision: revision.data },
+  });
+  if (result.ok) remember(result.data);
+  return result;
+}
+
 export const projectRepository = {
-  async list(filters) {
-    return withLatency(() => {
-      const f = filters || {};
-      let items = readAll().map(clone).sort((a, b) => (a.order || 0) - (b.order || 0));
-      if (f.query) {
-        const q = String(f.query).toLowerCase();
-        items = items.filter((project) =>
-          [project.title, project.description, project.note].filter(Boolean).some((text) => text.toLowerCase().includes(q))
-        );
-      }
-      if (f.category) items = items.filter((project) => project.category === f.category);
-      if (f.editorialStatus) items = items.filter((project) => project.editorialStatus === f.editorialStatus);
-      return ok(items);
-    });
+  async list(filters = {}) {
+    const result = await apiRequest(`/api/admin/projects${queryString(filters)}`);
+    if (result.ok) remember(result.data);
+    return result;
   },
 
   async getById(id) {
-    return withLatency(() => {
-      const found = readAll().find((project) => project.id === id);
-      return found ? ok(clone(found)) : fail("not_found", "Projeto não encontrado.");
-    });
+    const result = await apiRequest(`/api/admin/projects/${encodeURIComponent(id)}`);
+    if (result.ok) remember(result.data);
+    return result;
   },
 
   async create(data) {
-    return withLatency(() => {
-      const list = readAll();
-      const errors = validateProject(data);
-      if (errors.length) return failValidation(errors);
-      const now = new Date().toISOString();
-      const project = Object.assign({}, clone(data), {
-        id: generateId("proj"),
-        order: list.length,
-        editorialStatus: "draft",
-        createdAt: now,
-        updatedAt: now,
-      });
-      list.push(project);
-      writeAll(list);
-      record({ domain: "projects", action: "create", label: "Projeto criado: " + project.title });
-      return ok(clone(project));
-    });
+    const errors = validateProject(data);
+    if (errors.length) return failValidation(errors);
+    const result = await apiRequest("/api/admin/projects", { method: "POST", body: { data } });
+    if (result.ok) remember(result.data);
+    return result;
   },
 
   async update(id, data) {
-    return withLatency(() => {
-      const list = readAll();
-      const index = findIndex(list, id);
-      if (index === -1) return fail("not_found", "Projeto não encontrado.");
-      const errors = validateProject(Object.assign({}, list[index], data));
-      if (errors.length) return failValidation(errors);
-      const updated = Object.assign({}, list[index], clone(data), {
-        id: list[index].id,
-        editorialStatus: list[index].editorialStatus,
-        order: list[index].order,
-        createdAt: list[index].createdAt,
-        updatedAt: new Date().toISOString(),
-      });
-      list[index] = updated;
-      writeAll(list);
-      record({ domain: "projects", action: "update", label: "Projeto atualizado: " + updated.title });
-      return ok(clone(updated));
+    const errors = validateProject(data);
+    if (errors.length) return failValidation(errors);
+    const result = await apiRequest(`/api/admin/projects/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: { data, revision: Number(data.revision || revisions.get(id)) },
     });
+    if (result.ok) remember(result.data);
+    return result;
   },
 
   async duplicate(id) {
-    return withLatency(() => {
-      const list = readAll();
-      const source = list.find((project) => project.id === id);
-      if (!source) return fail("not_found", "Projeto não encontrado.");
-      const now = new Date().toISOString();
-      const duplicated = clone(source);
-      duplicated.id = generateId("proj");
-      duplicated.title = source.title + " (cópia)";
-      duplicated.editorialStatus = "draft";
-      duplicated.order = list.length;
-      duplicated.createdAt = now;
-      duplicated.updatedAt = now;
-      list.push(duplicated);
-      writeAll(list);
-      record({ domain: "projects", action: "duplicate", label: "Projeto duplicado: " + duplicated.title });
-      return ok(clone(duplicated));
-    });
+    const result = await apiRequest(`/api/admin/projects/${encodeURIComponent(id)}/duplicate`, { method: "POST", body: {} });
+    if (result.ok) remember(result.data);
+    return result;
   },
 
-  async archive(id) {
-    return withLatency(() => {
-      const list = readAll();
-      const index = findIndex(list, id);
-      if (index === -1) return fail("not_found", "Projeto não encontrado.");
-      list[index] = Object.assign({}, list[index], { editorialStatus: "archived", updatedAt: new Date().toISOString() });
-      writeAll(list);
-      record({ domain: "projects", action: "archive", label: "Projeto arquivado: " + list[index].title });
-      return ok(clone(list[index]));
-    });
+  archive(id) {
+    return editorialAction(id, "archive");
+  },
+
+  publish(id) {
+    return editorialAction(id, "publish");
   },
 
   async delete(id) {
-    return withLatency(() => {
-      const list = readAll();
-      const index = findIndex(list, id);
-      if (index === -1) return fail("not_found", "Projeto não encontrado.");
-      const removed = list.splice(index, 1)[0];
-      list.forEach((project, position) => {
-        project.order = position;
-      });
-      writeAll(list);
-      record({ domain: "projects", action: "delete", label: "Projeto excluído: " + removed.title });
-      return ok(true);
+    const revision = await revisionFor(id);
+    if (!revision.ok) return revision;
+    const result = await apiRequest(`/api/admin/projects/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      body: { revision: revision.data },
     });
+    if (result.ok) revisions.delete(id);
+    return result;
   },
 
-  // Extensao ao contrato minimo: troca a posicao do projeto com o vizinho
-  // imediato (direction: "up"|"down"), usada pelos botoes "Mover para cima/baixo"
-  // -- a tarefa exige reordenacao sem depender de arrastar.
   async reorder(id, direction) {
-    return withLatency(() => {
-      const list = readAll().sort((a, b) => (a.order || 0) - (b.order || 0));
-      const index = findIndex(list, id);
-      if (index === -1) return fail("not_found", "Projeto não encontrado.");
-      const targetIndex = direction === "up" ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= list.length) return ok(list.map(clone));
-      const currentOrder = list[index].order;
-      list[index].order = list[targetIndex].order;
-      list[targetIndex].order = currentOrder;
-      writeAll(list);
-      record({ domain: "projects", action: "reorder", label: "Ordem de projetos alterada" });
-      return ok(readAll().sort((a, b) => (a.order || 0) - (b.order || 0)).map(clone));
+    const revision = await revisionFor(id);
+    if (!revision.ok) return revision;
+    const result = await apiRequest("/api/admin/projects/reorder", {
+      method: "POST",
+      body: { id, direction, revision: revision.data },
     });
+    if (result.ok) remember(result.data);
+    return result;
   },
 };

@@ -7,11 +7,13 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "vercel dev",
+    "dev": "cd .. && vercel dev",
+    "build": "npm run build:vendor && node scripts/build-static.mjs",
+    "check:vercel-output": "node scripts/check-vercel-output.mjs",
     "check": "node scripts/check-source.mjs",
     "test": "node --test --test-reporter=spec",
-    "test:unit": "node --test --test-reporter=spec test/unit",
-    "test:db": "node --test --test-reporter=spec test/database",
+    "test:unit": "node --test --test-reporter=spec test/unit/*.test.js",
+    "test:db": "node --test --test-reporter=spec test/database/*.test.js",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
     "db:seed": "node --env-file-if-exists=.env.local scripts/seed.mjs",
     "db:create-admin": "node --env-file-if-exists=.env.local scripts/create-admin.mjs",
