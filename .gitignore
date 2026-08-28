@@ -1,1 +1,11 @@
 .vercel
+
+# Segredos e configuracoes locais. O template versionado e a unica excecao.
+.env
+.env.*
+!.env.example
+
+# Artefatos gerados localmente.
+node_modules/
+coverage/
+*.local
