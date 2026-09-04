@@ -13,7 +13,7 @@ test("seed atual e publicado, transacional e idempotente", async (context) => {
   const first = await applySeed(database);
   const second = await applySeed(database);
 
-  assert.equal(first.events, 3);
+  assert.equal(first.events, 1);
   assert.equal(first.projects, 3);
   assert.equal(first.content, 2);
   assert.equal(first.settings, 1);
@@ -22,7 +22,7 @@ test("seed atual e publicado, transacional e idempotente", async (context) => {
 
   const events = await createEventRepository(database).listPublic();
   const bootstrap = await createContentRepository(database).publicBootstrap();
-  assert.equal(events.length, 3);
+  assert.equal(events.length, 1);
   assert.equal(bootstrap.projects.length, 3);
   assert.ok(bootstrap.pages.home);
   assert.equal(bootstrap.settings.organizationName, "M&D Projetos e Eventos Desportivos");

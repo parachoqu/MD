@@ -21,7 +21,7 @@ async function fixture(context) {
 
 function registration(overrides = {}) {
   return {
-    eventSlug: "evento-demonstrativo-inscricoes-abertas",
+    eventSlug: "taca-vale-handebol-2026",
     registrationType: "team",
     team: { name: "Equipe Teste", city: "Itambacuri", state: "MG", institution: "" },
     responsible: {
@@ -30,21 +30,22 @@ function registration(overrides = {}) {
       phone: "33999999999",
       role: "Tecnico",
     },
-    categoryId: "sub17-misto-demo",
+    categoryId: "junior-masculino",
     participants: [
       { name: "Atleta Um", birthDate: "2010-05-20", jerseyNumber: "10", role: "" },
       { name: "Atleta Dois", birthDate: "2010-03-18", jerseyNumber: "11", role: "" },
     ],
     staff: [],
     consent: true,
-    regulationConsent: false,
+    regulationConsent: true,
     consentVersion: "privacy-v1",
     ...overrides,
   };
 }
 
 async function publishOpenEvent(database, capacity = null) {
-  const source = structuredClone(events[1]);
+  const source = structuredClone(events[0]);
+  source.status = "open";
   if (capacity !== null) source.capacity = { teams: capacity, label: `Ate ${capacity} equipe(s)` };
   const repository = createEventRepository(database);
   const created = await repository.create(source, null, { id: source.id, slug: source.slug });
@@ -68,7 +69,7 @@ test("inscricao oficial e transacional, com protocolo e replay idempotente", asy
     database.query("SELECT count(*)::int AS count FROM registration_members"),
     database.query("SELECT count(*)::int AS count FROM registration_consents"),
   ]);
-  assert.deepEqual(counts.map((result) => result.rows[0].count), [1, 1, 2, 2]);
+  assert.deepEqual(counts.map((result) => result.rows[0].count), [1, 1, 2, 3]);
 });
 
 test("mesma chave com outro payload e evento fechado sao recusados", async (context) => {
@@ -77,14 +78,14 @@ test("mesma chave com outro payload e evento fechado sao recusados", async (cont
   const service = createRegistrationService(database, config, { clock: () => now });
   await service.submit(registration(), "registration-test-0002");
   await assert.rejects(
-    service.submit(registration({ categoryId: "adulto-misto-demo" }), "registration-test-0002"),
+    service.submit(registration({ categoryId: "junior-feminino" }), "registration-test-0002"),
     (error) => error.code === "IDEMPOTENCY_CONFLICT"
   );
 
   const repository = createEventRepository(database);
-  const current = await repository.getAdmin(events[1].id);
-  const changed = await repository.update(events[1].id, { ...current, status: "closed" }, current.revision, null);
-  await repository.publish(events[1].id, changed.revision, null);
+  const current = await repository.getAdmin(events[0].id);
+  const changed = await repository.update(events[0].id, { ...current, status: "closed" }, current.revision, null);
+  await repository.publish(events[0].id, changed.revision, null);
   await assert.rejects(
     service.submit(registration(), "registration-test-closed"),
     (error) => error.code === "VALIDATION_ERROR" && Boolean(error.fields.eventSlug)

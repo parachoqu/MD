@@ -17,6 +17,12 @@
   <link rel="stylesheet" href="css/sections.css">
   <link rel="stylesheet" href="css/events.css">
   <link rel="stylesheet" href="css/mobile.css" media="(max-width: 767px)">
+  <!-- Imagem do primeiro slide da hero: é o LCP da home. O preload precisa
+       repetir srcset/sizes do <img> para o navegador escolher o mesmo degrau. -->
+  <link rel="preload" as="image" fetchpriority="high"
+        href="assets/img/generated/evento-taca-vale-handebol-junior-ficticio.webp"
+        imagesrcset="assets/img/generated/evento-taca-vale-handebol-junior-ficticio-768.webp 768w, assets/img/generated/evento-taca-vale-handebol-junior-ficticio-1152.webp 1152w, assets/img/generated/evento-taca-vale-handebol-junior-ficticio.webp 1536w"
+        imagesizes="(max-width: 767px) calc(100vw - 32px), (max-width: 1199px) 90vw, 1240px">
   <script>if(window.matchMedia("(max-width: 767px)").matches)document.documentElement.classList.add("md-shell")</script>
 </head>
 <body>
@@ -63,28 +69,94 @@
           <span>Portal de eventos e inscrições</span>
         </p>
 
-        <div class="grid-12 hero__grid">
-          <div class="hero__content">
-            <h1 id="heroTitle">
-              <span class="hero__title-strong">Movimento que organiza,</span>
-              <span class="hero__title-thin">conecta e transforma.</span>
-            </h1>
-            <p class="hero__lead" data-animate>Planejamento e realização de projetos, eventos, recreação e lazer para empresas, escolas e comunidades, da ideia à operação em campo.</p>
-            <div class="hero__actions" data-animate>
-              <a class="btn btn--primary" href="inscricoes.html">Ver eventos e inscrições</a>
-              <a class="link-action link-action--dark" href="#projetos">Conhecer projetos</a>
+        <div class="hero__carousel" data-hero-carousel>
+          <div class="hero__track" data-hero-track tabindex="0" role="group" aria-roledescription="carousel" aria-label="Destaque: 1ª Taça Vale do Mucuri de Handebol Júnior">
+            <div class="hero__slide hero__slide--visual" data-hero-slide id="heroSlide-0" data-animate role="group" aria-roledescription="slide" aria-label="1 de 2: imagem do evento em destaque">
+              <div class="hero-card hero-card--event media-frame">
+                <a class="hero-card__link" href="evento.html?evento=taca-vale-handebol-2026" aria-label="Ver regulamento e detalhes da 1ª Taça Vale do Mucuri de Handebol Júnior"></a>
+                <img src="assets/img/generated/evento-taca-vale-handebol-junior-ficticio.webp"
+                     srcset="assets/img/generated/evento-taca-vale-handebol-junior-ficticio-768.webp 768w, assets/img/generated/evento-taca-vale-handebol-junior-ficticio-1152.webp 1152w, assets/img/generated/evento-taca-vale-handebol-junior-ficticio.webp 1536w"
+                     sizes="(max-width: 767px) calc(100vw - 32px), (max-width: 1199px) 90vw, 1240px"
+                     alt="1ª Taça Vale do Mucuri de Handebol Júnior em Itambacuri/MG" width="1536" height="1024"
+                     fetchpriority="high" decoding="async">
+                <span class="kinetic-line hero__line" aria-hidden="true"></span>
+                <div class="hero-card__overlay">
+                  <div class="hero-card__badges">
+                    <span class="hero-card__badge hero-card__badge--solid">Handebol</span>
+                    <span class="hero-card__badge hero-card__badge--status">Inscrições em breve</span>
+                  </div>
+                  <div class="hero-card__body">
+                    <span class="hero-card__eyebrow">17 e 18 de Outubro de 2026</span>
+                    <strong class="hero-card__title">1ª Taça Vale do Mucuri de Handebol Júnior</strong>
+                    <p class="hero-card__support">Ginásio Poliesportivo · Itambacuri/MG</p>
+                    <div class="hero-card__cta-row">
+                      <span class="hero-card__action">
+                        <span>Ver regulamento e detalhes</span>
+                        <span aria-hidden="true">→</span>
+                      </span>
+                      <a class="hero-card__cta" href="inscricoes.html">Inscreva-se</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="hero__note">
+                <span>Evento oficial em destaque · Regulamento oficial publicado</span>
+              </p>
+            </div>
+
+            <div class="hero__slide hero__slide--content" data-hero-slide id="heroSlide-1" data-animate role="group" aria-roledescription="slide" aria-label="2 de 2: a M&amp;D em uma frase">
+              <div class="hero-card hero-card--statement media-frame">
+                <!-- O piso deste card é uma quadra de handebol desenhada: linhas
+                     de fundo e laterais, linha central, as duas áreas de gol de
+                     6m e as linhas tracejadas de 9m. Mesmo papel da foto no card
+                     do evento, no mesmo lugar e com o mesmo corte. -->
+                <svg class="hero-card__court" viewBox="0 0 400 200" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
+                  <g fill="none" stroke="currentColor" stroke-width="1.25" vector-effect="non-scaling-stroke">
+                    <rect x="44" y="22" width="312" height="156"></rect>
+                    <path d="M200 22V178"></path>
+                    <path d="M44 41.5A47 47 0 0 1 91 88.5V111.5A47 47 0 0 1 44 158.5"></path>
+                    <path d="M356 41.5A47 47 0 0 0 309 88.5V111.5A47 47 0 0 0 356 158.5"></path>
+                  </g>
+                  <g fill="none" stroke="currentColor" stroke-width="1.25" stroke-dasharray="9 9" opacity="0.55" vector-effect="non-scaling-stroke">
+                    <path d="M44 18.5A70 70 0 0 1 114 88.5V111.5A70 70 0 0 1 44 181.5"></path>
+                    <path d="M356 18.5A70 70 0 0 0 286 88.5V111.5A70 70 0 0 0 356 181.5"></path>
+                  </g>
+                  <g fill="currentColor">
+                    <rect x="38" y="88.5" width="6" height="23"></rect>
+                    <rect x="356" y="88.5" width="6" height="23"></rect>
+                  </g>
+                </svg>
+                <div class="hero-card__overlay">
+                  <div class="hero-card__badges">
+                    <span class="hero-card__badge hero-card__badge--solid">Projetos e eventos</span>
+                  </div>
+                  <div class="hero-card__body">
+                    <span class="hero-card__eyebrow">Da ideia à operação em campo</span>
+                    <h1 class="hero-card__title hero-card__title--display" id="heroTitle">
+                      <span class="hero__title-strong">Movimento que organiza,</span>
+                      <span class="hero__title-thin">conecta e transforma.</span>
+                    </h1>
+                    <p class="hero-card__support">Planejamento e realização de projetos, eventos, recreação e lazer para empresas, escolas e comunidades.</p>
+                    <div class="hero-card__cta-row">
+                      <a class="hero-card__action" href="evento.html?evento=taca-vale-handebol-2026">
+                        <span>Ver evento em destaque</span>
+                        <span aria-hidden="true">→</span>
+                      </a>
+                      <a class="hero-card__cta" href="inscricoes.html">Inscreva-se</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="hero__note">
+                <a href="regulamento-taca-vale-handebol-2026.html">Regulamento oficial</a> ·
+                <a href="#projetos">Conhecer projetos</a>
+              </p>
             </div>
           </div>
 
-          <div class="hero__visual" data-animate>
-            <figure class="hero__photo media-frame">
-              <img src="assets/img/generated/hero-evento-esportivo-ficticio.webp" alt="Imagem demonstrativa gerada por IA de um evento esportivo comunitário organizado, com participantes e equipe de apoio em uma quadra aberta" width="1536" height="1024">
-              <span class="kinetic-line hero__line" aria-hidden="true"></span>
-            </figure>
-            <p class="hero__note">
-              <span data-hero-note="desktop">Imagem demonstrativa · gerada por IA. Substituir por registro autorizado da M&amp;D.</span>
-              <span data-hero-note="mobile" hidden>Imagem ilustrativa gerada por IA.</span>
-            </p>
+          <div class="hero__dots" data-hero-dots role="group" aria-label="Selecionar slide do destaque">
+            <button type="button" class="hero__dot is-active" data-hero-dot="0" aria-current="true" aria-controls="heroSlide-0" aria-label="Ir para slide 1 de 2: imagem do evento"></button>
+            <button type="button" class="hero__dot" data-hero-dot="1" aria-controls="heroSlide-1" aria-label="Ir para slide 2 de 2: a M&amp;D em uma frase"></button>
           </div>
         </div>
       </div>

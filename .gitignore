@@ -11,3 +11,4 @@ md/.vercel-static/
 node_modules/
 coverage/
 *.local
+.env*

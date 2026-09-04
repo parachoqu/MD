@@ -140,27 +140,69 @@
   text-transform: uppercase;
 }
 
-.hero__grid {
-  align-items: center;
+.hero__carousel {
+  position: relative;
 }
 
-.hero__content {
-  grid-column: span 7;
+.hero__track {
+  display: flex;
+  align-items: start;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  /* Contém o gesto na trilha: sem isto o swipe que chega ao fim do
+     carrossel encadeia para o "voltar" do navegador em telas de toque. */
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* Altura do slide ativo, escrita por js/hero-carousel.js. Sem o script
+     (ou sem ResizeObserver) o valor não existe e a trilha volta a `auto`. */
+  height: var(--hero-track-h, auto);
+  transition: height var(--motion-step) var(--ease-out);
 }
 
-.hero h1 {
+.hero__track::-webkit-scrollbar {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hero__track {
+    cursor: grab;
+  }
+
+  .hero__track.is-dragging {
+    cursor: grabbing;
+  }
+}
+
+.hero__slide {
+  /* Token no slide, não no card: os dois slides o leem, cada breakpoint
+     redefine um valor só e ninguém disputa especificidade. */
+  --hero-card-ratio: 21 / 9;
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* Os dois slides são o mesmo card: fotografia num, desenho no outro.
+   Mesma moldura, mesma proporção, mesmas zonas - por isso compartilham
+   estas regras em vez de terem cada um a sua cópia. */
+.hero__slide--visual,
+.hero__slide--content {
   display: grid;
-  gap: 2px;
-  max-width: 14ch;
-  color: var(--color-white);
-  letter-spacing: var(--tracking-display);
-  line-height: 0.94;
+  gap: var(--space-12);
+  align-content: center;
+  justify-items: start;
 }
 
 .hero__title-strong {
   font-family: var(--font-display);
   font-size: var(--text-display);
   font-weight: 800;
+  /* O tracking mora nos spans, não no h1: como `em`, ele se resolve contra
+     o tamanho do elemento onde é declarado. No h1 (1rem) daria -0,7px e
+     seria herdado como esse valor fixo pelas linhas de 66px. */
+  letter-spacing: var(--tracking-display);
   text-transform: uppercase;
 }
 
@@ -171,32 +213,302 @@
   letter-spacing: -0.035em;
 }
 
-.hero__lead {
+.hero-card {
+  position: relative;
+  display: block;
+  border-color: var(--on-dark-line);
+  text-decoration: none;
+  overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+  transition: border-color var(--motion-feedback) var(--ease-out),
+    box-shadow var(--motion-feedback) var(--ease-out),
+    transform var(--motion-feedback) var(--ease-out);
+}
+
+.hero-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s var(--ease-out);
+}
+
+/* As duas variantes vêm depois da regra base de propósito: `display`,
+   `aspect-ratio` e fundo são redefinidos aqui, e com a mesma especificidade
+   quem fica por último vence. Invertida, a ordem devolvia `display: block`
+   ao card de manifesto e derrubava o piso de altura. */
+
+/* A proporção viaja como token para que cada breakpoint só a redefina,
+   em vez de disputar especificidade com um seletor de duas classes. */
+.hero-card--event {
+  aspect-ratio: var(--hero-card-ratio, 21 / 9);
+  width: 100%;
+  max-width: 100%;
+}
+
+/* O card de manifesto não pode ser cortado como uma foto: o texto tem de
+   caber. A proporção entra como piso, num item de grade que só empresta
+   altura - quando o conteúdo passa disso (telas estreitas), a linha cresce
+   e o card acompanha em vez de recortar o rodapé. */
+.hero-card--statement {
+  display: grid;
+  width: 100%;
+  background-color: var(--structure-deep);
+  background-image: linear-gradient(var(--on-dark-surface), var(--on-dark-surface));
+}
+
+.hero-card--statement::before {
+  content: "";
+  grid-area: 1 / 1;
+  align-self: start;
+  aspect-ratio: var(--hero-card-ratio, 21 / 9);
+}
+
+.hero-card--statement .hero-card__overlay {
+  grid-area: 1 / 1;
+}
+
+/* Sem .kinetic-line aqui, de propósito: sobre a foto a diagonal é o único
+   traço do card; sobre um desenho feito de traços ela vira erro de desenho.
+   O movimento deste slide já está na quadra. */
+
+/* O piso deste slide é um desenho, não uma fotografia: a quadra de handebol
+   em que a operação acontece. Ocupa o mesmo lugar do <img> do outro slide e
+   é cortada do mesmo jeito, só que ancorada à direita - assim o bloco de
+   texto do rodapé cai sobre o meio vazio, e o corte 1:1 do celular ainda
+   entrega meia quadra inteira (gol, área de 6m e linha central). */
+.hero-card__court {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--on-dark-line);
+  pointer-events: none;
+  /* O canto inferior esquerdo é onde moram as duas linhas em mono: o olho
+     ciano e o link de ação. Contra o fundo do card elas medem 5,6:1 e 5,7:1,
+     mas um traço da quadra atravessando derruba o pixel local para 3,2:1.
+     A máscara apaga o desenho exatamente ali - onde ele já ficava escondido
+     atrás do h1 - e o mantém inteiro no resto do card. Sem suporte a mask a
+     quadra volta inteira, que é o pior caso descrito acima, não uma quebra. */
+  -webkit-mask-image: radial-gradient(58% 78% at 0% 100%, transparent 0 72%, #000 100%);
+  mask-image: radial-gradient(58% 78% at 0% 100%, transparent 0 72%, #000 100%);
+}
+
+/* O realce de card inteiro pertence só ao slide do evento, que é um link
+   do topo ao rodapé. O de manifesto não leva a lugar nenhum sozinho: levantá-lo
+   no hover prometeria um clique que não existe. */
+@media (hover: hover) and (pointer: fine) {
+  .hero-card--event:hover {
+    border-color: var(--action);
+    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--action);
+    transform: translateY(-3px);
+  }
+
+  .hero-card--event:hover img {
+    transform: scale(1.04);
+  }
+}
+
+.hero-card__link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.hero-card__overlay {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* Com space-between o gap vira piso: quando o conteúdo enche o card
+     (telas estreitas), os selos ainda não encostam no bloco de texto. */
+  gap: var(--space-16);
+  padding: var(--space-20);
+  z-index: 2;
+}
+
+/* Sobre foto o texto precisa de um escurecimento; sobre o desenho da quadra,
+   não - lá o fundo já é o azul da seção e o traço vive a 18% de branco. */
+.hero-card--event .hero-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(7, 23, 47, 0.5) 0%,
+    rgba(7, 23, 47, 0.08) 35%,
+    rgba(7, 23, 47, 0.82) 70%,
+    rgba(7, 23, 47, 0.96) 100%
+  );
+  /* Deixa o clique/hover passar para .hero-card__link por baixo;
+     só o botão de inscrição (pointer-events:auto) reage a eventos aqui dentro. */
+  pointer-events: none;
+}
+
+.hero-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.hero-card__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 3px 10px;
+  border-radius: var(--radius-control);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 700;
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+}
+
+.hero-card__badge--solid {
+  background: var(--motion);
+  color: var(--color-azul-noite);
+}
+
+.hero-card__badge--status {
+  background: var(--status-soon-surface);
+  border: var(--line-soft) solid var(--status-soon-line);
+  color: var(--on-dark-warning);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Um selo só neste card, não dois: o segundo diria "recreação e lazer", que
+   a chamada logo abaixo já diz por extenso. O par do slide do evento existe
+   porque lá cada selo carrega um dado diferente - modalidade e status. */
+
+.hero-card__body {
+  display: grid;
+  gap: var(--space-8);
+}
+
+.hero-card__eyebrow {
+  color: var(--motion);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 700;
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+}
+
+.hero-card__title {
+  color: var(--color-white);
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 1.8vw, 1.4rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+/* O h1 ocupa o slot do título do card: mesma posição, mesma cor, mesma
+   âncora no rodapé. Só a escala é maior, porque ele continua sendo o título
+   da página - e não o de um card entre outros. Precisa vir depois da regra
+   base: mesma especificidade, quem fica por último vence. */
+.hero-card__title--display {
+  display: grid;
+  gap: 2px;
+  font-size: inherit;
+  line-height: 0.94;
+  text-transform: none;
+}
+
+.hero-card__support {
+  color: var(--on-dark-muted);
+  font-size: var(--text-label);
+  margin-bottom: var(--space-4);
+}
+
+/* No card de manifesto esta linha é a chamada da página, não a legenda de
+   um local: sobe um degrau de tamanho e ganha medida de leitura. */
+.hero-card--statement .hero-card__support {
   max-width: 52ch;
-  margin-top: var(--space-24);
   color: var(--on-dark);
   font-size: var(--text-lead);
 }
 
-.hero__actions {
+.hero-card__action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  color: var(--action);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 700;
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color var(--motion-feedback) var(--ease-out);
+}
+
+.hero-card__action span[aria-hidden] {
+  transition: transform var(--motion-feedback) var(--ease-out);
+}
+
+/* No slide do evento a ação é um <span>: quem clica é o card inteiro, e o
+   alvo já tem a altura do card. No manifesto ela é o próprio link para o
+   evento e precisa carregar os 44px por conta própria. */
+.hero-card--statement .hero-card__action {
+  min-height: 44px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hero-card--event:hover .hero-card__action,
+  .hero-card--statement .hero-card__action:hover {
+    color: var(--color-white);
+  }
+
+  .hero-card--event:hover .hero-card__action span[aria-hidden],
+  .hero-card--statement .hero-card__action:hover span[aria-hidden] {
+    transform: translateX(4px);
+  }
+}
+
+.hero-card__cta-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-16) var(--space-24);
-  margin-top: var(--space-32);
-}
-
-.hero__visual {
-  grid-column: 9 / -1;
-  display: grid;
+  justify-content: space-between;
   gap: var(--space-12);
-  align-content: center;
+  margin-top: var(--space-8);
 }
 
-.hero__photo {
+.hero-card__cta {
   position: relative;
-  aspect-ratio: 4 / 5;
-  border-color: var(--on-dark-line);
+  z-index: 1;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 18px;
+  border-radius: var(--radius-control);
+  background: var(--action);
+  color: var(--action-on);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 700;
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background-color var(--motion-feedback) var(--ease-out),
+    transform var(--motion-feedback) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hero-card__cta:hover {
+    background: var(--action-hover);
+    transform: translateY(-1px);
+  }
+}
+
+/* De 768px a 1199px o tablet é uma tela de toque que não carrega o
+   mobile.css: sem isto o botão fica nos 36px do tipo mono e some do
+   mínimo de alvo. Vale para os dois cards. */
+@media (pointer: coarse) {
+  .hero-card__cta {
+    min-height: 44px;
+  }
 }
 
 .hero__line {
@@ -213,6 +525,78 @@
   font-family: var(--font-mono);
   font-size: var(--text-meta);
   line-height: 1.45;
+}
+
+/* A nota do manifesto carrega dois destinos em vez de uma frase: a medida de
+   leitura de 40ch a quebraria no separador. */
+.hero__slide--content .hero__note {
+  max-width: none;
+}
+
+/* O padding vertical é o que transforma uma linha de 17px num alvo de toque
+   de 44px sem tirar os links do fluxo do parágrafo. */
+.hero__note a {
+  display: inline-block;
+  padding-block: 14px;
+  color: var(--on-dark-link);
+  text-decoration-color: var(--on-dark-line);
+  text-underline-offset: 3px;
+  transition: color var(--motion-feedback) var(--ease-out),
+    text-decoration-color var(--motion-feedback) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hero__note a:hover {
+    color: var(--motion);
+    text-decoration-color: var(--motion);
+  }
+}
+
+/* O alvo de 44px já embute 18px de folga acima do traço: a margem conta
+   só o que falta para o respiro pretendido, não os 24px cheios. */
+.hero__dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+}
+
+/* O botão inteiro é o alvo de toque; o traço visual mora no ::before.
+   A versão anterior desenhava 8x8 e esticava a área com um ::after de
+   inset negativo, que passava do gap e roubava o clique do dot vizinho. */
+.hero__dot {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.hero__dot::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-control);
+  background: var(--on-dark-line);
+  transform: translate(-50%, -50%);
+  transition: width var(--motion-feedback) var(--ease-out),
+    background-color var(--motion-feedback) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hero__dot:hover::before {
+    background: var(--on-dark-nav);
+  }
+}
+
+.hero__dot.is-active::before {
+  width: 28px;
+  background: var(--action);
 }
 
 /* --- Sobre -------------------------------------------------------------- */
@@ -771,16 +1155,11 @@ html.has-motion [data-animate].is-visible {
     bottom: 0;
   }
 
-  .hero__content {
-    grid-column: 1 / -1;
-  }
-
-  .hero__visual {
-    grid-column: 1 / -1;
-  }
-
-  .hero__photo {
-    aspect-ratio: 16 / 9;
+  /* Sem a moldura de duas colunas o card passa a ocupar 90vw: em retrato
+     4/5 isso viraria 1150px de altura num tablet. 3/2 mantém a presença
+     editorial da foto dentro de uma tela. */
+  .hero__slide {
+    --hero-card-ratio: 3 / 2;
   }
 
   .about-layout,
@@ -813,10 +1192,6 @@ html.has-motion [data-animate].is-visible {
 @media (max-width: 720px) {
   .hero {
     padding-top: calc(var(--header-height) + var(--space-24));
-  }
-
-  .hero h1 {
-    max-width: none;
   }
 
   .principle,

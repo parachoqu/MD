@@ -5,7 +5,7 @@ import { eventDraftSchema } from "../../server/validation/event.js";
 import { contactSubmissionSchema, registrationSubmissionSchema } from "../../server/validation/submissions.js";
 import { assertStructuredJson } from "../../server/validation/common.js";
 
-test("os tres eventos atuais passam pelo schema de servidor", () => {
+test("os eventos atuais passam pelo schema de servidor", () => {
   events.forEach((event) => assert.doesNotThrow(() => eventDraftSchema.parse(event)));
 });
 
@@ -18,13 +18,13 @@ test("evento rejeita slug duplicavel/estruturalmente inseguro e HTML livre", () 
 
 test("inscricao exige consentimento e estrutura tipada", () => {
   const result = registrationSubmissionSchema.safeParse({
-    eventSlug: "evento-demonstrativo-inscricoes-abertas",
+    eventSlug: "taca-vale-handebol-2026",
     team: { name: "Equipe A", city: "Cidade", state: "MG", institution: "" },
     responsible: { name: "Pessoa", email: "pessoa@example.test", phone: "33999999999", role: "responsavel" },
-    categoryId: "sub17-misto-demo",
+    categoryId: "junior-masculino",
     participants: [{ name: "Atleta", birthDate: "2010-01-01", jerseyNumber: "" }],
     consent: true,
-    regulationConsent: false,
+    regulationConsent: true,
     consentVersion: "privacy-v1",
   });
   assert.equal(result.success, true);

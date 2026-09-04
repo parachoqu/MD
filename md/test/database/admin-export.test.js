@@ -31,7 +31,7 @@ test("exportacao administrativa e versionada e nao inclui dados pessoais", async
     clock: () => new Date("2026-08-28T12:00:00.000Z"),
   });
   assert.equal(exported.schemaVersion, 1);
-  assert.equal(exported.events.length, 3);
+  assert.equal(exported.events.length, 1);
   assert.equal(exported.projects.length, 3);
   assert.deepEqual(Object.keys(exported.content).sort(), ["catalog", "home"]);
   assert.doesNotThrow(() => validateAdminExport(exported));
@@ -49,12 +49,12 @@ test("importacao administrativa e transacional, idempotente e preserva publicaca
   const first = await importAdminExport(targetDatabase, exported);
   const second = await importAdminExport(targetDatabase, exported);
 
-  assert.deepEqual(first.inserted, { media: 16, events: 3, projects: 3, content: 2, settings: 1 });
+  assert.deepEqual(first.inserted, { media: 16, events: 1, projects: 3, content: 2, settings: 1 });
   assert.deepEqual(second.inserted, { media: 0, events: 0, projects: 0, content: 0, settings: 0 });
   const published = await targetDatabase.query(
     "SELECT count(*)::int AS count FROM events WHERE editorial_status = 'published' AND published_data IS NOT NULL"
   );
-  assert.equal(published.rows[0].count, 3);
+  assert.equal(published.rows[0].count, 1);
 });
 
 test("dry-run valida sem acessar banco e midia local exige fluxo explicito", async (context) => {

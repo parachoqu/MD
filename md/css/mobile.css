@@ -71,7 +71,6 @@
     box-shadow: none;
   }
 
-  .hero__actions .btn,
   .event-hero__actions .btn,
   .home-events__footer .btn,
   .contact-form > .btn,
@@ -85,7 +84,6 @@
     border-bottom-width: var(--line-emphasis);
   }
 
-  .hero__actions .btn,
   .event-hero__actions .btn,
   .home-events__footer .btn,
   .contact-form > .btn,
@@ -98,7 +96,6 @@
 
   /* Mobile largo: o controle acompanha o polegar, não a janela. */
   @media (min-width: 480px) {
-    .hero__actions .btn,
     .event-hero__actions .btn,
     .home-events__footer .btn,
     .contact-form > .btn,
@@ -699,50 +696,109 @@
 
   .hero__meta {
     display: none;
-    gap: 3px;
-    padding-bottom: var(--space-10);
-    margin-bottom: var(--space-16);
-    font-size: 0.62rem;
-    letter-spacing: 0.1em;
-    line-height: 1.35;
   }
 
-  .hero__grid {
-    row-gap: var(--space-28);
+  .hero__dots {
+    margin-top: var(--space-4);
   }
 
-  .hero h1 {
-    max-width: none;
+  .hero-card__title--display {
     line-height: 0.96;
   }
 
-  .hero__lead {
+  /* A chamada perde o degrau de tamanho: dentro do card estreito ela
+     concorre com o h1 em vez de apoiá-lo. */
+  .hero-card--statement .hero-card__support {
     max-width: 46ch;
-    margin-top: var(--space-16);
     font-size: 1rem;
   }
 
-  .hero__actions {
-    display: grid;
-    gap: var(--space-12);
-    margin-top: var(--space-24);
+  /* O overlay carrega ~205px de conteúdo ancorado ao rodapé (selos, data,
+     título, local e o botão), altura que não encolhe com a tela. No
+     telefone só o quadrado deixa foto acima desse bloco; conforme a
+     largura cresce o card pode abrir sem espremer a imagem. */
+  .hero__slide {
+    --hero-card-ratio: 1 / 1;
   }
 
-  .hero__actions .link-action {
-    justify-self: start;
+  @media (min-width: 480px) {
+    .hero__slide {
+      --hero-card-ratio: 4 / 3;
+    }
   }
 
-  .hero__photo {
-    aspect-ratio: 4 / 3;
+  /* Em largura total a borda inferior já dá a presença física;
+     a sombra projetada some, como nas demais superfícies planas. */
+  .hero-card {
+    box-shadow: none;
+  }
+
+  /* A quadra sai do celular. De 768px para cima o card sobra 170px a 313px
+     de espaço livre entre o selo e o bloco de texto, e é ali que o desenho
+     vive. No telefone o texto enche o card inteiro: a quadra só apareceria
+     por baixo das letras, ilegível como desenho e derrubando o olho ciano
+     de 5,6:1 para 3,2:1 onde uma linha cruza. Um plano sem espaço não é
+     um plano - é ruído. */
+  .hero-card__court {
+    display: none;
+  }
+
+  /* O texto é ancorado ao rodapé, então sua distância até a base do card
+     não muda com a proporção - mas paradas em % mudam. Com o card baixo a
+     data em ciano caía na faixa translúcida, sobre a parede clara da
+     quadra, em 3,17:1. Paradas em px prendem o escurecimento ao bloco de
+     texto e seguram 5,2:1 ou mais de 320px a 767px. */
+  .hero-card__overlay {
+    padding: var(--space-16);
+  }
+
+  .hero-card--event .hero-card__overlay {
+    background: linear-gradient(
+      0deg,
+      rgba(7, 23, 47, 0.97) 0,
+      rgba(7, 23, 47, 0.9) 190px,
+      rgba(7, 23, 47, 0.12) 250px,
+      rgba(7, 23, 47, 0.5) 100%
+    );
+  }
+
+  .hero-card__badge--status {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .hero-card--event .hero-card__title {
+    font-size: 1.05rem;
+  }
+
+  /* O card do evento inteiro já é clicável por .hero-card__link: no toque o
+     texto da ação é redundante e é ele que estoura a linha do rodapé. No de
+     manifesto ele fica: é o único caminho até a página do evento. */
+  .hero-card--event .hero-card__action {
+    display: none;
+  }
+
+  .hero-card__cta-row {
+    display: block;
+    margin-top: var(--space-12);
+  }
+
+  /* Empilhado, o link de ação precisa de um respiro antes do botão sólido. */
+  .hero-card--statement .hero-card__cta {
+    margin-top: var(--space-8);
+  }
+
+  .hero-card__cta {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    padding-block: 12px;
   }
 
   .hero__note {
     max-width: none;
-    font-size: 0.64rem;
-  }
-
-  .hero__note [data-hero-note="desktop"] {
-    display: none;
+    font-size: 0.7rem;
   }
 
   @media (max-width: 359px) {
@@ -755,7 +811,7 @@
       padding-top: calc(var(--header-height) + var(--space-16));
     }
 
-    .hero__lead {
+    .hero-card--statement .hero-card__support {
       font-size: 0.95rem;
     }
   }
