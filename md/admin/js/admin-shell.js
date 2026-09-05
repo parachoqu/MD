@@ -6,14 +6,25 @@ import { element, clearChildren, trapFocus } from "./dom.js";
 import { createIcon } from "./icons.js";
 import { authService } from "./auth/auth-service.js";
 
+// `roles` decide o que aparece no menu. Isso e conveniencia de navegacao:
+// a autorizacao real esta no servidor, que responde 403 para rota proibida.
 const NAV_ITEMS = [
-  { route: "dashboard", hash: "#dashboard", label: "Visão geral", icon: "dashboard" },
-  { route: "events", hash: "#events", label: "Eventos", icon: "calendar" },
-  { route: "content", hash: "#content/home", label: "Conteúdo do site", icon: "content" },
-  { route: "projects", hash: "#projects", label: "Projetos", icon: "projects" },
-  { route: "media", hash: "#media", label: "Biblioteca de mídia", icon: "media" },
-  { route: "settings", hash: "#settings", label: "Configurações", icon: "settings" },
+  { route: "dashboard", hash: "#dashboard", label: "Visão geral", icon: "dashboard", roles: ["admin", "editor"] },
+  { route: "registrations", hash: "#registrations", label: "Inscrições", icon: "users", roles: ["admin", "editor", "organizer"] },
+  { route: "events", hash: "#events", label: "Eventos", icon: "calendar", roles: ["admin", "editor"] },
+  { route: "content", hash: "#content/home", label: "Conteúdo do site", icon: "content", roles: ["admin", "editor"] },
+  { route: "projects", hash: "#projects", label: "Projetos", icon: "projects", roles: ["admin", "editor"] },
+  { route: "media", hash: "#media", label: "Biblioteca de mídia", icon: "media", roles: ["admin", "editor"] },
+  { route: "settings", hash: "#settings", label: "Configurações", icon: "settings", roles: ["admin", "editor"] },
 ];
+
+export function navItemsForRole(role) {
+  return NAV_ITEMS.filter((item) => item.roles.includes(String(role || "")));
+}
+
+export function defaultRouteForRole(role) {
+  return navItemsForRole(role)[0]?.route || "registrations";
+}
 
 export function initShell(session) {
   const drawerToggle = document.getElementById("adminDrawerToggle");
@@ -31,8 +42,12 @@ export function initShell(session) {
 
   let toastTimer = null;
   let lastFocusBeforeDrawer = null;
+  // /api/auth/session devolve { user, csrfToken, expiresAt }; aceitar tambem a
+  // conta na raiz mantem o shell util se o envelope mudar.
+  const account = session?.user || session || {};
+  const role = account.role || "";
 
-  if (accountEmail && session) accountEmail.textContent = session.email;
+  if (accountEmail) accountEmail.textContent = account.email || "";
 
   document.querySelectorAll("[data-icon]").forEach((slot) => {
     slot.appendChild(createIcon(slot.dataset.icon, { size: 22 }));
@@ -40,7 +55,7 @@ export function initShell(session) {
 
   function buildNav() {
     clearChildren(navList);
-    NAV_ITEMS.forEach((item) => {
+    navItemsForRole(role).forEach((item) => {
       const link = element(
         "a",
         { href: item.hash, className: "admin-nav__link", dataset: { route: item.route } },
@@ -160,5 +175,6 @@ export function initShell(session) {
     showToast,
     setActiveRoute,
     closeDrawer,
+    getRole: () => role,
   };
 }

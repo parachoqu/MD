@@ -1,24 +1,67 @@
-import { events, getFeaturedEvents, getSports } from "../../data/events.js";
+import { collectSports, loadPublicEvents } from "../api/public-data.js";
 import { createEventRow } from "./event-renderer.js";
 import { revealScope } from "../motion.js";
 
 const STATUS_FILTERS = new Set(["open", "soon", "closed"]);
 
-export function initEventList() {
-  renderFeaturedEvents();
-  initCatalog();
+const OFFLINE_NOTICE =
+  "Não foi possível confirmar os eventos com o servidor. As informações abaixo podem estar desatualizadas e as inscrições estão indisponíveis no momento.";
+
+export async function initEventList() {
+  const grid = document.getElementById("featuredEvents");
+  const list = document.getElementById("eventsList");
+  if (!grid && !list) return;
+
+  const loading = markLoading(grid, list);
+  const result = await loadPublicEvents();
+  loading();
+
+  if (grid) renderFeaturedEvents(grid, result);
+  if (list) initCatalog(result);
 }
 
-function renderFeaturedEvents() {
-  const grid = document.getElementById("featuredEvents");
-  if (!grid) return;
+// Enquanto a resposta nao chega o usuario precisa ver que algo esta em curso;
+// os dois containers ja sao aria-live, entao o texto e anunciado sozinho.
+function markLoading(grid, list) {
+  const targets = [grid, list].filter(Boolean);
+  const placeholders = targets.map((target) => {
+    const placeholder = document.createElement("p");
+    placeholder.className = "events-notice";
+    placeholder.textContent = "Carregando eventos...";
+    target.replaceChildren(placeholder);
+    return placeholder;
+  });
+  return () => placeholders.forEach((placeholder) => placeholder.remove());
+}
 
-  const featured = getFeaturedEvents(3);
-  grid.replaceChildren(...featured.map((event) => createEventRow(event, "featured")));
+function noticeFor(result) {
+  if (result.source === "api") return null;
+  const notice = document.createElement("p");
+  notice.className = "events-notice events-notice--warning";
+  notice.setAttribute("role", "status");
+  notice.textContent = OFFLINE_NOTICE;
+  return notice;
+}
+
+function renderFeaturedEvents(grid, result) {
+  const featured = result.events.filter((event) => event.featured).slice(0, 3);
+  const rows = featured.length
+    ? featured.map((event) => createEventRow(event, "featured"))
+    : [emptyMessage("Nenhum evento em destaque no momento.")];
+
+  const notice = noticeFor(result);
+  grid.replaceChildren(...(notice ? [notice, ...rows] : rows));
   revealScope(grid);
 }
 
-function initCatalog() {
+function emptyMessage(text) {
+  const paragraph = document.createElement("p");
+  paragraph.className = "events-notice";
+  paragraph.textContent = text;
+  return paragraph;
+}
+
+function initCatalog(result) {
   const list = document.getElementById("eventsList");
   const search = document.getElementById("eventSearch");
   const status = document.getElementById("eventStatus");
@@ -32,7 +75,10 @@ function initCatalog() {
   const form = search.closest("form");
   form?.addEventListener("submit", (event) => event.preventDefault());
 
-  populateSports(sport);
+  const notice = noticeFor(result);
+  if (notice) list.parentElement?.insertBefore(notice, list);
+
+  populateSports(sport, result.events);
 
   const state = {
     query: "",
@@ -56,8 +102,8 @@ function initCatalog() {
   let firstRender = true;
 
   const apply = () => {
-    const result = filterEvents(state);
-    list.replaceChildren(...result.map((event) => createEventRow(event, "list")));
+    const filtered = filterEvents(result.events, state);
+    list.replaceChildren(...filtered.map((event) => createEventRow(event, "list")));
     revealScope(list, { immediate: !firstRender });
     firstRender = false;
 
@@ -65,11 +111,11 @@ function initCatalog() {
     clearButtons.forEach((button) => {
       button.hidden = !hasFilters;
     });
-    empty.hidden = result.length > 0;
-    list.hidden = result.length === 0;
+    empty.hidden = filtered.length > 0;
+    list.hidden = filtered.length === 0;
 
     if (count) {
-      count.textContent = `${result.length} ${result.length === 1 ? "evento encontrado" : "eventos encontrados"}`;
+      count.textContent = `${filtered.length} ${filtered.length === 1 ? "evento encontrado" : "eventos encontrados"}`;
     }
     syncStatusAppearance();
     confirmFilterUpdate();
@@ -109,8 +155,10 @@ function initCatalog() {
   apply();
 }
 
-function populateSports(select) {
-  getSports().forEach((option) => {
+function populateSports(select, events) {
+  // Mantem apenas a opcao "todas" ja presente no HTML antes de repovoar.
+  Array.from(select.querySelectorAll("option")).slice(1).forEach((option) => option.remove());
+  collectSports(events).forEach((option) => {
     const item = document.createElement("option");
     item.value = option.value;
     item.textContent = option.label;
@@ -118,7 +166,7 @@ function populateSports(select) {
   });
 }
 
-function filterEvents(state) {
+function filterEvents(events, state) {
   return events
     .filter((event) => {
       const matchesSearch = !state.query || eventSearchText(event).includes(state.query);
@@ -134,7 +182,7 @@ function filterEvents(state) {
 }
 
 function eventSearchText(event) {
-  const categoryText = event.categories
+  const categoryText = (event.categories || [])
     .flatMap((category) => [category.name, category.division, category.gender])
     .join(" ");
 

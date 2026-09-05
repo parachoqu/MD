@@ -1,4 +1,4 @@
-import { getEventBySlug, getEventStatus } from "../../data/events.js";
+import { getEventStatus } from "../../data/events.js";
 import {
   appendDefinition,
   createEventFigure,
@@ -8,31 +8,45 @@ import {
   statusBadge,
 } from "./event-renderer.js";
 import { createRegistrationModal } from "../registration/registration-modal.js";
-import { getRegistrationsByEvent } from "../registration/registration-storage.js";
+import { canRegister, findEventBySlug, loadPublicEvents } from "../api/public-data.js";
 import { revealScope } from "../motion.js";
 import { getRegulationRenderer } from "./regulations/index.js";
 
 const CONTACT_URL = "index.html#contato";
 
-export function initEventDetail() {
+const UNAVAILABLE_NOTICE =
+  "Não foi possível confirmar este evento com o servidor. As informações podem estar desatualizadas e as inscrições estão indisponíveis no momento.";
+
+export async function initEventDetail() {
   const root = document.getElementById("eventDetailRoot");
   if (!root) return;
 
+  renderLoading(root);
+
   const params = new URLSearchParams(window.location.search);
   const slug = params.get("evento");
-  const event = slug ? getEventBySlug(slug) : null;
+  const result = await loadPublicEvents();
+  const event = slug ? findEventBySlug(result.events, slug) : null;
 
   if (!event) {
     document.body.classList.remove("has-event-mobile-cta");
-    renderNotFound(root);
+    renderNotFound(root, result);
     return;
   }
 
   updateMeta(event);
-  renderEvent(root, event);
+  renderEvent(root, event, result);
 }
 
-function renderNotFound(root) {
+function renderLoading(root) {
+  const wrapper = document.createElement("section");
+  wrapper.className = "section internal-state";
+  wrapper.setAttribute("aria-live", "polite");
+  wrapper.append(textElement("p", "section-copy", "Carregando evento..."));
+  root.replaceChildren(wrapper);
+}
+
+function renderNotFound(root, result) {
   document.title = "Evento não encontrado | M&D";
   const wrapper = document.createElement("section");
   wrapper.className = "section internal-state";
@@ -42,6 +56,10 @@ function renderNotFound(root) {
     textElement("p", "section-copy", "Este evento pode ter sido removido ou o endereço está incorreto.")
   );
 
+  if (result?.source === "static") {
+    wrapper.append(textElement("p", "event-warning", UNAVAILABLE_NOTICE));
+  }
+
   const link = document.createElement("a");
   link.className = "btn btn--primary";
   link.href = "inscricoes.html";
@@ -50,20 +68,33 @@ function renderNotFound(root) {
   root.replaceChildren(wrapper);
 }
 
-function renderEvent(root, event) {
-  const status = getEventStatus(event.status);
-  document.body.classList.toggle("has-event-mobile-cta", status.canRegister);
+function renderEvent(root, event, result) {
+  // Sem confirmacao do servidor o evento continua visivel, mas a inscricao fica
+  // desativada: o status efetivo carrega essa decisao para todos os blocos.
+  const status = effectiveStatus(event);
   const registrationModal = status.canRegister ? createRegistrationModal(event) : null;
-  const registrations = getRegistrationsByEvent(event.slug);
+  document.body.classList.toggle("has-event-mobile-cta", status.canRegister);
 
   root.replaceChildren(
     renderBreadcrumb(event),
     renderHero(event, status, registrationModal),
     renderQuickInfo(event),
-    renderContent(event, status, registrations, registrationModal)
+    renderContent(event, status, registrationModal)
   );
 
+  if (result?.source === "static") {
+    const warning = textElement("p", "event-warning container", UNAVAILABLE_NOTICE);
+    warning.setAttribute("role", "status");
+    root.prepend(warning);
+  }
+
   revealScope(root);
+}
+
+function effectiveStatus(event) {
+  const status = getEventStatus(event.status);
+  if (canRegister(event, status)) return status;
+  return { ...status, canRegister: false, cta: status.canRegister ? "Inscrições indisponíveis" : status.cta };
 }
 
 function renderBreadcrumb(event) {
@@ -212,7 +243,7 @@ function renderQuickInfo(event) {
   return section;
 }
 
-function renderContent(event, status, registrations, registrationModal) {
+function renderContent(event, status, registrationModal) {
   const section = document.createElement("section");
   section.className = "section event-content-section";
 
@@ -229,8 +260,7 @@ function renderContent(event, status, registrations, registrationModal) {
     renderRegulation(event),
     renderHighlights(event),
     renderSponsors(event),
-    renderQuestions(event),
-    renderStoredRegistrations(registrations)
+    renderQuestions(event)
   );
 
   const aside = renderSidebar(event, status, registrationModal);
@@ -364,27 +394,6 @@ function renderQuestions(event) {
   link.textContent = "Falar com a M&D";
 
   return contentBlock("Dúvidas", [textElement("p", "", text), link], "evt-duvidas");
-}
-
-function renderStoredRegistrations(registrations) {
-  if (!registrations.length) return document.createDocumentFragment();
-
-  const list = document.createElement("ul");
-  list.className = "stored-registrations";
-  registrations.slice(0, 4).forEach((registration) => {
-    const item = document.createElement("li");
-    item.append(
-      textElement("strong", "", registration.team?.name || "Equipe"),
-      textElement("span", "", registration.protocol)
-    );
-    list.append(item);
-  });
-
-  return contentBlock(
-    "Inscrições demonstrativas salvas",
-    [textElement("p", "", "Registros locais encontrados neste navegador."), list],
-    "evt-inscricoes-salvas"
-  );
 }
 
 function renderSidebar(event, status, registrationModal) {

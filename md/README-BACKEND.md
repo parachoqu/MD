@@ -180,7 +180,14 @@ O plano Hobby nao deve ser presumido adequado para um site de atividade comercia
 
 ## Banco, migrations e seed
 
-A migration versionada fica em `db/migrations/001_initial_schema.sql`. `schema_migrations` registra nome, versao e checksum; alterar uma migration ja aplicada causa falha fechada.
+As migrations versionadas ficam em `db/migrations/`, aplicadas em ordem de versao:
+
+| Arquivo | O que faz |
+| --- | --- |
+| `001_initial_schema.sql` | schema completo, 18 tabelas |
+| `002_organizer_role_and_registration_indexes.sql` | libera o papel `organizer` no CHECK de `admin_users` e cria os indices `(updated_at, id)`, `(created_at DESC, id DESC)` e `(status, created_at DESC, id DESC)` de `registrations`, que sustentam a paginacao por keyset e o cursor incremental |
+
+`schema_migrations` registra nome, versao e checksum; alterar uma migration ja aplicada causa falha fechada. A 001 e imutavel: qualquer mudanca de schema entra como 002 ou posterior.
 
 Todos os scripts que acessam o banco para manutencao exigem `DATABASE_URL_UNPOOLED`. Ausencia, valor vazio/invalido ou endpoint Neon pooled nessa variavel devem impedir a conexao. A importacao sem `--apply` valida o arquivo offline e dispensa variaveis de banco. Pools administrativos sao separados do singleton HTTP e fechados em `finally`; os servicos continuam aceitando banco injetado nos testes.
 
@@ -188,7 +195,7 @@ Todos os scripts que acessam o banco para manutencao exigem `DATABASE_URL_UNPOOL
 npm run db:migrate
 ```
 
-Tabelas (18 no total, incluindo `schema_migrations`):
+Tabelas (18 no total, incluindo `schema_migrations`; a 002 nao cria tabela):
 
 - `admin_users`, `admin_sessions`, `password_reset_tokens`;
 - `events`, `projects`, `site_pages`, `site_settings`;
@@ -263,6 +270,34 @@ Salvar altera apenas `draft_data`. Publicar valida o rascunho, copia o snapshot 
 
 Toda atualizacao exige `revision`; uma edicao obsoleta recebe `409 REVISION_CONFLICT`.
 
+## Papeis e autorizacao
+
+`admin_users.role` aceita `admin`, `editor` e `organizer` (migration 002).
+A matriz vive em `server/http/authorization.js` e e aplicada no servidor, em
+`server/http/admin-controller.js`. Esconder item de menu no painel nao e controle
+de acesso: rota nao permitida responde `403`.
+
+| Papel | Conteudo (eventos, projetos, paginas, configuracoes, midia, auditoria, contatos) | Inscricoes |
+| --- | --- | --- |
+| `admin` | total | leitura e alteracao de status |
+| `editor` | total | leitura e alteracao de status |
+| `organizer` | nenhum acesso (`403`) | leitura e alteracao de status |
+
+Papel desconhecido nao recebe permissao alguma: a matriz falha fechada.
+Sem sessao a resposta e `401`, nunca `403` -- o servidor nao revela permissao a
+quem nao esta autenticado.
+
+Cada organizador precisa da propria conta. Crie com:
+
+```bash
+npm run db:create-organizer
+```
+
+O comando exige terminal interativo, le a senha oculta, aplica a politica de senha
+e revoga sessoes anteriores da conta. Nunca aceita senha por argumento, variavel de
+ambiente ou stdin nao interativo. Conta compartilhada destroi a rastreabilidade da
+auditoria e nao deve ser usada.
+
 ## APIs administrativas
 
 Todas exigem sessao. Mutacoes tambem exigem `Origin` correto e `X-CSRF-Token`.
@@ -317,6 +352,45 @@ PUT /api/admin/contact-messages/:id/status
 
 Inscricoes e mensagens ja possuem API administrativa, mas ainda nao possuem telas grandes dedicadas no painel.
 
+### Inscricoes no painel
+
+```text
+GET /api/admin/registrations?status&eventId&categoryId&query&limit&cursor&sync
+GET /api/admin/registrations/metrics?status&eventId&categoryId&query
+GET /api/admin/registrations/:id
+PUT /api/admin/registrations/:id/status
+```
+
+`GET /api/admin/registrations` devolve um objeto, nao um array:
+
+```json
+{ "mode": "page", "items": [], "limit": 50, "hasMore": false,
+  "nextCursor": null, "syncCursor": "..." }
+```
+
+- `limit`: padrao 50, maximo 100. A barreira antiga de 200 registros deixou de
+  existir: a paginacao percorre a base inteira sem carregar tudo de uma vez.
+- **Modo pagina** (sem `sync`): ordena por `created_at DESC, id DESC` e pagina por
+  keyset com `cursor`. `nextCursor` aponta para a proxima pagina.
+- **Modo incremental** (`sync=<cursor>`): devolve so o que foi criado ou alterado
+  depois do cursor, ordenado por `updated_at ASC, id ASC`, e `mode` vira `"sync"`.
+  Sem novidade a lista volta vazia e `syncCursor` permanece o mesmo.
+- O cursor e `base64url` de `"<timestamp>|<id>"`. A comparacao usa sempre o par
+  `(timestamp, id)`, nunca so o horario, para nao perder empates de milissegundo.
+  O timestamp e formatado pelo proprio Postgres com seis casas, porque o driver
+  entrega `timestamptz` como `Date` (milissegundos) e o arredondamento faria o
+  cursor repetir ou pular linha. Cursor malformado responde `422`.
+- A listagem carrega o minimo de dado pessoal: nome do responsavel e contagens.
+  **E-mail, telefone e data de nascimento so existem em `GET .../:id`.**
+- `PUT .../:id/status` aceita `new`, `reviewing`, `confirmed`, `cancelled` e
+  `rejected`, com concorrencia otimista por `updatedAt`. Divergencia responde `409`;
+  o painel recarrega o registro e explica que outro organizador o alterou.
+
+O painel usa o modo incremental a cada cinco segundos enquanto a aba esta visivel,
+mescla por `id` sem duplicar linha, pausa em segundo plano, sincroniza ao recuperar
+o foco, aplica backoff em falha e roda uma reconciliacao completa periodica para
+recuperar qualquer atualizacao perdida. Sem WebSocket, SSE ou servico pago.
+
 ## API publica
 
 ```text
@@ -362,13 +436,30 @@ O servico valida em transacao:
 
 O protocolo e criado no servidor no formato `MD-AAAAMMDD-XXXXXXXX`. O payload pessoal completo nao vai para logs de auditoria.
 
-Os dados antigos `md.registration.drafts.v1` e `md.registrations.v1` nao sao importados automaticamente. Rascunhos locais so devem ser removidos pelo frontend depois de uma resposta oficial de sucesso; essa integracao publica ainda esta pendente.
+O formulario publico esta ligado a este endpoint. O navegador nunca gera protocolo:
+ele exibe apenas `protocol`, `registrationId` e `receivedAt` devolvidos pelo servidor.
+
+Armazenamento local (`js/registration/registration-storage.js`):
+
+- `md.registration.drafts.v1` guarda **somente rascunho**, com `state`, `step`,
+  `idempotencyKey`, `updatedAt` e `expiresAt`.
+- **O rascunho expira em 7 dias** a partir da ultima gravacao; rascunho vencido e
+  ignorado e apagado do navegador na leitura seguinte.
+- A chave de idempotencia nasce junto do rascunho e e **reaproveitada em toda nova
+  tentativa do mesmo envio**. Em timeout, 5xx, 429 ou falta de rede o rascunho e a
+  chave sao mantidos e o botao "Tentar novamente" reenvia com a chave identica, para
+  o servidor responder replay em vez de criar uma segunda inscricao.
+- Rascunho e chave so sao apagados depois do `201` confirmado.
+- `md.registrations.v1` foi descontinuada: inscricao concluida nao mora mais no
+  navegador, e a chave antiga e removida na primeira abertura do formulario.
 
 ## Contato
 
 O endpoint valida nome, e-mail ou telefone, assunto, mensagem, consentimento, honeypot, tamanhos, rate limit e idempotencia. A mensagem inicia com status `new` e fica disponivel na API administrativa. Nao ha simulacao de envio de e-mail.
 
-O formulario publico atual ainda precisa ser ligado a esse endpoint.
+O formulario publico esta ligado a esse endpoint, com honeypot `website`, idempotencia
+por tentativa em `sessionStorage`, guarda contra clique duplo e tratamento distinto de
+`422`, `409`, `429` e indisponibilidade. Nao existe simulacao de sucesso por `setTimeout`.
 
 ## Midia e Vercel Blob
 

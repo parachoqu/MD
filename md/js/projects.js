@@ -1,20 +1,23 @@
 import { revealScope } from "./motion.js";
-import { projects as staticProjects } from "../data/projects.js";
+import { loadPublicBootstrap } from "./api/public-data.js";
 
-export function initProjects(projects = staticProjects) {
+// Os projetos passam a vir do bootstrap publicado; a lista estatica so entra
+// pelo fallback de leitura resolvido em public-data.js.
+export async function initProjects(projects) {
   const grid = document.getElementById("projectsGrid");
   const filters = Array.from(document.querySelectorAll("[data-filter]"));
   const modal = createProjectModal();
 
   if (!grid) return;
 
-  grid.innerHTML = projects.map(projectTemplate).join("");
+  const list = Array.isArray(projects) ? projects : (await loadPublicBootstrap()).projects;
+  grid.replaceChildren(...list.map(projectRow));
   revealScope(grid);
 
   grid.addEventListener("click", (event) => {
     const button = event.target.closest("[data-project-id]");
     if (!button) return;
-    const project = projects.find((item) => item.id === button.dataset.projectId);
+    const project = list.find((item) => item.id === button.dataset.projectId);
     if (project) modal.open(project, button);
   });
 
@@ -34,26 +37,60 @@ export function initProjects(projects = staticProjects) {
   });
 }
 
-function projectTemplate(project, index) {
-  return `
-    <article class="editorial-row project-row" data-category="${project.category}">
-      <figure class="project-row__media media-frame" data-animate>
-        <img src="${project.image}" alt="${project.imageAlt}" width="1448" height="1086" loading="lazy">
-      </figure>
-      <div class="project-row__body">
-        <span class="editorial-row__index" data-animate>${String(index + 1).padStart(2, "0")} / ${project.category}</span>
-        <h3 class="editorial-row__title">${project.title}</h3>
-        <p class="project-row__text" data-animate>${project.description}</p>
-      </div>
-      <div class="project-row__aside" data-animate>
-        <div class="project-row__meta">
-          <span class="tag tag--demo">${project.status}</span>
-        </div>
-        <span class="project-row__date">${project.date}</span>
-      </div>
-      <button class="link-action" type="button" data-project-id="${project.id}" data-animate>Ver detalhes</button>
-    </article>
-  `;
+// Construido pela API do DOM, nunca por string: o conteudo agora chega do
+// servidor e nao pode ser interpretado como marcacao.
+function projectRow(project, index) {
+  const article = element("article", "editorial-row project-row");
+  article.dataset.category = project.category || "";
+
+  const figure = element("figure", "project-row__media media-frame");
+  figure.dataset.animate = "";
+  const image = document.createElement("img");
+  image.src = safeImageSource(project.image);
+  image.alt = project.imageAlt || "";
+  image.width = 1448;
+  image.height = 1086;
+  image.loading = "lazy";
+  figure.append(image);
+
+  const body = element("div", "project-row__body");
+  const indexLabel = element("span", "editorial-row__index", `${String(index + 1).padStart(2, "0")} / ${project.category || ""}`);
+  indexLabel.dataset.animate = "";
+  const description = element("p", "project-row__text", project.description || "");
+  description.dataset.animate = "";
+  body.append(indexLabel, element("h3", "editorial-row__title", project.title || ""), description);
+
+  const aside = element("div", "project-row__aside");
+  aside.dataset.animate = "";
+  const meta = element("div", "project-row__meta");
+  meta.append(element("span", "tag tag--demo", project.status || ""));
+  aside.append(meta, element("span", "project-row__date", project.date || ""));
+
+  const details = document.createElement("button");
+  details.className = "link-action";
+  details.type = "button";
+  details.dataset.projectId = project.id || "";
+  details.dataset.animate = "";
+  details.textContent = "Ver detalhes";
+
+  article.append(figure, body, aside, details);
+  return article;
+}
+
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+// A imagem do projeto e editada no painel; caminhos relativos e http(s) sao
+// aceitos, qualquer outro esquema vira string vazia em vez de virar codigo.
+function safeImageSource(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^(?:javascript|data|vbscript):/i.test(raw)) return "";
+  return raw;
 }
 
 function createProjectModal() {
@@ -80,9 +117,13 @@ function createProjectModal() {
     description.textContent = project.description;
     date.textContent = project.date;
     note.textContent = project.note;
-    image.src = project.image;
+    image.src = safeImageSource(project.image);
     image.alt = project.imageAlt;
-    tags.innerHTML = `<span class="tag">${project.category}</span> <span class="tag tag--demo">${project.status}</span>`;
+    tags.replaceChildren(
+      element("span", "tag", project.category || ""),
+      document.createTextNode(" "),
+      element("span", "tag tag--demo", project.status || "")
+    );
     modalInterest.dataset.interest = project.category;
 
     modal.classList.add("is-open");

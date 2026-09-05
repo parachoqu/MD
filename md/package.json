@@ -17,6 +17,7 @@
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
     "db:seed": "node --env-file-if-exists=.env.local scripts/seed.mjs",
     "db:create-admin": "node --env-file-if-exists=.env.local scripts/create-admin.mjs",
+    "db:create-organizer": "node --env-file-if-exists=.env.local scripts/create-organizer.mjs",
     "db:export": "node --env-file-if-exists=.env.local scripts/export-data.mjs",
     "db:import-admin-export": "node --env-file-if-exists=.env.local scripts/import-admin-export.mjs",
     "build:vendor": "node scripts/build-vendor.mjs"

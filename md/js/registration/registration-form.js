@@ -1,3 +1,5 @@
+import { CONSENT_VERSION } from "../consent.js";
+
 export const STEPS = [
   { id: "team", label: "Equipe" },
   { id: "responsible", label: "Responsável" },
@@ -30,7 +32,7 @@ export function createInitialState(event, draft = null) {
 }
 
 export function createParticipant() {
-  const id = window.crypto?.randomUUID?.() || `participant-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const id = globalThis.crypto?.randomUUID?.() || `participant-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   return {
     id,
     name: "",
@@ -60,24 +62,38 @@ export function getCategory(event, categoryId) {
   return event.categories.find((category) => category.id === categoryId) || null;
 }
 
-export function buildRegistration(event, state) {
-  const now = new Date().toISOString();
-  const protocol = generateProtocol();
-
+// Espelha exatamente o schema estrito do servidor: qualquer campo a mais vira 422.
+// O id local do participante fica de fora para o payload continuar identico entre
+// tentativas, o que mantem o hash de idempotencia estavel.
+export function buildSubmissionPayload(event, state) {
   return {
-    id: window.crypto?.randomUUID?.() || protocol,
-    protocol,
-    eventId: event.id,
     eventSlug: event.slug,
     registrationType: event.registrationType || "team",
-    createdAt: now,
-    team: trimObject(state.team),
-    responsible: trimObject(state.responsible),
-    category: getCategory(event, state.categoryId),
-    participants: state.participants.map((participant) => trimObject(participant)),
-    consent: Boolean(state.consent),
+    team: {
+      name: text(state.team?.name),
+      city: text(state.team?.city),
+      state: text(state.team?.state),
+      institution: text(state.team?.institution),
+    },
+    responsible: {
+      name: text(state.responsible?.name),
+      email: text(state.responsible?.email),
+      phone: text(state.responsible?.phone),
+      role: text(state.responsible?.role),
+    },
+    categoryId: text(state.categoryId),
+    participants: (state.participants || []).map((participant) => ({
+      name: text(participant.name),
+      birthDate: text(participant.birthDate),
+      jerseyNumber: text(participant.jerseyNumber),
+      role: text(participant.role),
+    })),
+    // O formulario ainda nao coleta comissao tecnica; o servidor aceita a lista vazia.
+    staff: [],
+    // O envio so acontece depois da validacao exigir o aceite explicito.
+    consent: true,
     regulationConsent: Boolean(state.regulationConsent),
-    demoOnly: true,
+    consentVersion: CONSENT_VERSION,
   };
 }
 
@@ -94,24 +110,6 @@ function normalizeParticipants(participants) {
   }));
 }
 
-function trimObject(object) {
-  return Object.fromEntries(
-    Object.entries(object || {}).map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
-  );
-}
-
-function generateProtocol() {
-  const bytes = new Uint8Array(3);
-  if (window.crypto?.getRandomValues) {
-    window.crypto.getRandomValues(bytes);
-  } else {
-    bytes.forEach((_, index) => {
-      bytes[index] = Math.floor(Math.random() * 256);
-    });
-  }
-
-  return `MD-DEMO-${Array.from(bytes)
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("")
-    .toUpperCase()}`;
+function text(value) {
+  return typeof value === "string" ? value.trim() : "";
 }

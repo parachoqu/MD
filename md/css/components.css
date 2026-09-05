@@ -581,3 +581,14 @@ button:disabled:not(.btn--soon):not(.btn--closed) {
     transition: none;
   }
 }
+
+/* --- Honeypot de contato ----------------------------------------------- */
+/* Fora do fluxo visual e da ordem de foco, mas presente no DOM e no payload
+   para que apenas robôs preencham o campo. */
+.form-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

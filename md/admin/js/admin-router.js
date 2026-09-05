@@ -13,17 +13,27 @@ import { contentView } from "./views/content-view.js";
 import { projectsView } from "./views/projects-view.js";
 import { mediaView } from "./views/media-view.js";
 import { settingsView } from "./views/settings-view.js";
+import { registrationsView } from "./views/registrations-view.js";
+import { defaultRouteForRole } from "./admin-shell.js";
+
+// `roles` filtra a navegacao; o 403 do servidor continua sendo o controle real.
+const CONTENT_ROLES = ["admin", "editor"];
 
 const ROUTES = [
-  { pattern: ["dashboard"], view: dashboardView },
-  { pattern: ["events"], view: eventsView },
-  { pattern: ["events", "new"], view: eventEditorView },
-  { pattern: ["events", "edit", ":id"], view: eventEditorView },
-  { pattern: ["content", "home"], view: contentView },
-  { pattern: ["projects"], view: projectsView },
-  { pattern: ["media"], view: mediaView },
-  { pattern: ["settings"], view: settingsView },
+  { pattern: ["dashboard"], view: dashboardView, roles: CONTENT_ROLES },
+  { pattern: ["registrations"], view: registrationsView, roles: ["admin", "editor", "organizer"] },
+  { pattern: ["events"], view: eventsView, roles: CONTENT_ROLES },
+  { pattern: ["events", "new"], view: eventEditorView, roles: CONTENT_ROLES },
+  { pattern: ["events", "edit", ":id"], view: eventEditorView, roles: CONTENT_ROLES },
+  { pattern: ["content", "home"], view: contentView, roles: CONTENT_ROLES },
+  { pattern: ["projects"], view: projectsView, roles: CONTENT_ROLES },
+  { pattern: ["media"], view: mediaView, roles: CONTENT_ROLES },
+  { pattern: ["settings"], view: settingsView, roles: CONTENT_ROLES },
 ];
+
+function allowsRole(route, role) {
+  return route.roles.includes(String(role || ""));
+}
 
 function parseHash() {
   return window.location.hash.replace(/^#/, "").split("/").filter(Boolean);
@@ -56,12 +66,16 @@ export function initRouter(shell) {
     const session = await requireSession();
     if (!session) return;
 
+    const role = session.user?.role || session.role || "";
+    const fallback = defaultRouteForRole(role);
     const segments = parseHash();
-    const effectiveSegments = segments.length ? segments : ["dashboard"];
+    const effectiveSegments = segments.length ? segments : [fallback];
     const match = matchRoute(effectiveSegments);
 
-    if (!match) {
-      window.location.hash = "#dashboard";
+    // Rota inexistente ou fora do papel volta para a area inicial permitida.
+    if (!match || !allowsRole(match.route, role)) {
+      if (effectiveSegments.join("/") === fallback) return;
+      window.location.hash = "#" + fallback;
       return;
     }
 

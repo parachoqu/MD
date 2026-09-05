@@ -459,8 +459,13 @@
               </div>
             </div>
             <div class="form-field">
-              <label for="message">Mensagem</label>
-              <textarea id="message" name="message" placeholder="Descreva objetivo, público, data prevista, cidade ou necessidades principais."></textarea>
+              <label for="message">Mensagem *</label>
+              <textarea id="message" name="message" required placeholder="Descreva objetivo, público, data prevista, cidade ou necessidades principais."></textarea>
+              <span class="form-error">Escreva sua mensagem.</span>
+            </div>
+            <div class="form-honeypot" aria-hidden="true">
+              <label for="website">Não preencha este campo</label>
+              <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
             </div>
             <label class="checkbox-field">
               <input id="consent" name="consent" type="checkbox" required>

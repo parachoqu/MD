@@ -1,5 +1,6 @@
+import { apiPost } from "../api/public-client.js";
 import {
-  buildRegistration,
+  buildSubmissionPayload,
   createInitialState,
   createParticipant,
   getCategory,
@@ -7,7 +8,19 @@ import {
   STEPS,
 } from "./registration-form.js";
 import { firstInvalidStep, validateAll, validateStep } from "./registration-validation.js";
-import { deleteDraft, getDraft, saveDraft, saveRegistration } from "./registration-storage.js";
+import {
+  clearCompletedRegistration,
+  deleteDraft,
+  ensureIdempotencyKey,
+  getDraft,
+  purgeLegacyRegistrations,
+  saveDraft,
+} from "./registration-storage.js";
+
+const REGISTRATION_ENDPOINT = "/api/public/registrations";
+
+// Inscricao concluida nao mora mais no navegador: a chave antiga sai na primeira abertura.
+let legacyPurged = false;
 
 const FOCUSABLE =
   "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])";
@@ -30,8 +43,8 @@ export function createRegistrationModal(event, root = document.body) {
   let closeTimer = null;
   let saveState = "";
   let submitting = false;
-  let completedRegistration = null;
-  let showSuccessSummary = false;
+  let completed = null;
+  let submitError = null;
 
   modal.addEventListener("click", (clickEvent) => {
     if (clickEvent.target === modal) requestClose();
@@ -50,6 +63,11 @@ export function createRegistrationModal(event, root = document.body) {
   });
 
   function open(trigger) {
+    if (!legacyPurged) {
+      purgeLegacyRegistrations();
+      legacyPurged = true;
+    }
+
     lastTrigger = trigger;
     const draft = getDraft(event.slug);
     state = createInitialState(event, draft);
@@ -57,8 +75,8 @@ export function createRegistrationModal(event, root = document.body) {
     maxVisitedStep = currentStep;
     errors = {};
     submitting = false;
-    completedRegistration = null;
-    showSuccessSummary = false;
+    completed = null;
+    submitError = null;
     mode = draft && hasMeaningfulData(state) ? "resume" : "form";
     show();
   }
@@ -127,9 +145,9 @@ export function createRegistrationModal(event, root = document.body) {
     const header = element("header", { className: "registration-dialog__header" });
     const headingGroup = element("div");
     headingGroup.append(
-      element("p", { className: "eyebrow", text: event.demo ? "Inscrição demonstrativa" : "Inscrição" }),
+      element("p", { className: "eyebrow", text: "Inscrição" }),
       element("h2", {
-        text: mode === "success" ? "Inscrição concluída para demonstração" : "Inscrever equipe",
+        text: mode === "success" ? "Inscrição enviada" : "Inscrever equipe",
         attrs: { id: "registrationTitle" },
       }),
       element("p", {
@@ -376,7 +394,7 @@ export function createRegistrationModal(event, root = document.body) {
       element("p", {
         className: "registration-help",
         text: limitText.length
-          ? `Configuração demonstrativa de elenco: ${limitText.join(", ")} atletas.`
+          ? `Elenco aceito neste evento: ${limitText.join(", ")} atletas.`
           : "As regras oficiais de elenco serão aplicadas quando estiverem disponíveis.",
       })
     );
@@ -500,12 +518,61 @@ export function createRegistrationModal(event, root = document.body) {
 
     wrapper.append(
       element("p", {
-        className: "registration-demo-note",
-        text: "Demonstração frontend - nenhum dado será enviado para um servidor.",
-      })
+        className: "registration-help",
+        text: "Ao confirmar, os dados vão para a organização do evento e o protocolo oficial aparece nesta tela.",
+      }),
+      renderSubmitFeedback()
     );
 
     return wrapper;
+  }
+
+  // Regiao viva unica do envio: estado e erro entram aqui sem recriar o formulario.
+  function renderSubmitFeedback() {
+    const feedback = element("div", {
+      className: "registration-submit",
+      attrs: { "data-submit-feedback": "", "aria-live": "polite", tabindex: "-1" },
+    });
+    feedback.replaceChildren(...submitFeedbackNodes());
+    return feedback;
+  }
+
+  function submitFeedbackNodes() {
+    if (submitting) {
+      return [element("p", { className: "registration-submit__status", text: "Enviando inscrição..." })];
+    }
+
+    if (!submitError) return [];
+
+    const nodes = [element("p", { className: "registration-submit__error", text: submitError.message })];
+
+    if (submitError.retryable) {
+      nodes.push(
+        element("button", {
+          className: "btn btn--secondary",
+          text: "Tentar novamente",
+          attrs: { type: "button", "data-submit-retry": "" },
+          on: { click: confirmRegistration },
+        })
+      );
+    }
+
+    return nodes;
+  }
+
+  function updateSubmitUi() {
+    const button = modal.querySelector("[data-submit-button]");
+    if (button) {
+      button.disabled = submitting;
+      button.textContent = submitButtonLabel();
+    }
+
+    const feedback = modal.querySelector("[data-submit-feedback]");
+    if (feedback) feedback.replaceChildren(...submitFeedbackNodes());
+  }
+
+  function submitButtonLabel() {
+    return submitting ? "Enviando..." : "Confirmar inscrição";
   }
 
   function renderReviewBlock(title, rows, editStep = null) {
@@ -638,11 +705,12 @@ export function createRegistrationModal(event, root = document.body) {
     actions.append(
       element("button", {
         className: "btn btn--primary",
-        text: currentStep === STEPS.length - 1 ? (submitting ? "Confirmando..." : "Confirmar inscrição") : "Continuar",
+        text: currentStep === STEPS.length - 1 ? submitButtonLabel() : "Continuar",
         attrs: {
           type: "button",
           disabled: submitting ? "" : null,
           "data-autofocus": currentStep === 0 ? "" : null,
+          "data-submit-button": currentStep === STEPS.length - 1 ? "" : null,
         },
         on: {
           click: currentStep === STEPS.length - 1 ? confirmRegistration : goNext,
@@ -654,37 +722,21 @@ export function createRegistrationModal(event, root = document.body) {
     return footer;
   }
 
+  // Somente o que o servidor devolveu: protocolo, identificador e horario de recebimento.
   function renderSuccess() {
     const content = element("div", { className: "registration-panel registration-success" });
     content.append(
-      element("h3", { text: "Inscrição concluída para demonstração" }),
-      renderProtocolRow("Equipe", completedRegistration?.team?.name || "Equipe"),
-      renderProtocolRow("Evento", event.title),
-      renderProtocolRow("Protocolo", completedRegistration?.protocol || "MD-DEMO"),
+      element("h3", { text: "Inscrição enviada" }),
+      renderProtocolRow("Protocolo", completed?.protocol || "A confirmar"),
+      renderProtocolRow("Identificador", completed?.registrationId || "A confirmar"),
+      renderProtocolRow("Recebida em", formatReceivedAt(completed?.receivedAt)),
       element("p", {
-        className: "registration-demo-note",
-        text: "Demonstração frontend - nenhum dado foi enviado para um servidor.",
+        text: "Guarde o protocolo: é por ele que a organização localiza a inscrição. A análise e a confirmação seguem pelo e-mail do responsável.",
       })
     );
 
-    if (showSuccessSummary && completedRegistration) {
-      content.append(renderFinalSummary(completedRegistration));
-    }
-
     const actions = element("div", { className: "registration-actions" });
     actions.append(
-      element("button", {
-        className: "btn btn--secondary",
-        text: showSuccessSummary ? "Ocultar resumo" : "Ver resumo",
-        attrs: { type: "button" },
-        on: {
-          click: () => {
-            showSuccessSummary = !showSuccessSummary;
-            render();
-            focusInitial();
-          },
-        },
-      }),
       element("button", {
         className: "btn btn--primary",
         text: "Fechar",
@@ -701,22 +753,6 @@ export function createRegistrationModal(event, root = document.body) {
     const row = element("div", { className: "protocol-row" });
     row.append(element("span", { text: label }), element("strong", { text: value }));
     return row;
-  }
-
-  function renderFinalSummary(registration) {
-    const block = element("section", { className: "review-block" });
-    block.append(element("h4", { text: "Resumo salvo localmente" }));
-    const list = element("dl", { className: "review-list" });
-    [
-      ["Categoria", registration.category?.name],
-      ["Responsável", registration.responsible?.name],
-      ["Contato", `${registration.responsible?.email} · ${registration.responsible?.phone}`],
-      ["Atletas", String(registration.participants?.length || 0)],
-    ].forEach(([label, value]) => {
-      list.append(element("dt", { text: label }), element("dd", { text: value || "Não informado" }));
-    });
-    block.append(list);
-    return block;
   }
 
   function renderField(path, label, value, type = "text", autocomplete = null) {
@@ -803,11 +839,13 @@ export function createRegistrationModal(event, root = document.body) {
     focusInitial();
   }
 
-  function confirmRegistration() {
+  async function confirmRegistration() {
+    // Guarda de concorrencia: clique duplo ou retry nao viram segunda requisicao.
     if (submitting) return;
 
     errors = validateAll(state, event);
     if (Object.keys(errors).length) {
+      submitError = null;
       currentStep = firstInvalidStep(errors);
       maxVisitedStep = Math.max(maxVisitedStep, currentStep);
       render();
@@ -816,21 +854,161 @@ export function createRegistrationModal(event, root = document.body) {
     }
 
     submitting = true;
-    render();
+    submitError = null;
+    updateSubmitUi();
 
-    window.setTimeout(() => {
-      completedRegistration = buildRegistration(event, state);
-      saveRegistration(completedRegistration);
-      deleteDraft(event.slug);
-      submitting = false;
+    // Rascunho e chave gravados ANTES do envio: se a resposta se perder, a nova
+    // tentativa reusa a mesma chave e o servidor devolve a mesma inscricao.
+    saveNow();
+    updateSaveText();
+    const idempotencyKey = ensureIdempotencyKey(event.slug);
+    const result = await apiPost(REGISTRATION_ENDPOINT, buildSubmissionPayload(event, state), { idempotencyKey });
+    submitting = false;
+
+    if (result.ok) {
+      // A ordem importa: primeiro cancela a gravacao com debounce ainda pendente
+      // e marca o sucesso, so entao apaga. Sem isso um saveDraft agendado antes
+      // do envio dispara depois do 201 e recria o rascunho ja concluido.
+      clearTimeout(saveTimer);
+      saveTimer = null;
       mode = "success";
+      completed = result.data || {};
+      clearCompletedRegistration(event.slug);
+      errors = {};
+      submitError = null;
       saveState = "";
       render();
-      focusInitial();
-    }, 320);
+      if (isOpen()) focusInitial();
+      return;
+    }
+
+    handleSubmissionFailure(result.error || {});
+  }
+
+  function handleSubmissionFailure(error) {
+    if (error.code === "validation_error") {
+      const mapped = mapServerFields(error.fields);
+      errors = mapped.fields;
+      submitError = {
+        message: mapped.formMessage || error.message || "Revise os campos indicados e envie novamente.",
+        retryable: false,
+      };
+
+      if (Object.keys(errors).length) {
+        currentStep = firstInvalidStep(errors);
+        maxVisitedStep = Math.max(maxVisitedStep, currentStep);
+        render();
+        focusFirstError();
+        return;
+      }
+
+      render();
+      focusSubmitFeedback();
+      return;
+    }
+
+    submitError = describeFailure(error);
+    updateSubmitUi();
+    focusSubmitFeedback();
+  }
+
+  // O servidor numera participante pela posicao enviada; o formulario usa o id local.
+  function mapServerFields(fields) {
+    const result = { fields: {}, formMessage: "" };
+
+    Object.entries(fields || {}).forEach(([key, message]) => {
+      const local = translateFieldKey(key);
+      if (local === "_form") {
+        if (!result.formMessage) result.formMessage = message;
+        return;
+      }
+      if (!result.fields[local]) result.fields[local] = message;
+    });
+
+    return result;
+  }
+
+  function translateFieldKey(key) {
+    const participant = /^participants\.(\d+)\.([A-Za-z]+)$/.exec(key);
+    if (participant) {
+      const target = state.participants[Number(participant[1])];
+      return target ? `participants.${target.id}.${participant[2]}` : "_form";
+    }
+
+    if (["participants", "categoryId", "consent", "regulationConsent"].includes(key)) return key;
+    if (key.startsWith("team.") || key.startsWith("responsible.")) return key;
+
+    // eventSlug, registrationType, staff e afins nao tem campo no formulario.
+    return "_form";
+  }
+
+  function describeFailure(error) {
+    const status = Number(error.status || 0);
+    const code = String(error.code || "");
+
+    if (code === "offline") {
+      return {
+        message: "Sem conexão com a internet. O rascunho foi mantido; tente novamente quando a conexão voltar.",
+        retryable: true,
+      };
+    }
+
+    if (code === "timeout") {
+      return {
+        message: "O servidor demorou a responder. O rascunho foi mantido e a mesma inscrição pode ser reenviada.",
+        retryable: true,
+      };
+    }
+
+    if (code === "idempotency_conflict") {
+      return {
+        message: `${error.message || "Esta tentativa já foi registrada com outros dados."} Verifique o e-mail do responsável ou fale com a organização antes de reenviar.`,
+        retryable: false,
+      };
+    }
+
+    if (code === "idempotency_key_required") {
+      return { message: "Não foi possível validar o envio. Tente novamente.", retryable: true };
+    }
+
+    if (code === "revision_conflict" || status === 409) {
+      return { message: error.message || "Não foi possível concluir a inscrição agora.", retryable: true };
+    }
+
+    if (code === "rate_limited" || status === 429) {
+      const wait = Number(error.retryAfter || 0);
+      const suffix =
+        wait > 0
+          ? ` Aguarde ${wait} segundo(s) antes de tentar de novo.`
+          : " Aguarde alguns instantes antes de tentar de novo.";
+      return { message: `${error.message || "Muitas tentativas em pouco tempo."}${suffix}`, retryable: true };
+    }
+
+    if (code === "not_found" || status === 404) {
+      return {
+        message: error.message || "Este evento não está mais disponível para inscrição.",
+        retryable: false,
+      };
+    }
+
+    if (status === 0 || status >= 500) {
+      return {
+        message: "O serviço de inscrições está indisponível no momento. O rascunho foi mantido; tente novamente em alguns minutos.",
+        retryable: true,
+      };
+    }
+
+    return { message: error.message || "Não foi possível enviar a inscrição.", retryable: true };
+  }
+
+  function focusSubmitFeedback() {
+    if (!isOpen()) return;
+    focusInitial("[data-submit-feedback]");
   }
 
   function scheduleDraft() {
+    // Depois da inscricao confirmada nada mais volta para o navegador.
+    if (mode === "success") return;
     saveState = "Salvando rascunho...";
     updateSaveText();
     clearTimeout(saveTimer);
@@ -841,6 +1019,7 @@ export function createRegistrationModal(event, root = document.body) {
   }
 
   function saveNow() {
+    if (mode === "success") return;
     if (!hasMeaningfulData(state)) return;
     const saved = saveDraft(event.slug, { state, step: currentStep });
     saveState = saved ? "Rascunho salvo" : "Rascunho mantido nesta sessão";
@@ -946,6 +1125,19 @@ function element(tag, options = {}) {
   });
 
   return node;
+}
+
+// Horario oficial do recebimento no fuso do evento; sem data valida, mostra o texto cru.
+function formatReceivedAt(value) {
+  if (!value) return "A confirmar";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return String(value);
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "America/Sao_Paulo",
+  }).format(parsed);
 }
 
 function fieldId(path) {

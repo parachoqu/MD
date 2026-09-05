@@ -6,6 +6,10 @@ import { eventRepository } from "../repositories/event-repository.js";
 import { projectRepository } from "../repositories/project-repository.js";
 import { settingsRepository } from "../repositories/settings-repository.js";
 import { activityRepository } from "../repositories/activity-repository.js";
+import {
+  REGISTRATION_STATUS_LABELS,
+  registrationRepository,
+} from "../repositories/registration-repository.js";
 import { formatDateTimeBR } from "../utils.js";
 import { createIcon } from "../icons.js";
 
@@ -22,17 +26,19 @@ export const dashboardView = {
     shell.setTitle("Visão geral");
     shell.setBreadcrumb([{ label: "Visão geral" }]);
 
-    const [eventsResult, projectsResult, settingsResult, activityResult] = await Promise.all([
+    const [eventsResult, projectsResult, settingsResult, activityResult, registrationsResult] = await Promise.all([
       eventRepository.list({}),
       projectRepository.list({}),
       settingsRepository.get(),
       activityRepository.list(8),
+      registrationRepository.metrics(),
     ]);
 
     const events = eventsResult.data || [];
     const projects = projectsResult.data || [];
     const settings = settingsResult.data || {};
     const activity = activityResult.data || [];
+    const registrations = registrationsResult.ok ? registrationsResult.data || {} : null;
 
     const totalEvents = events.length;
     const openEvents = events.filter((event) => event.status === "open").length;
@@ -54,6 +60,18 @@ export const dashboardView = {
       metricCard("Conteúdos pendentes de revisão", placeholderProjects + placeholderSettings, "placeholders sinalizados"),
     ]);
 
+    // Contadores de inscricoes: numeros reais da API, sem estimativa.
+    const registrationCards = registrations
+      ? element("div", { className: "admin-metrics-grid" }, [
+          metricCard("Inscrições recebidas", registrations.total ?? 0),
+          metricCard(REGISTRATION_STATUS_LABELS.new, registrations.new ?? 0, "aguardando análise"),
+          metricCard(REGISTRATION_STATUS_LABELS.reviewing, registrations.reviewing ?? 0),
+          metricCard(REGISTRATION_STATUS_LABELS.confirmed, registrations.confirmed ?? 0),
+          metricCard(REGISTRATION_STATUS_LABELS.cancelled, registrations.cancelled ?? 0),
+          metricCard(REGISTRATION_STATUS_LABELS.rejected, registrations.rejected ?? 0),
+        ])
+      : element("p", { className: "admin-empty-state", text: "Não foi possível carregar os contadores de inscrições agora." });
+
     const shortcuts = element("div", { className: "admin-shortcuts" }, [
       element("a", { className: "admin-btn admin-btn--primary", href: "#events/new" }, [
         createIcon("plus", { size: 16 }),
@@ -66,6 +84,10 @@ export const dashboardView = {
       element("a", { className: "admin-btn admin-btn--secondary", href: "#projects" }, [
         createIcon("plus", { size: 16 }),
         element("span", { text: "Adicionar projeto" }),
+      ]),
+      element("a", { className: "admin-btn admin-btn--secondary", href: "#registrations" }, [
+        createIcon("users", { size: 16 }),
+        element("span", { text: "Ver inscrições" }),
       ]),
     ]);
 
@@ -86,6 +108,8 @@ export const dashboardView = {
     clearChildren(container);
     container.appendChild(integrationBadge);
     container.appendChild(metricsGrid);
+    container.appendChild(element("h2", { className: "admin-section-title", text: "Inscrições" }));
+    container.appendChild(registrationCards);
     container.appendChild(element("h2", { className: "admin-section-title", text: "Atalhos" }));
     container.appendChild(shortcuts);
     container.appendChild(element("h2", { className: "admin-section-title", text: "Últimas alterações auditadas" }));

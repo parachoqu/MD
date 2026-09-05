@@ -1286,3 +1286,162 @@ a:focus-visible,
     transition: none !important;
   }
 }
+
+/* ==========================================================================
+   Inscrições
+   Acrescentado para a tela de inscrições; nenhuma regra anterior foi alterada.
+   Mobile até 767px usa cards; a partir de 768px usa tabela.
+   ========================================================================== */
+
+.admin-registrations__metrics {
+  margin-bottom: 1rem;
+}
+
+.admin-registrations__live {
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.admin-registrations__live--offline {
+  color: var(--status-alert-ink, var(--ink));
+  font-weight: 600;
+}
+
+.admin-registrations__new {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--amber-line);
+  border-radius: var(--radius-control);
+  background: var(--amber-surface);
+  color: var(--amber-ink);
+  font-size: 0.9rem;
+}
+
+.admin-registrations__status--new { color: var(--amber-ink); border-color: var(--amber-line); background: var(--amber-surface); }
+.admin-registrations__status--reviewing { color: var(--status-soon-ink); border-color: var(--status-soon-line); background: var(--status-soon-surface); }
+.admin-registrations__status--confirmed { color: var(--status-open-ink); border-color: var(--status-open-line); background: var(--status-open-surface); }
+.admin-registrations__status--cancelled { color: var(--muted); border-color: var(--line); background: var(--surface-alt); }
+.admin-registrations__status--rejected { color: var(--status-alert-ink); border-color: var(--status-alert-line); background: var(--status-alert-surface); }
+
+.admin-registrations__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.admin-registrations__table th,
+.admin-registrations__table td {
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-registrations__table th {
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.75rem;
+}
+
+.admin-registrations__cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.admin-registrations__card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-surface);
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.admin-registrations__card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-registrations__card-team {
+  margin: 0;
+  font-weight: 600;
+}
+
+.admin-registrations__more {
+  margin-top: 1rem;
+}
+
+.admin-registrations__detail {
+  display: grid;
+  gap: 1.1rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.admin-registrations__section h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+}
+
+.admin-registrations__definitions {
+  display: grid;
+  grid-template-columns: minmax(8rem, auto) 1fr;
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.admin-registrations__definitions dt {
+  color: var(--muted);
+}
+
+.admin-registrations__definitions dd {
+  margin: 0;
+}
+
+.admin-registrations__people {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.admin-registrations__people span {
+  display: block;
+  color: var(--muted);
+}
+
+.admin-registrations__detail-feedback:empty {
+  display: none;
+}
+
+.admin-registrations__detail-feedback {
+  margin: 0.6rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--amber-line);
+  border-radius: var(--radius-control);
+  background: var(--amber-surface);
+  color: var(--amber-ink);
+  font-size: 0.88rem;
+}
+
+/* Mobile: cards. Desktop: tabela. Um dos dois some do fluxo e da árvore de
+   acessibilidade, então o leitor de tela nunca ouve a lista duas vezes. */
+@media (max-width: 767px) {
+  .admin-registrations__table { display: none; }
+  .admin-registrations__definitions { grid-template-columns: 1fr; }
+  .admin-registrations__definitions dt { margin-top: 0.35rem; }
+}
+
+@media (min-width: 768px) {
+  .admin-registrations__cards { display: none; }
+}

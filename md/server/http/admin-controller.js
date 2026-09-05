@@ -9,10 +9,14 @@ import { getIpHash } from "../security/request.js";
 import { consumeRateLimit, subjectHash } from "../security/rate-limit.js";
 import { createSubmissionAdminService } from "../services/submission-admin-service.js";
 import { createBlobService } from "../storage/blob-service.js";
+import { assertPermission, PERMISSIONS } from "./authorization.js";
 import { AppError, notFoundError, rateLimitError } from "./errors.js";
 import { json, readJson, success } from "./response.js";
 import { dataFromBody, expectedRevision, pathSegments, requireMethod } from "./route-utils.js";
 import { requireAdmin } from "./runtime.js";
+
+// Recursos de conteudo: exigem CONTENT_MANAGE, que o organizer nao possui.
+const CONTENT_RESOURCES = new Set(["events", "projects", "content", "settings", "media", "activity", "contact-messages"]);
 
 function filtersFrom(request, names) {
   const search = new URL(request.url).searchParams;
@@ -132,6 +136,7 @@ async function handleBlobRoute(request, body, runtime, options = {}) {
   let session = null;
   if (generating) {
     session = await requireAdmin(request, runtime, { mutation: true });
+    assertPermission(session, PERMISSIONS.CONTENT_MANAGE);
     const limiter = await consumeRateLimit(
       runtime.database,
       "upload",
@@ -183,30 +188,52 @@ async function handleMedia(request, segments, runtime, session) {
   throw notFoundError();
 }
 
-async function handleSubmissions(request, segments, runtime, session) {
-  const [resource, id, action] = segments;
+const REGISTRATION_LIST_FILTERS = ["status", "eventId", "categoryId", "query", "limit", "cursor", "sync"];
+const REGISTRATION_METRIC_FILTERS = ["status", "eventId", "categoryId", "query"];
+
+async function handleRegistrations(request, segments, runtime, session) {
+  const [, id, action] = segments;
   const service = createSubmissionAdminService(runtime.database);
-  const registrations = resource === "registrations";
+  if (!id) {
+    assertPermission(session, PERMISSIONS.REGISTRATIONS_READ);
+    requireMethod(request, "GET");
+    return success(await service.listRegistrations(filtersFrom(request, REGISTRATION_LIST_FILTERS)));
+  }
+  // "metrics" vem antes do ramo generico de :id para nao ser lido como identificador.
+  if (id === "metrics" && !action) {
+    assertPermission(session, PERMISSIONS.REGISTRATIONS_READ);
+    requireMethod(request, "GET");
+    return success(await service.registrationMetrics(filtersFrom(request, REGISTRATION_METRIC_FILTERS)));
+  }
+  if (!action) {
+    assertPermission(session, PERMISSIONS.REGISTRATIONS_READ);
+    requireMethod(request, "GET");
+    return success(await service.getRegistration(id));
+  }
+  if (action === "status") {
+    assertPermission(session, PERMISSIONS.REGISTRATIONS_WRITE);
+    requireMethod(request, "PUT");
+    const body = await mutationBody(request, 16 * 1024);
+    return success(await service.updateRegistrationStatus(id, body.status, body.updatedAt, session.user_id));
+  }
+  throw notFoundError();
+}
+
+async function handleContactMessages(request, segments, runtime, session) {
+  const [, id, action] = segments;
+  const service = createSubmissionAdminService(runtime.database);
   if (!id) {
     requireMethod(request, "GET");
-    return success(
-      registrations
-        ? await service.listRegistrations(filtersFrom(request, ["status", "eventId"]))
-        : await service.listContacts(filtersFrom(request, ["status"]))
-    );
+    return success(await service.listContacts(filtersFrom(request, ["status"])));
   }
   if (!action) {
     requireMethod(request, "GET");
-    return success(registrations ? await service.getRegistration(id) : await service.getContact(id));
+    return success(await service.getContact(id));
   }
   if (action === "status") {
     requireMethod(request, "PUT");
     const body = await mutationBody(request, 16 * 1024);
-    return success(
-      registrations
-        ? await service.updateRegistrationStatus(id, body.status, body.updatedAt, session.user_id)
-        : await service.updateContactStatus(id, body.status, body.updatedAt, session.user_id)
-    );
+    return success(await service.updateContactStatus(id, body.status, body.updatedAt, session.user_id));
   }
   throw notFoundError();
 }
@@ -223,6 +250,8 @@ export async function handleAdminRequest(request, runtime) {
 
   const mutation = !["GET", "HEAD"].includes(request.method);
   const session = await requireAdmin(request, runtime, { mutation });
+  // Papel decidido no servidor: esconder o menu no painel nao e controle de acesso.
+  if (CONTENT_RESOURCES.has(segments[0])) assertPermission(session, PERMISSIONS.CONTENT_MANAGE);
   if (segments[0] === "events") return handleEvents(request, segments, runtime, session);
   if (segments[0] === "projects") return handleProjects(request, segments, runtime, session);
   if (segments[0] === "content") return handleContent(request, segments, runtime, session);
@@ -232,8 +261,7 @@ export async function handleAdminRequest(request, runtime) {
     requireMethod(request, "GET");
     return success(await listAudit(runtime.database, { limit: new URL(request.url).searchParams.get("limit") }));
   }
-  if (["registrations", "contact-messages"].includes(segments[0])) {
-    return handleSubmissions(request, segments, runtime, session);
-  }
+  if (segments[0] === "registrations") return handleRegistrations(request, segments, runtime, session);
+  if (segments[0] === "contact-messages") return handleContactMessages(request, segments, runtime, session);
   throw notFoundError();
 }

@@ -229,5 +229,5 @@ test("comando migrate usa direto e fecha o pool no sucesso e na falha", async (c
   shouldFail = true;
   await assert.rejects(import("../../scripts/migrate.mjs?connection-test=failure"), (error) => error === failure);
   assert.deepEqual(observed.closed, [DIRECT, DIRECT]);
-  assert.deepEqual(messages, ["Migrations: 0 aplicada(s), 1 ja existente(s).\n"]);
+  assert.deepEqual(messages, [`Migrations: 0 aplicada(s), ${migrations.length} ja existente(s).\n`]);
 });

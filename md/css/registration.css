@@ -632,3 +632,43 @@
     transition: none;
   }
 }
+
+/* --- Envio da inscrição ---------------------------------------------------- */
+.registration-submit {
+  display: grid;
+  gap: var(--space-12);
+  justify-items: start;
+}
+
+.registration-submit:empty {
+  display: none;
+}
+
+.registration-submit__status {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+}
+
+.registration-submit__error {
+  padding: var(--space-12);
+  border: var(--line-soft) solid var(--status-alert-line);
+  border-left-width: var(--line-strong);
+  background: var(--status-alert-surface);
+  color: var(--status-alert-ink);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .registration-submit {
+    justify-items: stretch;
+  }
+
+  .registration-submit .btn {
+    width: 100%;
+    min-height: 48px;
+  }
+}

@@ -776,3 +776,18 @@
     padding-inline: 14px;
   }
 }
+
+/* Aviso de carregamento e de indisponibilidade das listas de eventos. */
+.events-notice {
+  margin: 0;
+  padding: var(--space-3, 1rem) 0;
+  color: var(--color-text-muted, #5b6470);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.events-notice--warning {
+  border-left: 3px solid var(--color-warning, #b4690e);
+  padding-left: var(--space-3, 1rem);
+  color: var(--color-text, #1d2430);
+}
