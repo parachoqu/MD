@@ -1,7 +1,7 @@
-import { getDatabase } from "../server/database/index.js";
+import { createMaintenanceDatabase } from "../server/database/index.js";
 import { migrateDatabase } from "../server/database/migrations.js";
 
-const database = getDatabase();
+const database = createMaintenanceDatabase();
 
 try {
   const results = await migrateDatabase(database);

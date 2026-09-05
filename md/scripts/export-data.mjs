@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { getDatabase } from "../server/database/index.js";
+import { createMaintenanceDatabase } from "../server/database/index.js";
 import { createAdminExport } from "../server/services/admin-export-service.js";
 
 function argument(name) {
@@ -15,7 +15,7 @@ function defaultOutput() {
 }
 
 const output = argument("output") || defaultOutput();
-const database = getDatabase();
+const database = createMaintenanceDatabase();
 
 try {
   const exported = await createAdminExport(database);

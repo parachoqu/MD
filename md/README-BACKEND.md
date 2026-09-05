@@ -2,7 +2,7 @@
 
 Backend Node.js para o site estatico M&D, executado em Vercel Functions, com Neon Postgres para dados relacionais e Vercel Blob para imagens administraveis. O frontend continua em HTML, CSS e ES Modules, sem framework.
 
-> Estado verificado em 28/08/2026: a implementacao local, os testes com Postgres embutido e o build de Preview passam. O backend ainda nao esta operacional na Vercel porque o projeto `mdprojetos` nao possui as variaveis obrigatorias em Development, Preview ou Production. Neon, Blob, migrations, seed, primeiro administrador e testes reais de Preview continuam pendentes.
+> Operacao atual (05/09/2026): somente Preview/staging, no projeto `colaresdev/mdprojetos`. Runtime usa `DATABASE_URL` pooled; manutencao exige `DATABASE_URL_UNPOOLED` direta. Antes de qualquer escrita remota, comprove a branch Neon propria do Preview no recurso `neon-coquelicot-dog`. Consulte o [procedimento de staging](docs/configuracao-backend-vercel-neon-pendencias.md). As tabelas de estado abaixo sao evidencias historicas de 28/08/2026; nao comprovam o estado remoto atual. Production, Blob e a integracao dos formularios ficam fora desta etapa.
 
 ## Estado objetivo
 
@@ -106,14 +106,18 @@ O projeto usa duas Functions roteadoras para admin e publico, alem de auth e hea
 ## Instalacao local
 
 ```bash
-cd /caminho/para/MD
-vercel link --project mdprojetos
-vercel env pull md/.env.local
-cd md
+cd /caminho/para/worktree-staging/md
 npm ci
 ```
 
-O pull acima usa Development por padrao. Se nao quiser usar o CLI, copie `.env.example` para `md/.env.local` e preencha valores locais ficticios/isolados. Nunca envie esse arquivo ao Git.
+Para trabalho offline, use valores ficticios/isolados de `.env.example`. Nunca envie arquivos com credenciais ao Git. Na operacao de staging, mantenha o vinculo Vercel na raiz da worktree e injete as variaveis sem substituir `md/.env.local`:
+
+```bash
+cd /caminho/para/worktree-staging
+vercel env run -e preview --git-branch staging -- npm --prefix md run db:migrate
+```
+
+Esse comando de escrita somente pode ser executado depois da prova do alvo descrita no procedimento de staging. `--git-branch staging` seleciona variaveis da Vercel, mas sozinho nao comprova que a conexao corresponde a branch Neon criada para o deployment.
 
 Depois:
 
@@ -133,7 +137,8 @@ npm run dev
 
 | Variavel | Obrigatoria | Uso |
 |---|---:|---|
-| `DATABASE_URL` | sim | conexao Neon do ambiente |
+| `DATABASE_URL` | sim, runtime HTTP | conexao Neon pooled do ambiente; Functions continuam usando esta variavel |
+| `DATABASE_URL_UNPOOLED` | sim, manutencao | conexao direta para migrate, seed, create-admin, export e import com `--apply`; sem fallback para pooled e sem obrigatoriedade no runtime HTTP |
 | `BLOB_READ_WRITE_TOKEN` | sim para midia | credencial server-side do Vercel Blob |
 | `APP_ORIGIN` | sim | origem exata aceita em mutacoes same-origin |
 | `SESSION_SECRET` | sim | HMAC dos tokens de sessao e callbacks internos |
@@ -177,11 +182,13 @@ O plano Hobby nao deve ser presumido adequado para um site de atividade comercia
 
 A migration versionada fica em `db/migrations/001_initial_schema.sql`. `schema_migrations` registra nome, versao e checksum; alterar uma migration ja aplicada causa falha fechada.
 
+Todos os scripts que acessam o banco para manutencao exigem `DATABASE_URL_UNPOOLED`. Ausencia, valor vazio/invalido ou endpoint Neon pooled nessa variavel devem impedir a conexao. A importacao sem `--apply` valida o arquivo offline e dispensa variaveis de banco. Pools administrativos sao separados do singleton HTTP e fechados em `finally`; os servicos continuam aceitando banco injetado nos testes.
+
 ```bash
 npm run db:migrate
 ```
 
-Tabelas:
+Tabelas (18 no total, incluindo `schema_migrations`):
 
 - `admin_users`, `admin_sessions`, `password_reset_tokens`;
 - `events`, `projects`, `site_pages`, `site_settings`;

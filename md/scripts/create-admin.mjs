@@ -1,6 +1,6 @@
 import { randomToken } from "../server/security/crypto.js";
 import { hashPassword, validatePasswordStrength } from "../server/security/password.js";
-import { getDatabase } from "../server/database/index.js";
+import { createMaintenanceDatabase } from "../server/database/index.js";
 import { migrateDatabase } from "../server/database/migrations.js";
 import { createInterface } from "node:readline/promises";
 
@@ -8,7 +8,6 @@ function readHidden(prompt) {
   if (!process.stdin.isTTY || !process.stdout.isTTY || typeof process.stdin.setRawMode !== "function") {
     throw new Error("Execute este comando em um terminal interativo para informar a senha com seguranca.");
   }
-  process.stdout.write(prompt);
   return new Promise((resolve, reject) => {
     let value = "";
     const finish = (error) => {
@@ -21,40 +20,44 @@ function readHidden(prompt) {
     };
     const onData = (chunk) => {
       const text = chunk.toString("utf8");
-      if (text === "\u0003") return finish(new Error("Operacao cancelada."));
-      if (text === "\r" || text === "\n") return finish();
-      if (text === "\u007f") {
-        value = value.slice(0, -1);
-        return;
+      for (const character of text) {
+        if (character === "\u0003") return finish(new Error("Operacao cancelada."));
+        if (character === "\r" || character === "\n") return finish();
+        if (character === "\u007f" || character === "\b") {
+          value = Array.from(value).slice(0, -1).join("");
+        } else if (!/[\u0000-\u001f]/.test(character)) {
+          value += character;
+        }
       }
-      if (!/[\u0000-\u001f]/.test(text)) value += text;
     };
+    process.stdin.on("data", onData);
     process.stdin.setRawMode(true);
     process.stdin.resume();
-    process.stdin.on("data", onData);
+    process.stdout.write(prompt);
   });
 }
 
-const terminal = createInterface({ input: process.stdin, output: process.stdout });
-let database;
+const database = createMaintenanceDatabase();
+let terminal;
 
 try {
+  terminal = createInterface({ input: process.stdin, output: process.stdout });
   const email = (await terminal.question("E-mail do administrador: ")).trim().toLowerCase();
   const name = (await terminal.question("Nome do administrador: ")).trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 320) throw new Error("E-mail invalido.");
   if (!name || name.length > 240) throw new Error("Nome invalido.");
-  terminal.pause();
+  // Remova os listeners do readline antes de reativar stdin em modo oculto.
+  terminal.close();
   const password = await readHidden("Senha (nao sera exibida): ");
   const confirmation = await readHidden("Confirme a senha: ");
   if (password !== confirmation) throw new Error("As senhas nao coincidem.");
   const errors = validatePasswordStrength(password);
   if (errors.length) throw new Error(errors.join(" "));
 
-  database = getDatabase();
   await migrateDatabase(database);
   const existing = await database.query("SELECT id FROM admin_users WHERE email = $1 LIMIT 1", [email]);
   if (existing.rows.length) {
-    terminal.resume();
+    terminal = createInterface({ input: process.stdin, output: process.stdout });
     const confirmationText = await terminal.question('A conta ja existe. Digite "ATUALIZAR" para trocar nome e senha: ');
     if (confirmationText !== "ATUALIZAR") throw new Error("Atualizacao cancelada.");
   }
@@ -71,6 +74,6 @@ try {
   await database.query("UPDATE admin_sessions SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL", [id]);
   process.stdout.write(existing.rows.length ? "Administrador atualizado e sessoes anteriores revogadas.\n" : "Administrador criado.\n");
 } finally {
-  terminal.close();
-  if (database) await database.close();
+  terminal?.close();
+  await database.close();
 }

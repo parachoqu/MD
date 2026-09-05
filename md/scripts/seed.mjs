@@ -1,8 +1,8 @@
-import { getDatabase } from "../server/database/index.js";
+import { createMaintenanceDatabase } from "../server/database/index.js";
 import { migrateDatabase } from "../server/database/migrations.js";
 import { applySeed } from "../server/services/seed-service.js";
 
-const database = getDatabase();
+const database = createMaintenanceDatabase();
 
 try {
   await migrateDatabase(database);

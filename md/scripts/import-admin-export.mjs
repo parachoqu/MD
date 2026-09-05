@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { getDatabase } from "../server/database/index.js";
+import { createMaintenanceDatabase } from "../server/database/index.js";
 import { migrateDatabase } from "../server/database/migrations.js";
 import { importAdminExport, validateAdminExport } from "../server/services/admin-export-service.js";
 
@@ -34,7 +34,7 @@ if (
   throw new Error("Production exige --confirm-production=IMPORTAR-PRODUCAO e confirmacao humana explicita.");
 }
 
-const database = getDatabase();
+const database = createMaintenanceDatabase();
 try {
   await migrateDatabase(database);
   const result = await importAdminExport(database, parsed, {
