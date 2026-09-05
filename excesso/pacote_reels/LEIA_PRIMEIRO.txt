@@ -1,0 +1,11 @@
+DOIS REELS DO EVENTO
+
+1. Abra manual_reels_capcut.pdf.
+2. Use os vídeos do ZIP original; os IDs V01-V05 e F01-F03 estão mapeados no manual.
+3. Monte R1 em 24 s e R2 em 30 s, em CapCut Desktop, 1080 x 1920 e 30 fps.
+4. Importe os SRTs como textos editoriais. Eles não são transcrições.
+5. As bases WAV são referências musicais sintéticas criadas para esta entrega; não são áudio do evento.
+
+O PDF e o Markdown contêm o mesmo roteiro. O JSON é apenas dado estruturado, não projeto do CapCut. As pranchas mostram os recortes, sem simulação exata da correção de cor do aplicativo.
+
+Limitação: não houve escuta/transcrição das falas, nem revisão auditiva das bases. A montagem final precisa de conferência de som e imagem pelo editor.
