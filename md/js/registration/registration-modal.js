@@ -32,6 +32,7 @@ export function createRegistrationModal(event, root = document.body) {
   let submitting = false;
   let completedRegistration = null;
   let showSuccessSummary = false;
+  let submitError = "";
 
   modal.addEventListener("click", (clickEvent) => {
     if (clickEvent.target === modal) requestClose();
@@ -57,6 +58,7 @@ export function createRegistrationModal(event, root = document.body) {
     maxVisitedStep = currentStep;
     errors = {};
     submitting = false;
+    submitError = "";
     completedRegistration = null;
     showSuccessSummary = false;
     mode = draft && hasMeaningfulData(state) ? "resume" : "form";
@@ -129,7 +131,7 @@ export function createRegistrationModal(event, root = document.body) {
     headingGroup.append(
       element("p", { className: "eyebrow", text: event.demo ? "Inscrição demonstrativa" : "Inscrição" }),
       element("h2", {
-        text: mode === "success" ? "Inscrição concluída para demonstração" : "Inscrever equipe",
+        text: mode === "success" ? "Inscrição confirmada" : "Inscrever equipe",
         attrs: { id: "registrationTitle" },
       }),
       element("p", {
@@ -249,6 +251,15 @@ export function createRegistrationModal(event, root = document.body) {
 
   function renderForm() {
     const wrapper = element("div", { className: "registration-form-shell" });
+    if (submitError) {
+      wrapper.append(
+        element("div", {
+          className: "registration-error-banner",
+          attrs: { role: "alert" },
+          text: submitError,
+        })
+      );
+    }
     wrapper.append(renderStepper(), renderCurrentStep(), renderFooter());
     return wrapper;
   }
@@ -638,7 +649,7 @@ export function createRegistrationModal(event, root = document.body) {
     actions.append(
       element("button", {
         className: "btn btn--primary",
-        text: currentStep === STEPS.length - 1 ? (submitting ? "Confirmando..." : "Confirmar inscrição") : "Continuar",
+        text: currentStep === STEPS.length - 1 ? (submitting ? "Enviando inscrição..." : "Confirmar inscrição") : "Continuar",
         attrs: {
           type: "button",
           disabled: submitting ? "" : null,
@@ -657,13 +668,15 @@ export function createRegistrationModal(event, root = document.body) {
   function renderSuccess() {
     const content = element("div", { className: "registration-panel registration-success" });
     content.append(
-      element("h3", { text: "Inscrição concluída para demonstração" }),
+      element("h3", { text: "Inscrição confirmada com sucesso!" }),
       renderProtocolRow("Equipe", completedRegistration?.team?.name || "Equipe"),
       renderProtocolRow("Evento", event.title),
-      renderProtocolRow("Protocolo", completedRegistration?.protocol || "MD-DEMO"),
+      renderProtocolRow("Protocolo Oficial", completedRegistration?.protocol || "MD-CONFIRMADA"),
       element("p", {
         className: "registration-demo-note",
-        text: "Demonstração frontend - nenhum dado foi enviado para um servidor.",
+        text: completedRegistration?.demoOnly
+          ? "Demonstração frontend - nenhum dado foi enviado para um servidor."
+          : "Sua inscrição oficial foi recebida pelo sistema. Guarde o protocolo acima para acompanhamento.",
       })
     );
 
@@ -803,7 +816,7 @@ export function createRegistrationModal(event, root = document.body) {
     focusInitial();
   }
 
-  function confirmRegistration() {
+  async function confirmRegistration() {
     if (submitting) return;
 
     errors = validateAll(state, event);
@@ -816,18 +829,100 @@ export function createRegistrationModal(event, root = document.body) {
     }
 
     submitting = true;
+    submitError = "";
     render();
 
-    window.setTimeout(() => {
-      completedRegistration = buildRegistration(event, state);
-      saveRegistration(completedRegistration);
-      deleteDraft(event.slug);
+    const payload = {
+      eventSlug: event.slug,
+      registrationType: event.registrationType || "team",
+      team: {
+        name: String(state.team.name || "").trim(),
+        city: String(state.team.city || "").trim(),
+        state: String(state.team.state || "").trim(),
+        institution: String(state.team.institution || "").trim(),
+      },
+      responsible: {
+        name: String(state.responsible.name || "").trim(),
+        email: String(state.responsible.email || "").trim(),
+        phone: String(state.responsible.phone || "").trim(),
+        role: String(state.responsible.role || "").trim(),
+      },
+      categoryId: state.categoryId,
+      participants: state.participants.map((p) => ({
+        name: String(p.name || "").trim(),
+        birthDate: p.birthDate || "",
+        jerseyNumber: String(p.jerseyNumber || "").trim(),
+        role: String(p.role || "").trim(),
+      })),
+      staff: (state.staff || []).map((s) => ({
+        name: String(s.name || "").trim(),
+        birthDate: s.birthDate || "",
+        jerseyNumber: String(s.jerseyNumber || "").trim(),
+        role: String(s.role || "").trim(),
+      })),
+      consent: true,
+      regulationConsent: Boolean(state.regulationConsent),
+      consentVersion: "privacy-v1",
+    };
+
+    const idempotencyKey = state.idempotencyKey || `reg-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+
+    try {
+      const response = await fetch("/api/public/registrations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Idempotency-Key": idempotencyKey,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      let resBody = null;
+      try {
+        resBody = await response.json();
+      } catch {
+        resBody = null;
+      }
+
+      if (response.ok && resBody?.ok) {
+        completedRegistration = buildRegistration(event, state, resBody.data);
+        saveRegistration(completedRegistration);
+        deleteDraft(event.slug);
+        submitting = false;
+        mode = "success";
+        saveState = "";
+        submitError = "";
+        render();
+        focusInitial();
+        return;
+      }
+
       submitting = false;
-      mode = "success";
-      saveState = "";
+      if (response.status === 409) {
+        submitError = "A capacidade de inscrições para este evento foi atingida.";
+      } else if (response.status === 422 && resBody?.error?.fields) {
+        const fieldErrors = resBody.error.fields;
+        Object.entries(fieldErrors).forEach(([k, v]) => {
+          errors[k] = v;
+        });
+        submitError = resBody.error.message || "Por favor, revise os dados informados.";
+        currentStep = firstInvalidStep(errors);
+        maxVisitedStep = Math.max(maxVisitedStep, currentStep);
+      } else if (response.status === 429) {
+        submitError = "Muitas requisições enviadas. Aguarde alguns instantes e tente novamente.";
+      } else {
+        submitError = resBody?.error?.message || "Não foi possível concluir a inscrição. Verifique sua conexão e tente novamente.";
+      }
+
       render();
       focusInitial();
-    }, 320);
+    } catch {
+      submitting = false;
+      submitError = "Sem conexão com o servidor. Seu rascunho continua salvo. Tente novamente.";
+      render();
+      focusInitial();
+    }
   }
 
   function scheduleDraft() {

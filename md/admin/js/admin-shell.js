@@ -9,6 +9,7 @@ import { authService } from "./auth/auth-service.js";
 const NAV_ITEMS = [
   { route: "dashboard", hash: "#dashboard", label: "Visão geral", icon: "dashboard" },
   { route: "events", hash: "#events", label: "Eventos", icon: "calendar" },
+  { route: "registrations", hash: "#registrations", label: "Inscrições", icon: "users" },
   { route: "content", hash: "#content/home", label: "Conteúdo do site", icon: "content" },
   { route: "projects", hash: "#projects", label: "Projetos", icon: "projects" },
   { route: "media", hash: "#media", label: "Biblioteca de mídia", icon: "media" },

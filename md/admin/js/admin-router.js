@@ -9,6 +9,7 @@ import { dirtyGuard } from "./dirty-guard.js";
 import { dashboardView } from "./views/dashboard-view.js";
 import { eventsView } from "./views/events-view.js";
 import { eventEditorView } from "./views/event-editor-view.js";
+import { registrationsView } from "./views/registrations-view.js";
 import { contentView } from "./views/content-view.js";
 import { projectsView } from "./views/projects-view.js";
 import { mediaView } from "./views/media-view.js";
@@ -19,6 +20,7 @@ const ROUTES = [
   { pattern: ["events"], view: eventsView },
   { pattern: ["events", "new"], view: eventEditorView },
   { pattern: ["events", "edit", ":id"], view: eventEditorView },
+  { pattern: ["registrations"], view: registrationsView },
   { pattern: ["content", "home"], view: contentView },
   { pattern: ["projects"], view: projectsView },
   { pattern: ["media"], view: mediaView },

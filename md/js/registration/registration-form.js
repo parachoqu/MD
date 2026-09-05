@@ -8,7 +8,12 @@ export const STEPS = [
 export function createInitialState(event, draft = null) {
   const saved = draft?.state || draft || {};
 
+  const generateKey = () =>
+    window.crypto?.randomUUID?.() ||
+    `reg-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+
   return {
+    idempotencyKey: saved.idempotencyKey || generateKey(),
     team: {
       name: saved.team?.name || "",
       city: saved.team?.city || "",
@@ -60,12 +65,12 @@ export function getCategory(event, categoryId) {
   return event.categories.find((category) => category.id === categoryId) || null;
 }
 
-export function buildRegistration(event, state) {
-  const now = new Date().toISOString();
-  const protocol = generateProtocol();
+export function buildRegistration(event, state, serverResponse = null) {
+  const now = serverResponse?.receivedAt || new Date().toISOString();
+  const protocol = serverResponse?.protocol || generateProtocol();
 
   return {
-    id: window.crypto?.randomUUID?.() || protocol,
+    id: serverResponse?.registrationId || window.crypto?.randomUUID?.() || protocol,
     protocol,
     eventId: event.id,
     eventSlug: event.slug,
@@ -77,7 +82,7 @@ export function buildRegistration(event, state) {
     participants: state.participants.map((participant) => trimObject(participant)),
     consent: Boolean(state.consent),
     regulationConsent: Boolean(state.regulationConsent),
-    demoOnly: true,
+    demoOnly: !serverResponse,
   };
 }
 

@@ -6,6 +6,7 @@ import { eventRepository } from "../repositories/event-repository.js";
 import { projectRepository } from "../repositories/project-repository.js";
 import { settingsRepository } from "../repositories/settings-repository.js";
 import { activityRepository } from "../repositories/activity-repository.js";
+import { registrationRepository } from "../repositories/registration-repository.js";
 import { formatDateTimeBR } from "../utils.js";
 import { createIcon } from "../icons.js";
 
@@ -22,17 +23,19 @@ export const dashboardView = {
     shell.setTitle("Visão geral");
     shell.setBreadcrumb([{ label: "Visão geral" }]);
 
-    const [eventsResult, projectsResult, settingsResult, activityResult] = await Promise.all([
+    const [eventsResult, projectsResult, settingsResult, activityResult, regResult] = await Promise.all([
       eventRepository.list({}),
       projectRepository.list({}),
       settingsRepository.get(),
       activityRepository.list(8),
+      registrationRepository.list({}),
     ]);
 
     const events = eventsResult.data || [];
     const projects = projectsResult.data || [];
     const settings = settingsResult.data || {};
     const activity = activityResult.data || [];
+    const registrations = regResult.data || [];
 
     const totalEvents = events.length;
     const openEvents = events.filter((event) => event.status === "open").length;
@@ -44,11 +47,17 @@ export const dashboardView = {
     const placeholderSettings = ["emailIsPlaceholder", "phoneIsPlaceholder", "whatsappIsPlaceholder", "addressIsPlaceholder"].filter(
       (key) => settings[key]
     ).length;
+    const totalRegistrations = registrations.length;
+    const newRegistrations = registrations.filter((r) => r.status === "new").length;
 
     const metricsGrid = element("div", { className: "admin-metrics-grid" }, [
       metricCard("Total de eventos", totalEvents),
       metricCard("Inscrições abertas", openEvents),
-      metricCard("Em breve", soonEvents),
+      metricCard(
+        "Inscrições recebidas",
+        totalRegistrations,
+        newRegistrations ? `${newRegistrations} nova(s) pendente(s)` : "Todas analisadas"
+      ),
       metricCard("Encerrados ou realizados", finishedEvents),
       metricCard("Rascunhos administrativos", draftEvents + draftProjects, "eventos + projetos"),
       metricCard("Conteúdos pendentes de revisão", placeholderProjects + placeholderSettings, "placeholders sinalizados"),
@@ -58,6 +67,10 @@ export const dashboardView = {
       element("a", { className: "admin-btn admin-btn--primary", href: "#events/new" }, [
         createIcon("plus", { size: 16 }),
         element("span", { text: "Novo evento" }),
+      ]),
+      element("a", { className: "admin-btn admin-btn--secondary", href: "#registrations" }, [
+        createIcon("users", { size: 16 }),
+        element("span", { text: "Gerenciar inscrições" }),
       ]),
       element("a", { className: "admin-btn admin-btn--secondary", href: "#content/home" }, [
         createIcon("content", { size: 16 }),

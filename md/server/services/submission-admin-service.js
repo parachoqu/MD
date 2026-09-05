@@ -31,7 +31,8 @@ export function createSubmissionAdminService(database) {
     const result = await database.query(
       `SELECT r.id, r.protocol, r.event_id, e.slug AS event_slug,
               e.draft_data->>'title' AS event_title, r.category_id,
-              r.registration_type, r.status, r.created_at, r.updated_at,
+              r.registration_type, r.team_data->>'name' AS team_name,
+              r.status, r.created_at, r.updated_at,
               rr.name AS responsible_name, rr.email AS responsible_email
        FROM registrations r
        JOIN events e ON e.id = r.event_id
@@ -48,6 +49,7 @@ export function createSubmissionAdminService(database) {
       eventTitle: row.event_title,
       categoryId: row.category_id,
       registrationType: row.registration_type,
+      teamName: row.team_name || null,
       status: row.status,
       responsibleName: row.responsible_name,
       responsibleEmail: row.responsible_email,
