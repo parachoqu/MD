@@ -1,20 +1,30 @@
 # Backend Preview/staging — execucao de 05/09/2026
 
-**BLOQUEADO — ACAO MANUAL NECESSARIA**
+**PRONTO PARA INICIAR A INTEGRACAO DO FORMULARIO E DO PAINEL DE INSCRICOES**
 
 O codigo local foi concluido e validado. A autenticacao Neon foi concluida e
 permitiu comprovar a branch Preview/staging. Migration, seed e repeticao foram
 executados nessa branch: checksum correto, 18 tabelas e contagens aprovadas.
-O Preview existente passou nos GETs autenticados. Administrador criado e verificado em terminal humano; push, novo deployment
-e login/logout final sao as proximas verificacoes.
+Administrador criado e verificado em terminal humano. A publicacao exclusiva
+de staging gerou Preview automatico READY em gru1. Os GETs, login humano,
+sessao, logout e rejeicao do cookie revogado passaram no commit publicado.
+A integracao do formulario e do painel nao foi iniciada.
 
 ## Codigo
 
 - Branch: `staging`, em `/home/https/Área de trabalho/workspace/MD-preview-staging`.
 - Base confirmada por fetch: `origin/staging`, commit
   `dd627cbad2f2849410f13f589ca8c7925f73b557`.
-- Commit local desta entrega: `fix(db): use direct Neon connection for maintenance scripts`.
-  Hash da correcao: `d42d8daf1d0095430673dfa388eff16132651d62`.
+- Commit publicado: `fix(db): use direct Neon connection for maintenance scripts`,
+  `de0ec62e7d26bcdb64df58adc9db168f8124fffd`.
+- Registro de banco e administrador publicado em
+  `e8770382c4fcd2c78b90bf4a6fc46ff52a0f7748`.
+- O Git HTTPS local nao dispunha de autenticacao; a publicacao usou o conector
+  GitHub ja autenticado e atualizou exclusivamente `refs/heads/staging`, sem
+  force. Os dois trees remotos foram comparados aos trees locais: identicos.
+  Os commits locais originais foram preservados em
+  `backup/staging-local-20260905`; a worktree foi alinhada ao historico publicado
+  com reset soft, sem alterar os arquivos. A API gerou novos hashes de commit.
 - `md/server/database/index.js`: fabrica administrativa independente exige
   `DATABASE_URL_UNPOOLED`; rejeita ausencia, vazio, URL invalida e endpoint Neon
   pooled. Nenhum fallback. Runtime HTTP e injecao de banco existente mantidos.
@@ -123,26 +133,46 @@ execucao inseriu zero dessas entidades; apenas registra a auditoria de execucao.
 
 ## Deployment e smoke tests
 
-Nenhum push ou novo deployment. Alias de destino:
+Publicacao de staging concluida apos todos os gates. O Preview automatico do
+commit `e8770382c4fcd2c78b90bf4a6fc46ff52a0f7748` ficou READY em `gru1`,
+com referencia Git `staging` e alias estavel confirmado. Nenhum hook foi usado.
+Alias de destino:
 https://mdprojetos-git-staging-colaresdev.vercel.app
 
 A primeira consulta sem autenticacao encontrou a protecao Vercel. Depois foi
 localizado um segredo de automacao **ja existente**, usado em memoria pelo
 `vercel curl` sem criar bypass, alterar protecao ou revelar seu valor.
 
-| Rota | Resultado depois da migration |
+| Rota | Resultado no Preview publicado |
 | --- | --- |
 | `/api/health` | 200; envelope da aplicacao |
 | `/api/auth/session`, sem cookie de admin | 401; envelope da aplicacao |
 | `/api/public/events` | 200; envelope da aplicacao |
 | `/api/public/bootstrap` | 200; envelope da aplicacao |
 | `/`, `/admin/login.html`, `/css/variables.css`, `/js/main.js` | 200 |
+| `POST /api/auth/login`, conta informada pelo usuario | 200; admin autenticado |
+| `GET /api/auth/session`, com cookie do login | 200; mesma conta e CSRF |
+| `POST /api/auth/logout`, com Origin e CSRF | 200; signedOut e cookie expirado |
+| `GET /api/auth/session`, reutilizando o cookie original apos logout | 401; sessao revogada |
 
 Os quatro endpoints nao exibiram `42P01` nas respostas. O checksum/tabelas foram
 verificados diretamente no banco; nao se concluiu ausencia de erro apenas
-pelas respostas sanitizadas. O Preview testado ainda usa o commit
-`dd627cbad2f2849410f13f589ca8c7925f73b557`, anterior ao push da correcao.
-Login/logout com participacao humana continuam pendentes.
+pelas respostas sanitizadas. O health confirmou o SHA publicado antes dos
+GETs e novamente antes de solicitar as credenciais para o teste de login.
+
+Login/logout foram exercitados por HTTPS em terminal privado, com e-mail e
+senha digitados pelo usuario e ocultos. Cookie e CSRF permaneceram somente em
+memoria; o resultado registrado contem apenas status, booleanos e commit.
+O cookie apresentou `Secure`, `HttpOnly`, `SameSite=Strict`, caminho `/`,
+escopo de host e validade positiva. O logout expirou o cookie e revogou a sessao
+no servidor, comprovado pela rejeicao do cookie original. Nenhuma inscricao
+ou upload foi enviado. A pagina de login foi verificada por HTTP; nao houve
+validacao visual ou de interacao da interface em navegador.
+
+Este fechamento acrescenta somente documentacao ao commit funcional testado;
+o historico de staging identifica o commit de registro posterior. Os resultados
+de autenticacao acima se referem expressamente a `e8770382`, preservando a
+distincao entre evidencia funcional e registro documental.
 
 ## Seguranca
 
@@ -156,19 +186,19 @@ Nao houve reset, stash, merge, promocao, exclusao, desconexao, criacao de
 recurso pago ou alteracao do deployment branching. Frontend, migration SQL,
 dados estaticos, Blob, PII e impressao nao foram alterados.
 
-## Acao manual e retomada
+## Fechamento e pendencias externas
 
 1. Administrador concluido: primeira tentativa falhou apos confirmacao de senha
    sem causa comprovada pelo resumo original. Repeticao autorizada pelo usuario
    criou a conta e confirmou ativo, role admin e hash scrypt persistido. Nenhuma
    credencial foi registrada no relatorio; o terminal permaneceu privado.
-2. Somente apos o administrador aprovado, fazer push de `staging` para
-   `origin/staging`; nao tocar `main`.
-3. Aguardar o Preview automatico e repetir os GETs, login e logout. Se nao houver
-   deployment automatico, Claude deve acionar `staging-preview` sem revelar o hook.
+2. Publicacao concluida somente em `origin/staging`, com conteudo remoto
+   conferido e commits locais originais preservados.
+3. Preview automatico READY; GETs, login, sessao, logout e revogacao aprovados.
+   Nao resta acao manual desta missao.
 
 Fora desta etapa: Blob, formulario publico/API, painel de inscricoes,
 atualizacao automatica, PII/retencao/backup/restore, projetos duplicados,
 plano comercial e configuracao/deployment de Production.
 
-**BLOQUEADO — ACAO MANUAL NECESSARIA**
+**PRONTO PARA INICIAR A INTEGRACAO DO FORMULARIO E DO PAINEL DE INSCRICOES**

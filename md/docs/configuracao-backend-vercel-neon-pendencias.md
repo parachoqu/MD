@@ -6,7 +6,12 @@ Esta secao prevalece sobre o roteiro historico abaixo durante a missao de
 staging. Nenhuma etapa historica de Production, Blob, troca de banco,
 desconexao de recursos ou integracao publica esta autorizada nesta missao.
 
-Resultado desta execucao e bloqueios: [relatorio de Preview/staging](relatorio-preview-staging-2026-09-05.md).
+Resultado desta execucao: [relatorio de Preview/staging](relatorio-preview-staging-2026-09-05.md).
+Migration/seed e repeticao, administrador, publicacao exclusiva de staging e
+Preview automatico foram concluidos. No commit funcional `e8770382`, health,
+APIs publicas, estaticos, login humano, sessao, logout e revogacao passaram.
+O backend Preview esta pronto para a proxima fase; ela nao foi iniciada.
+O roteiro abaixo permanece como procedimento para futuras manutencoes.
 
 - Worktree isolada na branch `staging`, a partir de `origin/staging`; preservar
   alteracoes preexistentes e manter `main` intacta.
