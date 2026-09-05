@@ -2,10 +2,11 @@
 
 **BLOQUEADO — ACAO MANUAL NECESSARIA**
 
-O codigo local foi concluido e validado. Nenhuma migration, seed, criacao de
-administrador, push ou deployment foi executado nesta sessao: nao foi possivel
-comprovar que o endpoint fornecido pela Vercel pertence a branch Neon propria
-do Preview/staging. A parada segue a regra explicita da missao do usuario.
+O codigo local foi concluido e validado. A autenticacao Neon foi concluida e
+permitiu comprovar a branch Preview/staging. Migration, seed e repeticao foram
+executados nessa branch: checksum correto, 18 tabelas e contagens aprovadas.
+O Preview existente passou nos GETs autenticados. Administrador criado e verificado em terminal humano; push, novo deployment
+e login/logout final sao as proximas verificacoes.
 
 ## Codigo
 
@@ -13,7 +14,7 @@ do Preview/staging. A parada segue a regra explicita da missao do usuario.
 - Base confirmada por fetch: `origin/staging`, commit
   `dd627cbad2f2849410f13f589ca8c7925f73b557`.
 - Commit local desta entrega: `fix(db): use direct Neon connection for maintenance scripts`.
-  O hash e informado na entrega e pode ser consultado com `git log -1` nesta worktree.
+  Hash da correcao: `d42d8daf1d0095430673dfa388eff16132651d62`.
 - `md/server/database/index.js`: fabrica administrativa independente exige
   `DATABASE_URL_UNPOOLED`; rejeita ausencia, vazio, URL invalida e endpoint Neon
   pooled. Nenhum fallback. Runtime HTTP e injecao de banco existente mantidos.
@@ -58,9 +59,9 @@ o comportamento local; nao comprovam Neon, login ou seed remotos.
 | APP_ORIGIN igual ao alias staging | sim |
 | Tres secrets cadastrados no Preview como sensiveis | sim |
 | Tres secrets disponibilizados ao env run local | nao |
-| Comprimento minimo dos secrets comprovado | nao |
-| Branch Neon propria do Preview comprovada | nao |
-| Branch Neon distinta da principal/Development comprovada | nao |
+| Comprimento minimo dos secrets validado pelo runtime Preview | sim |
+| Branch Neon propria do Preview comprovada | sim |
+| Branch Neon distinta da principal/Development comprovada | sim |
 
 As assercoes foram repetidas com CLI 54.20.1 e 59.11.7, com o mesmo resultado.
 Variaveis da integracao Neon foram disponibilizadas por `env run`, embora nao
@@ -70,10 +71,28 @@ Portanto, seus valores reais no deployment nao foram classificados como curtos
 ou ausentes. A [documentacao da Vercel](https://vercel.com/docs/environment-variables/sensitive-environment-variables)
 explica a restricao de leitura desse tipo de variavel.
 
-O recurso autorizado continua sendo `neon-coquelicot-dog`, projeto
-`withered-moon-82282924`. O project ID recebido e insuficiente para provar a
-branch do endpoint. Nenhum canal Neon autenticado ou navegador conectado ficou
-disponivel para concluir a verificacao.
+O recurso autorizado e `neon-coquelicot-dog`, projeto
+`withered-moon-82282924`, regiao Brasil. A CLI Neon autenticada confirmou uma
+unica branch com referencia a Preview/staging, criada pela integracao Vercel,
+nao principal, com pai e endpoint de escrita proprio.
+
+**Diferenca critica de contexto:** `vercel env run -e preview --git-branch
+staging` entrega o endpoint da branch principal desse projeto, nao o da branch
+Preview criada pela integracao. Por isso os comandos de manutencao nao podem
+usar cegamente as URLs recebidas pelo `env run`.
+
+A manutencao foi iniciada pelo `env run` Preview/staging, mas resolveu a URL da
+branch correta pela CLI Neon e substituiu as duas URLs somente na memoria do
+processo filho. Antes de cada comando, foram revalidados projeto, nome do
+recurso, regiao, origem, branch Preview/staging criada pela Vercel, endpoint,
+par pooled/direto e checksum local. Nenhuma variavel remota foi alterada;
+deployment branching permaneceu ativo. Nenhuma conexao SQL foi aberta na
+branch principal.
+
+Os tres secrets sensiveis nao sao baixados pela CLI, mas as rotas publicas e
+session carregaram a configuracao completa no Preview e responderam com o
+contrato da aplicacao. Isso confirma a passagem da validacao minima de 32
+caracteres em `getConfig`, sem expor ou substituir os secrets.
 
 Foi usado somente `vercel pull --environment=preview --git-branch=staging
 --scope colaresdev --yes`, na worktree, para preparar o build local. As copias
@@ -84,12 +103,12 @@ Nenhum `.env.local` preexistente foi substituido.
 
 | Item | Estado |
 | --- | --- |
-| Migration remota | nao executada |
-| Checksum no banco remoto | nao consultado |
-| Tabelas remotas | nao consultadas |
-| Seed remoto e repeticao | nao executados |
-| Administrador criado nesta sessao | nao |
-| Status, role, e-mail e hash do administrador | nao consultados |
+| Migration remota | 1 aplicada; repeticao com 0 aplicadas e 1 existente |
+| Checksum no banco remoto | confere com SQL imutavel |
+| Tabelas remotas | 18; nomes exatos conferidos |
+| Seed remoto e repeticao | 1/3/2/1/16; repeticao insere zero entidades |
+| Administrador criado nesta sessao | sim |
+| Administrador ativo / role / e-mail mascarado / hash persistido | sim / admin / d***@g*** / sim |
 
 SQL versionado preservado: `001_initial_schema.sql`, SHA-256
 `185bf847acf0535e449b335be2bbb8ef34ab16fffee8bc204bb21f9c2f69c719`.
@@ -97,42 +116,40 @@ Ele define **18 tabelas**, incluindo `schema_migrations`; o teste existente
 confirma esse total. O numero 15 da missao/guia anterior estava divergente.
 Nao se alterou SQL ou checksum para ajustar a contagem.
 
-O seed local esperado permanece: 1 evento, 3 projetos, 2 paginas,
-1 configuracao e 16 midias. A repeticao nao duplica essas entidades, mas
-registra uma nova auditoria de execucao.
+O banco estava vazio antes da migration, conforme transacao READ ONLY.
+A verificacao posterior tambem foi READ ONLY e confirmou 1 evento, 3 projetos,
+2 paginas, 1 configuracao e 16 midias, com os IDs esperados do seed. A segunda
+execucao inseriu zero dessas entidades; apenas registra a auditoria de execucao.
 
 ## Deployment e smoke tests
 
 Nenhum push ou novo deployment. Alias de destino:
 https://mdprojetos-git-staging-colaresdev.vercel.app
 
-A consulta preliminar sem autenticacao da Vercel encontrou a protecao de
-deployment, sem seguir redirecionamentos:
+A primeira consulta sem autenticacao encontrou a protecao Vercel. Depois foi
+localizado um segredo de automacao **ja existente**, usado em memoria pelo
+`vercel curl` sem criar bypass, alterar protecao ou revelar seu valor.
 
-| Rota | Resposta preliminar |
+| Rota | Resultado depois da migration |
 | --- | --- |
-| `/api/health` | 401 da protecao Vercel |
-| `/api/auth/session` | 401 da protecao Vercel |
-| `/api/public/events` | 401 da protecao Vercel |
-| `/api/public/bootstrap` | 401 da protecao Vercel |
-| `/`, `/admin/login.html`, `/css/variables.css`, `/js/main.js` | 302 da protecao Vercel |
+| `/api/health` | 200; envelope da aplicacao |
+| `/api/auth/session`, sem cookie de admin | 401; envelope da aplicacao |
+| `/api/public/events` | 200; envelope da aplicacao |
+| `/api/public/bootstrap` | 200; envelope da aplicacao |
+| `/`, `/admin/login.html`, `/css/variables.css`, `/js/main.js` | 200 |
 
-Essas respostas **nao sao smoke tests aprovados da aplicacao**. O 401 de session
-nao comprova o resultado esperado do backend. Nao foi possivel afirmar ausencia
-de `42P01` no banco ou identificar o commit do deployment por essas respostas.
+Os quatro endpoints nao exibiram `42P01` nas respostas. O checksum/tabelas foram
+verificados diretamente no banco; nao se concluiu ausencia de erro apenas
+pelas respostas sanitizadas. O Preview testado ainda usa o commit
+`dd627cbad2f2849410f13f589ca8c7925f73b557`, anterior ao push da correcao.
 Login/logout com participacao humana continuam pendentes.
-
-A CLI `vercel curl` foi inspecionada: ela pode criar automaticamente um segredo
-de bypass no projeto caso nao exista. Nao foi executada, para preservar a
-regra de nenhuma mutacao remota antes da prova do alvo. A validacao seguinte
-deve usar uma sessao autenticada ou acesso de automacao ja existente, sem
-desativar a protecao.
 
 ## Seguranca
 
 Production e `main` permaneceram intocadas. Nenhum secret real foi impresso;
-nenhum arquivo de ambiente real ou `.vercel/` entra no commit. Nenhuma consulta
-foi feita a usuarios, inscricoes, contatos ou dados pessoais. O relatorio
+nenhum arquivo de ambiente real ou `.vercel/` entra no commit. As verificacoes
+de schema/seed nao consultaram usuarios, inscricoes, contatos ou dados pessoais.
+A criacao de admin usa somente a conta informada no terminal humano. O relatorio
 preexistente `relatorio-vercel-neon-md.md` permaneceu no checkout original.
 
 Nao houve reset, stash, merge, promocao, exclusao, desconexao, criacao de
@@ -141,19 +158,14 @@ dados estaticos, Blob, PII e impressao nao foram alterados.
 
 ## Acao manual e retomada
 
-1. Disponibilizar acesso autenticado ao projeto Neon permitido pelo terminal
-   ou navegador conectado. Comprovar, sem divulgar identificadores sensiveis,
-   a associacao endpoint → branch Neon do Preview/staging → projeto permitido,
-   distinta da principal e de Development. Nao enviar credenciais no chat.
-2. Validar os tres secrets no contexto autorizado do Preview, emitindo apenas
-   sim/nao; nao reclassificar, remover ou rotacionar valores para forcar leitura
-   local. Disponibilizar acesso autenticado ao Preview protegido.
-3. Retomar o procedimento versionado: migration, seed, repeticao e verificacao
-   de checksum/tabelas/contagens, somente depois da prova do alvo.
-4. Criar o primeiro administrador no terminal humano com senha oculta.
-5. Somente entao fazer push de `staging` para `origin/staging`, aguardar o
-   Preview e concluir smoke, login e logout. Se o push nao disparar deployment,
-   Claude deve acionar `staging-preview` sem divulgar a URL do hook.
+1. Administrador concluido: primeira tentativa falhou apos confirmacao de senha
+   sem causa comprovada pelo resumo original. Repeticao autorizada pelo usuario
+   criou a conta e confirmou ativo, role admin e hash scrypt persistido. Nenhuma
+   credencial foi registrada no relatorio; o terminal permaneceu privado.
+2. Somente apos o administrador aprovado, fazer push de `staging` para
+   `origin/staging`; nao tocar `main`.
+3. Aguardar o Preview automatico e repetir os GETs, login e logout. Se nao houver
+   deployment automatico, Claude deve acionar `staging-preview` sem revelar o hook.
 
 Fora desta etapa: Blob, formulario publico/API, painel de inscricoes,
 atualizacao automatica, PII/retencao/backup/restore, projetos duplicados,

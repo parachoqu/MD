@@ -71,6 +71,22 @@ Executar na worktree isolada, sem `.env.local` e sem variaveis herdadas que
 substituam as recebidas da Vercel. Nunca usar o checkout original com arquivos
 de Development para essa verificacao.
 
+### Diferenca comprovada entre env run e deployment branching
+
+Na retomada autenticada de 05/09, a CLI Neon comprovou que as URLs retornadas
+por `env run` Preview/staging apontavam para a branch principal do projeto
+permitido. A branch Neon Preview/staging existia separadamente, criada pela
+integracao Vercel. Portanto, **nao executar os exemplos de manutencao abaixo
+sem substituir as URLs no processo filho pelas conexoes da branch comprovada**.
+
+Nesta execucao, um wrapper temporario resolveu a conexao pela CLI Neon com
+branch explicita, comparou seu endpoint aos metadados autenticados e injetou
+pooled/direta somente em memoria. Repetiu a prova antes de cada comando.
+Nao alterou variaveis remotas, nao acessou SQL da principal e nao desligou
+branching. O wrapper da sessao esta em `/tmp/md-preview-maintenance.mjs`;
+se ele nao estiver disponivel, reimplementar/conferir a prova antes de operar,
+sem executar cegamente `env run ... db:migrate`.
+
 ### Banco, administrador e publicacao
 
 Somente depois do alvo comprovado, executar na mesma injecao Preview/staging:
