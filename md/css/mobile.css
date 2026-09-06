@@ -385,37 +385,19 @@
   }
 
   /* Voltar real do detalhe do evento */
-  html.md-shell .md-appbar__back {
-    display: inline-flex;
+  .header__start {
+    gap: var(--space-8);
+    min-width: 0;
   }
 
   .md-appbar__back {
-    align-items: center;
-    gap: var(--space-8);
-    flex: 0 0 auto;
     min-height: 44px;
     padding: 0 var(--space-12) 0 var(--space-10);
-    border: var(--line-soft) solid var(--on-dark-line);
-    border-radius: var(--radius-control);
-    background: var(--on-dark-surface);
-    color: var(--color-white);
-    font-family: var(--font-mono);
-    font-size: var(--text-meta);
-    font-weight: 700;
-    letter-spacing: var(--tracking-meta);
-    text-transform: uppercase;
-    text-decoration: none;
   }
 
   .md-appbar__back svg {
     width: 16px;
     height: 16px;
-  }
-
-  .md-appbar__back:active {
-    border-color: var(--action);
-    background: var(--action);
-    color: var(--action-on);
   }
 
   /* Com o voltar presente, a marca fica reduzida ao símbolo. */
