@@ -19,8 +19,7 @@ O commit-base adicionou o painel administrativo demonstrativo (39 arquivos,
 ## Runtime publico atual
 
 - HTML, CSS e ES Modules, sem framework, bundler ou backend.
-- `data/events.js` e a fonte unica dos tres eventos e alimenta home, catalogo e
-  `evento.html?evento=<slug>`.
+- `data/events.js` e a fonte unica dos tres eventos e alimenta home, catalogo (`#inscricoes`) e a visualizacao consolidada de detalhe (`index.html?evento=<slug>`).
 - `js/projects.js` contem tres projetos demonstrativos e renderiza o modal.
 - `js/form.js` apenas simula o contato com `setTimeout`.
 - O regulamento e renderizado por

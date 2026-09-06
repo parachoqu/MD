@@ -30,7 +30,6 @@ export function createInitialState(event, draft = null) {
     registrationType: event.registrationType || "team",
   };
 }
-
 export function createParticipant() {
   const id = globalThis.crypto?.randomUUID?.() || `participant-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   return {

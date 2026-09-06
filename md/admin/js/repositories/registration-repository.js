@@ -15,7 +15,6 @@ export const REGISTRATION_STATUS_LABELS = {
   cancelled: "Cancelada",
   rejected: "Recusada",
 };
-
 export const registrationRepository = {
   list(filters = {}) {
     return apiRequest(`${BASE}${queryString(filters)}`);

@@ -113,9 +113,9 @@ test("so o 201 confirmado apaga rascunho e chave", (context) => {
   assert.notEqual(ensureIdempotencyKey("evento-teste"), key);
 });
 
-test("a chave antiga de inscricoes concluidas e removida do navegador", (context) => {
+test("a chave legada de inscricoes concluidas e removida sem ser migrada", (context) => {
   const map = useStorage(context, {
-    [LEGACY_KEY]: JSON.stringify([{ protocol: "MD-DEMO-ABC123" }]),
+    [LEGACY_KEY]: JSON.stringify([{ protocol: "PROTOCOLO-LOCAL-LEGADO" }]),
   });
 
   assert.equal(purgeLegacyRegistrations(), true);

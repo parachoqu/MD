@@ -21,7 +21,6 @@ const NAV_ITEMS = [
 export function navItemsForRole(role) {
   return NAV_ITEMS.filter((item) => item.roles.includes(String(role || "")));
 }
-
 export function defaultRouteForRole(role) {
   return navItemsForRole(role)[0]?.route || "registrations";
 }

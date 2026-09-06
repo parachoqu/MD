@@ -1,6 +1,7 @@
 {
-  "name": "md-temporary-vercel-backend",
-  "version": "0.1.0",
+  "name": "md-vercel-neon",
+  "version": "1.0.0-preview",
+  "description": "Site consolidado M&D com Vercel Functions e Neon Postgres",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,6 +12,7 @@
     "build": "npm run build:vendor && node scripts/build-static.mjs",
     "check:vercel-output": "node scripts/check-vercel-output.mjs",
     "check": "node scripts/check-source.mjs",
+    "validate": "npm run check && npm test && npm run build",
     "test": "node --test --test-reporter=spec",
     "test:unit": "node --test --test-reporter=spec test/unit/*.test.js",
     "test:db": "node --test --test-reporter=spec test/database/*.test.js",

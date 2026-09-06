@@ -61,8 +61,8 @@ export function clearCompletedRegistration(eventSlug) {
   return deleteDraft(eventSlug);
 }
 
-// A versao antiga guardava inscricoes "concluidas" no navegador; nada disso e
-// oficial, entao a chave e removida na primeira abertura do modal.
+// Limpeza unidirecional da versao antiga. O conteudo nao e lido nem migrado:
+// a chave que guardava inscricoes concluidas e removida do navegador.
 export function purgeLegacyRegistrations() {
   const store = storage();
   if (!store) return false;

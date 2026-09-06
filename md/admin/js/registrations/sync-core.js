@@ -1,7 +1,7 @@
 // Nucleo puro da atualizacao automatica. Sem window, sem document e sem fetch:
 // e exatamente esta parte que os testes exercitam em Node.
 
-export const SYNC_INTERVAL_MS = 5000;
+export const SYNC_INTERVAL_MS = 4000;
 export const RECONCILE_INTERVAL_MS = 60000;
 export const MAX_BACKOFF_MS = 60000;
 

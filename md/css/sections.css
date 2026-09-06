@@ -54,6 +54,85 @@
   gap: var(--space-24);
 }
 
+.header__start {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  min-width: 0;
+}
+
+/* --- Botão voltar da App Bar (Mobile e Desktop) ---------------------- */
+.md-appbar__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 0 var(--space-14) 0 var(--space-10);
+  border: var(--line-soft) solid var(--on-dark-line);
+  border-radius: var(--radius-control);
+  background: var(--on-dark-surface);
+  color: var(--color-white);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 700;
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+  text-decoration: none;
+  line-height: 1;
+  transition: background-color var(--motion-feedback) var(--ease-out),
+    border-color var(--motion-feedback) var(--ease-out),
+    color var(--motion-feedback) var(--ease-out),
+    transform var(--motion-feedback) var(--ease-out);
+}
+
+.md-appbar__back svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  stroke-width: 2.4;
+  transition: transform var(--motion-feedback) var(--ease-out);
+}
+
+.md-appbar__back:hover {
+  border-color: var(--action);
+  background: rgba(245, 124, 0, 0.12);
+  color: var(--color-white);
+  transform: translateY(-1px);
+}
+
+.md-appbar__back:hover svg {
+  transform: translateX(-3px);
+}
+
+.md-appbar__back:active {
+  border-color: var(--action);
+  background: var(--action);
+  color: var(--action-on);
+  transform: translate(1px, 1px);
+}
+
+.md-appbar__back:active svg {
+  transform: translateX(-3px);
+}
+
+/* Slot contextual do catálogo */
+.md-appbar__context {
+  min-width: 0;
+  padding-left: var(--space-12);
+  border-left: var(--line-soft) solid var(--on-dark-line);
+  color: var(--on-dark);
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .nav {
   display: flex;
   align-items: center;
@@ -1100,12 +1179,36 @@
 .footer-bottom {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: var(--space-16);
   margin-top: var(--space-24);
   color: var(--on-dark-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), monospace;
   font-size: var(--text-meta);
   letter-spacing: 0.06em;
+}
+
+.footer-admin-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  color: var(--on-dark-muted);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: var(--text-meta);
+  font-family: var(--font-mono), monospace;
+  letter-spacing: 0.05em;
+  transition: color var(--motion-fast), border-color var(--motion-fast), background var(--motion-fast);
+}
+
+.footer-admin-link:hover,
+.footer-admin-link:focus-visible {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 /* --- Reveal ------------------------------------------------------------------- */

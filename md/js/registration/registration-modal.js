@@ -19,7 +19,6 @@ import {
 
 const REGISTRATION_ENDPOINT = "/api/public/registrations";
 
-// Inscricao concluida nao mora mais no navegador: a chave antiga sai na primeira abertura.
 let legacyPurged = false;
 
 const FOCUSABLE =
@@ -50,7 +49,7 @@ export function createRegistrationModal(event, root = document.body) {
     if (clickEvent.target === modal) requestClose();
   });
 
-  document.addEventListener("keydown", (keyEvent) => {
+  const handleKeydown = (keyEvent) => {
     if (!isOpen()) return;
 
     if (keyEvent.key === "Escape") {
@@ -60,7 +59,8 @@ export function createRegistrationModal(event, root = document.body) {
     }
 
     if (keyEvent.key === "Tab") trapFocus(keyEvent);
-  });
+  };
+  document.addEventListener("keydown", handleKeydown);
 
   function open(trigger) {
     if (!legacyPurged) {
@@ -1105,7 +1105,15 @@ export function createRegistrationModal(event, root = document.body) {
     return Math.max(0, Math.min(STEPS.length - 1, Number(step) || 0));
   }
 
-  return { open };
+  function destroy() {
+    clearTimeout(saveTimer);
+    clearTimeout(closeTimer);
+    document.removeEventListener("keydown", handleKeydown);
+    if (isOpen()) document.body.classList.remove("modal-open");
+    modal.remove();
+  }
+
+  return { open, destroy };
 }
 
 function element(tag, options = {}) {

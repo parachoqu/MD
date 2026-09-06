@@ -191,3 +191,136 @@ test("contato publico exige origem e idempotencia e fica disponivel no admin", a
   assert.equal(items.length, 1);
   assert.equal(items[0].email, payload.email);
 });
+
+test("inscricao publica e listada, consultada em detalhe e atualizada no painel administrativo", async (context) => {
+  const api = await fixture(context);
+  const session = await login(api);
+  const headers = { Cookie: session.cookie, "X-CSRF-Token": session.csrfToken };
+
+  // 1. Admin abre as inscrições do evento e publica a alteração
+  const getEventRes = await api.admin(
+    request("/api/admin/events/evt-taca-vale-handebol-2026", { headers })
+  );
+  const adminEvent = (await body(getEventRes)).data;
+  const updateEventRes = await api.admin(
+    request(`/api/admin/events/${adminEvent.id}`, {
+      method: "PUT",
+      headers,
+      body: {
+        data: {
+          ...adminEvent,
+          status: "open",
+          registrationPeriod: {
+            ...adminEvent.registrationPeriod,
+            start: "2026-01-01",
+            end: "2026-12-31",
+          },
+        },
+        revision: adminEvent.revision,
+      },
+    })
+  );
+  assert.equal(updateEventRes.status, 200);
+  const updatedEvent = (await body(updateEventRes)).data;
+
+  const publishRes = await api.admin(
+    request(`/api/admin/events/${adminEvent.id}/publish`, {
+      method: "POST",
+      headers,
+      body: { revision: updatedEvent.revision },
+    })
+  );
+  assert.equal(publishRes.status, 200);
+
+  // 2. Submissão pública da inscrição
+  const payload = {
+    eventSlug: "taca-vale-handebol-2026",
+    registrationType: "team",
+    team: { name: "Equipe Integracao", city: "Itambacuri", state: "MG", institution: "" },
+    responsible: {
+      name: "Tecnico Responsavel",
+      email: "tecnico@example.test",
+      phone: "33999999999",
+      role: "Tecnico",
+    },
+    categoryId: "junior-masculino",
+    participants: [
+      { name: "Atleta Um", birthDate: "2010-05-20", jerseyNumber: "10", role: "" },
+      { name: "Atleta Dois", birthDate: "2010-03-18", jerseyNumber: "11", role: "" },
+    ],
+    staff: [],
+    consent: true,
+    regulationConsent: true,
+    consentVersion: "privacy-v1",
+  };
+
+  const submitRes = await api.publicApi(
+    request("/api/public/registrations", {
+      method: "POST",
+      headers: { "Idempotency-Key": "registration-http-flow-1" },
+      body: payload,
+    })
+  );
+  assert.equal(submitRes.status, 201);
+  const submitData = (await body(submitRes)).data;
+  assert.match(submitData.protocol, /^MD-\d{8}-[A-Z0-9]{8}$/);
+  assert.deepEqual(Object.keys(submitData).sort(), ["protocol", "receivedAt", "registrationId"]);
+
+  const replayRes = await api.publicApi(
+    request("/api/public/registrations", {
+      method: "POST",
+      headers: { "Idempotency-Key": "registration-http-flow-1" },
+      body: payload,
+    })
+  );
+  assert.equal(replayRes.status, 201);
+  assert.equal(replayRes.headers.get("Idempotency-Replayed"), "true");
+  assert.equal((await body(replayRes)).data.protocol, submitData.protocol);
+
+  // 3. Admin lista inscrições e verifica filtros
+  const listRes = await api.admin(
+    request("/api/admin/registrations", { headers: { Cookie: session.cookie } })
+  );
+  assert.equal(listRes.status, 200);
+  const listData = (await body(listRes)).data;
+  assert.equal(listData.items.length, 1);
+  assert.equal(listData.items[0].protocol, submitData.protocol);
+  assert.equal(listData.items[0].status, "new");
+  assert.equal(listData.items[0].teamName, "Equipe Integracao");
+  assert.equal(JSON.stringify(listData.items).includes("Tecnico Responsavel"), false);
+  assert.equal(JSON.stringify(listData.items).includes("tecnico@example.test"), false);
+
+  // 4. Admin consulta detalhe completo da inscrição
+  const detailRes = await api.admin(
+    request(`/api/admin/registrations/${submitData.registrationId}`, { headers: { Cookie: session.cookie } })
+  );
+  assert.equal(detailRes.status, 200);
+  const detailData = (await body(detailRes)).data;
+  assert.equal(detailData.id, submitData.registrationId);
+  assert.equal(detailData.members.length, 2);
+  assert.equal(detailData.responsibles[0].email, "tecnico@example.test");
+  assert.equal(detailData.members[0].name, "Atleta Um");
+  assert.equal(detailData.members[0].jerseyNumber, "10");
+  assert.equal(detailData.consents.length, 3);
+
+  // 5. Admin atualiza status para confirmed com auditoria
+  const updateRes = await api.admin(
+    request(`/api/admin/registrations/${submitData.registrationId}/status`, {
+      method: "PUT",
+      headers: { Cookie: session.cookie, "X-CSRF-Token": session.csrfToken },
+      body: { status: "confirmed", updatedAt: detailData.updatedAt },
+    })
+  );
+  assert.equal(updateRes.status, 200);
+  const updateData = (await body(updateRes)).data;
+  assert.equal(updateData.status, "confirmed");
+
+  // 6. Verifica log de auditoria
+  const activityRes = await api.admin(
+    request("/api/admin/activity", { headers: { Cookie: session.cookie } })
+  );
+  const activities = (await body(activityRes)).data;
+  const statusAudit = activities.find((a) => a.action === "registration.status.update");
+  assert.ok(statusAudit);
+  assert.equal(statusAudit.entity_id, submitData.registrationId);
+});

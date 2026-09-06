@@ -1,140 +1,163 @@
 # Configuracao do backend Vercel, Neon e Blob: estado e proximos passos
 
-## Procedimento vigente: somente Preview/staging (05/09/2026)
+## Procedimento vigente: reconciliacao final de Preview/staging (06/09/2026)
 
-Esta secao prevalece sobre o roteiro historico abaixo durante a missao de
-staging. Nenhuma etapa historica de Production, Blob, troca de banco,
-desconexao de recursos ou integracao publica esta autorizada nesta missao.
+Esta secao prevalece sobre todo o registro historico abaixo. A missao reconcilia
+o frontend de `main` com o backend e RBAC de `staging`, publica exclusivamente
+a branch Git `staging` e termina com uma PR para `main`, sem merge.
 
-Resultado desta execucao: [relatorio de Preview/staging](relatorio-preview-staging-2026-09-05.md).
-Migration/seed e repeticao, administrador, publicacao exclusiva de staging e
-Preview automatico foram concluidos. No commit funcional `e8770382`, health,
-APIs publicas, estaticos, login humano, sessao, logout e revogacao passaram.
-O backend Preview esta pronto para a proxima fase; ela nao foi iniciada.
-O roteiro abaixo permanece como procedimento para futuras manutencoes.
+Limites imutaveis:
 
-- Worktree isolada na branch `staging`, a partir de `origin/staging`; preservar
-  alteracoes preexistentes e manter `main` intacta.
 - Vercel: equipe `colaresdev`, projeto `mdprojetos`, Root Directory `md`,
-  Functions `gru1`, ambiente `preview`, branch Git `staging`.
-- Neon permitido: `neon-coquelicot-dog`, projeto `withered-moon-82282924`;
-  usar somente a branch propria do Preview/staging, distinta da principal e
-  de Development. Nao desligar deployment branching.
-- Alias esperado: `https://mdprojetos-git-staging-colaresdev.vercel.app`.
-- Nunca consultar ou baixar variaveis de Production nem acessar seu banco.
+  Node 24, Functions em `gru1`, ambiente Preview da branch `staging`.
+- Production continua em `main`. Nao executar `--prod`, `promote`, mudanca
+  de dominio ou qualquer mutacao de Production.
+- Neon autorizado: projeto `withered-moon-82282924`
+  (`neon-coquelicot-dog`), regiao `aws-sa-east-1`, branch
+  `br-hidden-poetry-ac5a7r03` (`preview/staging`).
+- Nunca consultar ou conectar ao projeto `neon-purple-marble`.
+- Blob real, politicas de retencao/exclusao, criptografia de PII, backup/PITR,
+  restore e aprovacao para inscricoes reais permanecem fora do escopo.
+- Credenciais, senhas, tokens e strings de conexao nunca entram em arquivos,
+  comandos exibidos, logs ou documentacao.
 
-### Conexoes e validacao local
+### 1. Git e worktree isolado
 
-`DATABASE_URL` pooled permanece no runtime HTTP. `migrate`, `seed`,
-`create-admin`, `export` e `import-admin-export --apply` exigem exclusivamente
-`DATABASE_URL_UNPOOLED`. Sem URL direta valida, falham antes da conexao e nao
-exibem valores. A validacao de import sem `--apply` continua offline.
+1. Execute `git fetch --all --prune`.
+2. Confirme os heads, merge-base e divergencia. Avanco normal exige recalculo;
+   reescrita inesperada interrompe a missao.
+3. Crie `backup/staging-before-reconcile-20260906` no head original.
+4. Crie uma nova worktree na branch `reconcile/main-staging-20260906`, a partir
+   de `origin/staging`.
+5. Execute `git merge --no-commit --no-ff origin/main` e resolva conflitos por
+   comportamento.
+6. Nao mova, limpe, resete ou use o worktree `MD-preview-staging`, que contem
+   um relatorio staged independente.
 
-Na pasta `md`, executar `npm ci`, `npm run check`, `npm test` e `npm run build`.
-`npm run check:vercel-output` exige tambem um build Vercel fresco na raiz da
-worktree. Se necessario baixar configuracao para esse build, usar somente:
+O merge deve preservar a pagina consolidada de `main` e, de `staging`, API
+publica, RBAC, idempotencia, cursores, polling, detalhes autenticados e conexao
+direta de manutencao.
+
+### 2. Contratos de codigo
+
+- `GET /api/public/bootstrap` e a fonte prioritaria. Fallback estatico e
+  somente leitura e sempre bloqueia inscricao.
+- Inscricao usa `Idempotency-Key`, protocolo do servidor e replay com o mesmo
+  protocolo. Rascunho expira em sete dias, conserva a chave entre tentativas e
+  so e apagado depois de `201`.
+- A listagem administrativa aceita `limit`, `cursor`, `sync`, `query`,
+  `status`, `eventId` e `categoryId`.
+- A listagem e a pesquisa nao acessam PII: pesquisa apenas protocolo/equipe;
+  nomes pessoais, contatos, nascimento, responsaveis e atletas ficam no detalhe.
+- Organizer lista, abre e altera inscricoes, mas recebe `403` para conteudo,
+  eventos, projetos, configuracoes, midia/upload, auditoria e contatos.
+- Polling padrao de 4 segundos, pausa em aba oculta, sincronizacao imediata no
+  foco, exclusao mutua, backoff ate 60 segundos, reconciliacao completa e
+  teardown no unmount.
+- A migration 002 e imutavel.
+
+### 3. Validacao local obrigatoria
+
+Na pasta `md`:
 
 ```bash
-vercel pull --environment=preview --git-branch=staging --scope colaresdev --yes
+npm ci
+npm run check
+npm test
+npm run build
+npm audit --omit=dev
+```
+
+A suite precisa ter no minimo 89 testes, sem falhas e sem skips. Na raiz, rode
+`git diff --check`.
+
+Valide tambem desktop e mobile no navegador: pagina consolidada, redirects,
+navegacao, filtros, detalhe, modal, fallback offline, foco, teclado, overflow e
+console.
+
+### 4. Build de Preview antes do push
+
+Na raiz da worktree, vincule ou confira somente o projeto `mdprojetos`.
+Prepare o contexto Preview da branch `staging` sem gravar env em `md/` e
+execute:
+
+```bash
 vercel build --target=preview
-cd md
-npm run check:vercel-output
+npm --prefix md run check:vercel-output
 ```
 
-Os artefatos `.vercel/` e arquivos de ambiente ficam ignorados e fora do commit.
-Revisar o diff e criar o commit local `fix(db): use direct Neon connection for
-maintenance scripts`; nao fazer push ainda.
+O artefato deve conter exatamente quatro Functions `nodejs24.x`. O estatico
+nao pode conter servidor, testes, migrations, scripts operacionais, relatorios,
+documentacao ou secrets.
 
-### Prova obrigatoria do alvo antes de escrever
+### 5. Publicacao Git e Preview
 
-Consultar a ajuda da CLI instalada. A partir da raiz vinculada da worktree, usar
-`vercel env run -e preview --git-branch staging -- <comando>` para injecao em
-memoria, sem substituir `md/.env.local`. Confirmar apenas com `sim/nao`:
+1. Revise o diff e crie um merge commit funcional descritivo.
+2. Faça push normal apenas de `HEAD:staging`; nunca use force e nao toque em
+   `main`.
+3. Aguarde o deployment Git ficar `READY` como Preview.
+4. Confira SHA exato, quatro Functions e `GET /api/health` com
+   `database: reachable` e a mesma versao.
+5. Deployment/SHA incorreto interrompe todas as etapas seguintes.
 
-- identidade autenticada, equipe e projeto esperados;
-- presenca das duas URLs, diferenca entre elas e correspondencia ao mesmo
-  banco/endpoint, com e sem pooler;
-- `NEON_PROJECT_ID` esperado, quando presente;
-- vinculo verificavel entre endpoint, recurso permitido e branch Neon propria
-  do deployment staging; distinta da principal e de Development;
-- `APP_ORIGIN` igual ao alias estavel;
-- `SESSION_SECRET`, `CSRF_SECRET` e `IP_HASH_SECRET` com minimo valido.
+### 6. Neon e migration
 
-Nao imprimir valores, hosts, usuarios, IDs de branch ou comprimentos exatos.
-Selecionar `preview/staging` na CLI ou validar apenas `NEON_PROJECT_ID` nao
-substitui a prova do endpoint e da branch. Se essa prova faltar, parar antes de
-migration, seed, admin e push; registrar a acao manual necessaria.
+Nao use `vercel env run` como fonte de manutencao: a integracao pode resolver
+a branch principal do Neon.
 
-Variaveis cadastradas como sensiveis podem nao ser disponibilizadas pela CLI.
-Confirmar seu cadastro por metadados nao prova comprimento minimo; uma saida
-vazia do `env run` tambem nao prova que estejam vazias no deployment. Nao
-recriar, reclassificar ou rotacionar secrets para contornar essa restricao.
-Validar no contexto autorizado do Preview, mostrando somente sim/nao.
+Antes de SQL, reconfirme projeto, regiao, branch, endpoint gravavel e o par
+pooled/direto. Obtenha as duas URLs explicitamente para
+`br-hidden-poetry-ac5a7r03`, confirme que a direta nao possui `-pooler` e
+injete-a apenas no processo filho.
 
-`env run` tambem pode carregar arquivos locais e herdar o ambiente do terminal.
-Executar na worktree isolada, sem `.env.local` e sem variaveis herdadas que
-substituam as recebidas da Vercel. Nunca usar o checkout original com arquivos
-de Development para essa verificacao.
+Execute `npm run db:migrate` duas vezes. Confirme migration 002 registrada uma
+vez, checksum versionado intacto e nenhuma mudanca na segunda execucao.
+Reutilize admin e organizer existentes; so crie organizer se consulta segura
+provar ausencia ou inatividade. Senhas entram apenas em terminal privado.
 
-### Diferenca comprovada entre env run e deployment branching
+### 7. E2E real e limpeza
 
-Na retomada autenticada de 05/09, a CLI Neon comprovou que as URLs retornadas
-por `env run` Preview/staging apontavam para a branch principal do projeto
-permitido. A branch Neon Preview/staging existia separadamente, criada pela
-integracao Vercel. Portanto, **nao executar os exemplos de manutencao abaixo
-sem substituir as URLs no processo filho pelas conexoes da branch comprovada**.
+Use tres sessoes efemeras e isoladas: `md-public-e2e`, `md-admin-e2e` e
+`md-organizer-e2e`.
 
-Nesta execucao, um wrapper temporario resolveu a conexao pela CLI Neon com
-branch explicita, comparou seu endpoint aos metadados autenticados e injetou
-pooled/direta somente em memoria. Repetiu a prova antes de cada comando.
-Nao alterou variaveis remotas, nao acessou SQL da principal e nao desligou
-branching. O wrapper da sessao esta em `/tmp/md-preview-maintenance.mjs`;
-se ele nao estiver disponivel, reimplementar/conferir a prova antes de operar,
-sem executar cegamente `env run ... db:migrate`.
+Crie um evento `TESTE PREVIEW — Reconciliação <shortSHA>`, slug unico, janela
+aberta relativa a data do teste, capacidade quatro e categoria sintetica. Use
+somente nomes marcados como teste, e-mails `.invalid`, telefone e nascimento
+ficticios.
 
-### Banco, administrador e publicacao
+Prove:
 
-Somente depois do alvo comprovado, executar na mesma injecao Preview/staging:
+- duas inscricoes e paginacao keyset real com `limit=1`;
+- replay da principal com mesmo protocolo/header e uma unica linha no Neon;
+- nova inscricao e status na outra sessao sem reload em ate cinco segundos;
+- listagem sem PII, detalhe com PII, metricas, filtros e pesquisa;
+- conflito concorrente `409 revision_conflict`;
+- organizer `200` nas rotas permitidas e `403` nas proibidas;
+- contato sintetico e arquivamento;
+- desktop 1280 px, mobile 390x844, console/rede, teclado, foco e offline.
 
-```bash
-vercel env run -e preview --git-branch staging -- npm --prefix md run db:migrate
-vercel env run -e preview --git-branch staging -- npm --prefix md run db:seed
-vercel env run -e preview --git-branch staging -- npm --prefix md run db:migrate
-vercel env run -e preview --git-branch staging -- npm --prefix md run db:seed
-```
+Finalize por fluxo normal: cancele inscricoes, arquive contato e evento, preserve
+auditoria, limpe cookies/storage e feche as sessoes. Confirme que o evento saiu
+da API publica e nao restou chave pessoal no navegador.
 
-Verificar `001_initial_schema.sql` em `schema_migrations` com SHA-256
-`185bf847acf0535e449b335be2bbb8ef34ab16fffee8bc204bb21f9c2f69c719`,
-18 tabelas e seed `1/3/2/1/16` (evento/projetos/paginas/configuracao/midias).
-A referencia anterior a 15 tabelas estava incorreta: o SQL imutavel e o teste
-versionado preveem 18. Nao modificar a migration/checksum para ajustar contagens.
-O seed repetido nao duplica conteudo; cada execucao registra sua propria
-auditoria. Nao consultar usuarios, inscricoes, contatos ou dados pessoais nesta
-verificacao. Em falha parcial, registrar e parar, sem reparos SQL manuais.
+### 8. Handoff
 
-O primeiro administrador exige participacao humana em terminal interativo:
+Atualize `relatorio-vercel-neon-md.md` separando evidencias de codigo, local,
+deployment, migration, E2E, latencias, RBAC, idempotencia, privacidade e limpeza.
+Publique um commit documental, espere o Preview final e prove que o runtime nao
+mudou entre os commits funcional e documental.
 
-```bash
-vercel env run -e preview --git-branch staging -- npm --prefix md run db:create-admin
-```
+Abra PR pronta para revisao de `staging` para `main`, aguarde CI verde e nao
+mescle.
 
-Nome, e-mail, senha e confirmacao sao informados no terminal do usuario; nunca
-no chat. Senha: ao menos 12 caracteres e tres grupos entre minusculas,
-maiusculas, numeros e simbolos. Relatar somente criado/ativo/hash persistido
-como sim/nao, role e e-mail mascarado. Nao criar credencial padrao.
+Sucesso final:
 
-Push exclusivamente para `origin/staging` somente depois de codigo, testes,
-migration, seed e administrador aprovados. Aguardar o Preview automatico. Se
-nao houver deployment, solicitar que Claude dispare o hook `staging-preview`,
-sem recuperar nem divulgar sua URL.
+`PREVIEW VALIDADO — PRONTO PARA REVISÃO, MAIN E PRODUCTION INTACTAS`
 
-Smoke final no alias staging: health `200`, sessao sem cookie `401`, events e
-bootstrap `200`, estaticos principais `200`, login humano e logout com sessao
-revogada. Nao enviar inscricoes nem testar upload. Ausencia de `42P01` precisa
-ser verificada no Preview; testes locais nao comprovam isso.
+Se endpoint Neon, conexao direta, autenticacao, testes, deployment/SHA ou as
+tres sessoes nao puderem ser comprovados, pare e registre:
 
-Referencias operacionais: [Vercel env run](https://vercel.com/docs/cli/env) e
-[conexoes Neon](https://neon.com/docs/connect/connection-pooling).
+`BLOQUEADO — AÇÃO HUMANA NECESSÁRIA`
 
 ## Registro historico da auditoria de 04/09/2026
 

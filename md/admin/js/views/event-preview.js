@@ -52,7 +52,7 @@ export function openEventPreview(event, shell) {
         renderContent(target) {
           target.appendChild(renderEventPreviewContent(event));
         },
-        publicUrl: event.slug ? "../evento.html?evento=" + encodeURIComponent(event.slug) : null,
+        publicUrl: event.slug ? "../index.html?evento=" + encodeURIComponent(event.slug) : null,
       });
       return element("div", {}, [
         element("div", { className: "admin-dialog__header" }, [

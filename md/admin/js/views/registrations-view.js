@@ -1,8 +1,8 @@
 // Inscricoes recebidas: metricas por status, listagem paginada com pesquisa e
-// filtros, detalhe acessivel e atualizacao automatica a cada cinco segundos.
+// filtros, detalhe acessivel e atualizacao automatica a cada quatro segundos.
 //
-// A listagem carrega o minimo de dado pessoal; telefone, nascimento e a ficha
-// completa so aparecem no detalhe, que e uma chamada autenticada separada.
+// A listagem nao carrega identificadores pessoais. Responsaveis, atletas,
+// contatos e nascimento so aparecem no detalhe autenticado separado.
 
 import { element, clearChildren } from "../dom.js";
 import { createIcon } from "../icons.js";
@@ -82,7 +82,7 @@ export const registrationsView = {
       id: "registrationSearchInput",
       type: "search",
       className: "admin-input",
-      placeholder: "Buscar por protocolo, equipe ou responsável",
+      placeholder: "Buscar por protocolo ou equipe",
     });
     searchInput.value = filters.query;
 
@@ -227,7 +227,6 @@ export const registrationsView = {
           element("th", { scope: "col", text: "Equipe" }),
           element("th", { scope: "col", text: "Evento" }),
           element("th", { scope: "col", text: "Categoria" }),
-          element("th", { scope: "col", text: "Responsável" }),
           element("th", { scope: "col", text: "Recebida em" }),
           element("th", { scope: "col", text: "Status" }),
           element("th", { scope: "col" }, [element("span", { className: "admin-visually-hidden", text: "Ações" })]),
@@ -243,7 +242,6 @@ export const registrationsView = {
             element("td", { text: item.teamName || "-" }),
             element("td", { text: item.eventTitle || item.eventSlug || "-" }),
             element("td", { text: item.categoryId || "-" }),
-            element("td", { text: item.responsibleName || "-" }),
             element("td", { text: formatDateTimeBR(item.createdAt) }),
             element("td", {}, [statusBadge(item.status)]),
             element("td", {}, [
@@ -280,7 +278,6 @@ export const registrationsView = {
             definitionList([
               ["Evento", item.eventTitle || item.eventSlug || "-"],
               ["Categoria", item.categoryId || "-"],
-              ["Responsável", item.responsibleName || "-"],
               ["Recebida em", formatDateTimeBR(item.createdAt)],
             ]),
             element("button", {

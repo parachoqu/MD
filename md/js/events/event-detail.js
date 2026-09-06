@@ -12,30 +12,111 @@ import { canRegister, findEventBySlug, loadPublicEvents } from "../api/public-da
 import { revealScope } from "../motion.js";
 import { getRegulationRenderer } from "./regulations/index.js";
 
-const CONTACT_URL = "index.html#contato";
+const CONTACT_URL = "#contato";
+const DEFAULT_TITLE = "M&D Projetos e Eventos Desportivos | Movimento que organiza, conecta e transforma";
+const DEFAULT_DESCRIPTION =
+  "Planejamento e realização profissional de projetos e eventos esportivos para empresas, escolas, comunidades e parceiros.";
 
 const UNAVAILABLE_NOTICE =
   "Não foi possível confirmar este evento com o servidor. As informações podem estar desatualizadas e as inscrições estão indisponíveis no momento.";
 
+let isInitialized = false;
+let activeRegistrationModal = null;
+
 export async function initEventDetail() {
   const root = document.getElementById("eventDetailRoot");
+  const detailSection = document.getElementById("eventDetailSection");
+  const mainViews = document.getElementById("mainViews");
+  const backButton = document.querySelector(".md-appbar__back");
   if (!root) return;
 
-  renderLoading(root);
+  let routeRevision = 0;
 
-  const params = new URLSearchParams(window.location.search);
-  const slug = params.get("evento");
-  const result = await loadPublicEvents();
-  const event = slug ? findEventBySlug(result.events, slug) : null;
+  const syncRoute = async () => {
+    const revision = ++routeRevision;
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("evento");
 
-  if (!event) {
-    document.body.classList.remove("has-event-mobile-cta");
-    renderNotFound(root, result);
-    return;
-  }
+    if (!slug) {
+      destroyActiveModal();
+      if (detailSection) detailSection.hidden = true;
+      if (mainViews) mainViews.hidden = false;
+      if (backButton) backButton.hidden = true;
+      document.body.classList.remove("has-event-mobile-cta");
+      document.title = DEFAULT_TITLE;
+      const description = document.querySelector("meta[name='description']");
+      if (description) description.setAttribute("content", DEFAULT_DESCRIPTION);
+      root.replaceChildren();
+      return;
+    }
 
-  updateMeta(event);
-  renderEvent(root, event, result);
+    if (mainViews) mainViews.hidden = true;
+    if (detailSection) detailSection.hidden = false;
+    if (backButton) {
+      backButton.hidden = false;
+      backButton.href = "#inscricoes";
+    }
+    destroyActiveModal();
+    renderLoading(root);
+
+    const result = await loadPublicEvents();
+    if (revision !== routeRevision) return;
+    const event = findEventBySlug(result.events, slug);
+
+    if (!event) {
+      document.body.classList.remove("has-event-mobile-cta");
+      renderNotFound(root, result);
+      return;
+    }
+
+    updateMeta(event);
+    renderEvent(root, event, result);
+  };
+
+  await syncRoute();
+
+  if (isInitialized) return;
+  isInitialized = true;
+
+  window.addEventListener("popstate", () => {
+    syncRoute().then(() => import("../regulation.js").then((module) => module.initRegulation?.()));
+  });
+
+  document.addEventListener("click", (clickEvent) => {
+    const link = clickEvent.target.closest("a");
+    if (!link) return;
+    const href = link.getAttribute("href");
+    if (!href) return;
+
+    if (href.startsWith("?evento=") || href.includes("index.html?evento=") || href.includes("evento.html?evento=")) {
+      const targetUrl = new URL(link.href, window.location.href);
+      const targetSlug = targetUrl.searchParams.get("evento");
+      if (!targetSlug) return;
+      clickEvent.preventDefault();
+      history.pushState({ evento: targetSlug }, "", `?evento=${encodeURIComponent(targetSlug)}${targetUrl.hash}`);
+      syncRoute().then(() => import("../regulation.js").then((module) => module.initRegulation?.()));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    const detailIsActive = detailSection && !detailSection.hidden;
+    const leavesDetail =
+      link.matches(".md-appbar__back") ||
+      href === "#inscricoes" ||
+      href === "#inicio" ||
+      href === "inscricoes.html" ||
+      href === "index.html";
+    if (!detailIsActive || !leavesDetail) return;
+
+    clickEvent.preventDefault();
+    const targetHash = href.startsWith("#") ? href : "#inscricoes";
+    history.pushState({}, "", `${window.location.pathname}${targetHash}`);
+    syncRoute().then(() => {
+      const target = document.querySelector(targetHash);
+      if (target) target.scrollIntoView({ behavior: "smooth" });
+      else window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
 }
 
 function renderLoading(root) {
@@ -62,7 +143,7 @@ function renderNotFound(root, result) {
 
   const link = document.createElement("a");
   link.className = "btn btn--primary";
-  link.href = "inscricoes.html";
+  link.href = "#inscricoes";
   link.textContent = "Ver todos os eventos";
   wrapper.append(link);
   root.replaceChildren(wrapper);
@@ -73,6 +154,7 @@ function renderEvent(root, event, result) {
   // desativada: o status efetivo carrega essa decisao para todos os blocos.
   const status = effectiveStatus(event);
   const registrationModal = status.canRegister ? createRegistrationModal(event) : null;
+  activeRegistrationModal = registrationModal;
   document.body.classList.toggle("has-event-mobile-cta", status.canRegister);
 
   root.replaceChildren(
@@ -102,8 +184,8 @@ function renderBreadcrumb(event) {
   nav.className = "breadcrumb container";
   nav.setAttribute("aria-label", "Caminho");
 
-  const home = breadcrumbLink("index.html", "Início");
-  const events = breadcrumbLink("inscricoes.html", "Inscrições");
+  const home = breadcrumbLink("#inicio", "Início");
+  const events = breadcrumbLink("#inscricoes", "Inscrições");
   const current = document.createElement("span");
   current.textContent = event.shortTitle || event.title;
   current.setAttribute("aria-current", "page");
@@ -167,7 +249,7 @@ function renderHeroActions(event, status, registrationModal) {
 
   const back = document.createElement("a");
   back.className = "link-action link-action--dark";
-  back.href = "inscricoes.html";
+  back.href = "#inscricoes";
   back.textContent = "Ver todos os eventos";
   back.dataset.eventAction = "back";
   actions.append(back);
@@ -492,4 +574,9 @@ function updateMeta(event) {
   document.title = `${event.title} | M&D`;
   const description = document.querySelector("meta[name='description']");
   if (description) description.setAttribute("content", event.summary);
+}
+
+function destroyActiveModal() {
+  activeRegistrationModal?.destroy?.();
+  activeRegistrationModal = null;
 }

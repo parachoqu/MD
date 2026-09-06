@@ -72,18 +72,9 @@ function assertStatus(status, allowed) {
   }
 }
 
-// Um responsavel por linha: sem o LATERAL, uma inscricao com dois responsaveis
-// duplicaria a linha e quebraria a paginacao por keyset.
 const REGISTRATION_SOURCE = `
   FROM registrations r
-  JOIN events e ON e.id = r.event_id
-  LEFT JOIN LATERAL (
-    SELECT rr.name
-    FROM registration_responsibles rr
-    WHERE rr.registration_id = r.id
-    ORDER BY rr.created_at, rr.id
-    LIMIT 1
-  ) responsible ON true`;
+  JOIN events e ON e.id = r.event_id`;
 
 const MEMBER_COUNTS = `
   LEFT JOIN LATERAL (
@@ -113,8 +104,7 @@ function registrationFilters(filters, values, options = {}) {
     const position = `$${values.length}`;
     where.push(
       `(r.protocol ILIKE ${position} ESCAPE '\\'` +
-        ` OR r.team_data->>'name' ILIKE ${position} ESCAPE '\\'` +
-        ` OR responsible.name ILIKE ${position} ESCAPE '\\')`
+        ` OR r.team_data->>'name' ILIKE ${position} ESCAPE '\\')`
     );
   }
   return where;
@@ -125,7 +115,8 @@ function whereClause(conditions) {
 }
 
 function listItem(row) {
-  // Listagem carrega o minimo: sem e-mail, telefone ou data de nascimento.
+  // A listagem e operacional, sem qualquer identificador pessoal. Toda PII
+  // fica restrita ao endpoint de detalhe autenticado.
   return {
     id: row.id,
     protocol: row.protocol,
@@ -138,7 +129,6 @@ function listItem(row) {
     teamName: row.team_name,
     teamCity: row.team_city,
     teamState: row.team_state,
-    responsibleName: row.responsible_name,
     participantCount: Number(row.participant_count || 0),
     staffCount: Number(row.staff_count || 0),
     createdAt: dateIso(row.created_at),
@@ -186,7 +176,6 @@ export function createSubmissionAdminService(database) {
               r.team_data->>'name' AS team_name,
               r.team_data->>'city' AS team_city,
               r.team_data->>'state' AS team_state,
-              responsible.name AS responsible_name,
               member_counts.participant_count, member_counts.staff_count,
               r.created_at, r.updated_at,
               ${cursorExpression("r.created_at")} AS created_cursor,

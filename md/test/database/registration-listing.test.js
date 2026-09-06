@@ -196,7 +196,7 @@ test("filtros e pesquisa sao parametrizados e nao viram curinga", async (context
   assert.deepEqual(byProtocol.items.map((item) => item.id), [created[3].registrationId]);
 
   const byResponsible = await service.listRegistrations({ query: "RESPONSAVEL EQUIPE TESTE 01" });
-  assert.deepEqual(byResponsible.items.map((item) => item.id), [created[1].registrationId]);
+  assert.deepEqual(byResponsible.items, [], "a pesquisa da listagem nao consulta nomes pessoais");
 
   // Uma aspa simples nao pode quebrar a consulta.
   const injection = await service.listRegistrations({ query: "' OR 1=1 --" });
@@ -224,7 +224,7 @@ test("metricas contam por status sem expor dado pessoal", async (context) => {
   assert.equal((await service.registrationMetrics({ status: "confirmed" })).total, 5);
 });
 
-test("a listagem carrega o minimo: sem e-mail, telefone ou nascimento", async (context) => {
+test("a listagem nao contem nenhum identificador pessoal", async (context) => {
   const { service, created } = await fixture(context, { count: 1 });
 
   const page = await service.listRegistrations({});
@@ -240,7 +240,6 @@ test("a listagem carrega o minimo: sem e-mail, telefone ou nascimento", async (c
     "participantCount",
     "protocol",
     "registrationType",
-    "responsibleName",
     "staffCount",
     "status",
     "teamCity",
@@ -252,6 +251,7 @@ test("a listagem carrega o minimo: sem e-mail, telefone ou nascimento", async (c
   assert.equal(item.staffCount, 0);
 
   const serialized = JSON.stringify(page.items);
+  assert.equal(serialized.includes("RESPONSAVEL"), false);
   assert.equal(serialized.includes("responsavel.teste@example.test"), false);
   assert.equal(serialized.includes("33900000000"), false);
   assert.equal(serialized.includes("2010-05-20"), false);

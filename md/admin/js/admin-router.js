@@ -34,7 +34,6 @@ const ROUTES = [
 function allowsRole(route, role) {
   return route.roles.includes(String(role || ""));
 }
-
 function parseHash() {
   return window.location.hash.replace(/^#/, "").split("/").filter(Boolean);
 }

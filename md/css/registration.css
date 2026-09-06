@@ -534,6 +534,18 @@
   overflow-wrap: anywhere;
 }
 
+.registration-error-banner {
+  background: var(--status-alert-surface, #fef2f2);
+  color: var(--status-alert-ink, #991b1b);
+  border: 1px solid var(--status-alert-line, #fecaca);
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--text-sm, 0.875rem);
+  line-height: 1.4;
+  margin: var(--space-12) var(--space-24) 0;
+  font-weight: 500;
+}
+
 /* --- Responsivo ------------------------------------------------------------ */
 @media (max-width: 720px) {
   .registration-modal {

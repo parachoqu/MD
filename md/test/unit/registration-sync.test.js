@@ -112,6 +112,7 @@ test("contagem de novidades ignora atualizacao de item ja conhecido", () => {
 });
 
 test("backoff cresce em potencia de dois ate o teto", () => {
+  assert.equal(SYNC_INTERVAL_MS, 4000);
   assert.equal(nextBackoffDelay(0), SYNC_INTERVAL_MS);
   assert.equal(nextBackoffDelay(1, 1000, 60000), 1000);
   assert.equal(nextBackoffDelay(2, 1000, 60000), 2000);

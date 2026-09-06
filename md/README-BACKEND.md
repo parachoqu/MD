@@ -1,25 +1,25 @@
-# Backend temporario M&D na Vercel
+# Backend M&D na Vercel
 
 Backend Node.js para o site estatico M&D, executado em Vercel Functions, com Neon Postgres para dados relacionais e Vercel Blob para imagens administraveis. O frontend continua em HTML, CSS e ES Modules, sem framework.
 
-> Operacao atual (05/09/2026): somente Preview/staging, no projeto `colaresdev/mdprojetos`. Runtime usa `DATABASE_URL` pooled; manutencao exige `DATABASE_URL_UNPOOLED` direta. Antes de qualquer escrita remota, comprove a branch Neon propria do Preview no recurso `neon-coquelicot-dog`. Consulte o [procedimento de staging](docs/configuracao-backend-vercel-neon-pendencias.md). As tabelas de estado abaixo sao evidencias historicas de 28/08/2026; nao comprovam o estado remoto atual. Production, Blob e a integracao dos formularios ficam fora desta etapa.
+> Operacao atual (06/09/2026): somente Preview/staging, no projeto `colaresdev/mdprojetos`. Runtime usa `DATABASE_URL` pooled; manutencao exige `DATABASE_URL_UNPOOLED` direta da branch `preview/staging`, sem fallback e sem arquivo local. O Neon autorizado e `withered-moon-82282924` / `neon-coquelicot-dog`, branch `br-hidden-poetry-ac5a7r03`; `neon-purple-marble`, Production e Blob real ficam fora deste escopo. Consulte o [procedimento de staging](docs/configuracao-backend-vercel-neon-pendencias.md).
 
 ## Estado objetivo
 
 | Area | Estado | Evidencia ou pendencia |
 |---|---|---|
-| Vercel Functions | Validado localmente | `vercel build --yes` gera 4 Functions `nodejs24.x` |
+| Vercel Functions | Validado localmente | `vercel build --target=preview` deve gerar 4 Functions `nodejs24.x` |
 | Rotas profundas | Validado no build | rewrites levam todas as rotas admin/public aos dois roteadores internos |
 | Saida estatica | Validada | 86 arquivos publicos; sem `server/`, `scripts/`, migrations, testes ou docs |
-| Migrations | Validado em PGlite | banco vazio, repeticao idempotente, constraints e rollback |
+| Migrations | Validado local e no Preview anterior | banco vazio, repeticao idempotente, checksum, constraints e rollback |
 | Seed | Validado em PGlite | 3 eventos, 3 projetos, 2 paginas, configuracoes e 16 midias estaticas |
 | Autenticacao | Validada localmente | scrypt, sessao por hash, cookie seguro, CSRF, expiracao, revogacao e rate limit |
 | Editorial | Validado localmente | rascunho separado, snapshot publicado e conflito otimista `409` |
-| Inscricoes e contato | APIs validadas localmente | transacoes, idempotencia, protocolo no servidor e consulta administrativa |
+| Inscricoes e contato | Integrados | API prioritaria, fallback bloqueado, idempotencia, protocolo no servidor e painel |
 | Vercel Blob | Fluxo testado com doubles | upload real depende de criar/configurar o Blob no ambiente |
-| Neon real | Pendente | nenhuma `DATABASE_URL` configurada na Vercel |
-| Preview real | Pendente | nao houve deploy, migration, seed nem smoke test externo |
-| Integracao do site publico | Parcial | APIs existem; formularios e leitura publica ainda usam o fluxo estatico/demonstrativo |
+| Neon real | Isolado em Preview | projeto, regiao e branch proprios identificados; revalidar antes de cada SQL |
+| Preview real | Em validacao final | somente deployment Git de `staging`; SHA e health precisam coincidir |
+| Integracao do site publico | Concluida em codigo | bootstrap prioritario, inscricao e contato same-origin; fallback somente leitura |
 | Impressao do regulamento | Reprovada | Chromium gerou 4 paginas A4; o requisito e exatamente 3 |
 | Privacidade para uso real | Pendente | exige politica aprovada de retencao, exclusao, backup e revisao de seguranca |
 
@@ -110,14 +110,9 @@ cd /caminho/para/worktree-staging/md
 npm ci
 ```
 
-Para trabalho offline, use valores ficticios/isolados de `.env.example`. Nunca envie arquivos com credenciais ao Git. Na operacao de staging, mantenha o vinculo Vercel na raiz da worktree e injete as variaveis sem substituir `md/.env.local`:
+Para trabalho offline, use valores ficticios/isolados de `.env.example`. Nunca envie arquivos com credenciais ao Git. Na operacao de staging, mantenha o vinculo Vercel na raiz da worktree.
 
-```bash
-cd /caminho/para/worktree-staging
-vercel env run -e preview --git-branch staging -- npm --prefix md run db:migrate
-```
-
-Esse comando de escrita somente pode ser executado depois da prova do alvo descrita no procedimento de staging. `--git-branch staging` seleciona variaveis da Vercel, mas sozinho nao comprova que a conexao corresponde a branch Neon criada para o deployment.
+Nao use `vercel env run` como fonte de conexao para migrations: com deployment branching ele pode resolver a branch principal do projeto Neon. Obtenha as URLs da branch `preview/staging` explicitamente na Neon, confira projeto/branch/endpoint e injete `DATABASE_URL_UNPOOLED` somente no processo filho, sem eco nem arquivo.
 
 Depois:
 
@@ -167,14 +162,14 @@ No dashboard da Vercel:
 
 1. Abra o projeto `mdprojetos`.
 2. Confirme em Settings que Root Directory e `md`, Framework e `Other` e Node e `24.x`.
-3. Em Storage/Marketplace, instale Neon e crie uma base ou branch exclusiva para Preview.
-4. Confirme a regiao `sa-east-1` quando estiver disponivel e compativel.
-5. Crie um Vercel Blob para o ambiente.
-6. Em Settings > Environment Variables, adicione as variaveis da tabela anterior somente ao ambiente correto.
+3. Confirme que o Preview de `staging` continua ligado apenas ao Neon autorizado e a branch `preview/staging`.
+4. Confirme a regiao `sa-east-1` e o endpoint gravavel antes de qualquer SQL.
+5. Nao provisione Blob neste escopo.
+6. Confira por metadados as variaveis somente do Preview, sem copiar valores.
 7. Nao copie credenciais de Production para Preview.
 8. Execute primeiro migration, seed e criacao de administrador no ambiente nao produtivo.
 9. Publique um Preview e conclua os smoke tests.
-10. Promova para Production somente com confirmacao humana.
+10. Nao promova nem publique em Production nesta reconciliacao.
 
 O plano Hobby nao deve ser presumido adequado para um site de atividade comercial. Nao altere nem compre plano sem autorizacao.
 
@@ -380,13 +375,14 @@ PUT /api/admin/registrations/:id/status
   O timestamp e formatado pelo proprio Postgres com seis casas, porque o driver
   entrega `timestamptz` como `Date` (milissegundos) e o arredondamento faria o
   cursor repetir ou pular linha. Cursor malformado responde `422`.
-- A listagem carrega o minimo de dado pessoal: nome do responsavel e contagens.
-  **E-mail, telefone e data de nascimento so existem em `GET .../:id`.**
+- A listagem nao carrega identificadores pessoais. Nome, e-mail, telefone,
+  nascimento, responsaveis e atletas so existem em `GET .../:id` autenticado.
+- A pesquisa da listagem consulta apenas protocolo e equipe.
 - `PUT .../:id/status` aceita `new`, `reviewing`, `confirmed`, `cancelled` e
   `rejected`, com concorrencia otimista por `updatedAt`. Divergencia responde `409`;
   o painel recarrega o registro e explica que outro organizador o alterou.
 
-O painel usa o modo incremental a cada cinco segundos enquanto a aba esta visivel,
+O painel usa o modo incremental a cada quatro segundos enquanto a aba esta visivel,
 mescla por `id` sem duplicar linha, pausa em segundo plano, sincroniza ao recuperar
 o foco, aplica backoff em falha e roda uma reconciliacao completa periodica para
 recuperar qualquer atualizacao perdida. Sem WebSocket, SSE ou servico pago.
@@ -450,8 +446,8 @@ Armazenamento local (`js/registration/registration-storage.js`):
   chave sao mantidos e o botao "Tentar novamente" reenvia com a chave identica, para
   o servidor responder replay em vez de criar uma segunda inscricao.
 - Rascunho e chave so sao apagados depois do `201` confirmado.
-- `md.registrations.v1` foi descontinuada: inscricao concluida nao mora mais no
-  navegador, e a chave antiga e removida na primeira abertura do formulario.
+- Nenhuma inscricao concluida ou protocolo e persistido no navegador. A chave
+  legada e somente removida na primeira abertura, sem leitura ou migracao.
 
 ## Contato
 
@@ -583,7 +579,7 @@ Use a tela de Deployments da Vercel para promover um deploy anterior validado. I
 
 ### Site publico
 
-O site publico ainda usa dados estaticos, portanto continua disponivel sem a API. O futuro corte para `public-data-repository.js` deve manter um unico sinal de fallback somente leitura. Esse fallback nao pode reativar login local, publicacao local nem apagar dados server-side.
+O site publico usa a API como fonte prioritaria. Sem API, exibe o fallback estatico somente para leitura e marca todos os eventos com inscricao bloqueada. O fallback nao gera protocolo, nao grava inscricao e nao apaga dados server-side.
 
 ## Migracao futura para Firebase
 
@@ -600,12 +596,12 @@ Nenhum componente do navegador importa SDK Neon ou acessa `DATABASE_URL`.
 
 ## Checklist antes de chamar de pronto
 
-- [ ] criar Neon separado para Development/Preview;
+- [x] isolar o Neon e a branch de Preview;
 - [ ] criar Blob e configurar token do ambiente;
 - [ ] configurar todas as variaveis sem compartilhar Production;
-- [ ] executar migration e seed em Preview;
-- [ ] criar o primeiro administrador em Preview;
-- [ ] conectar leitura publica, inscricao e contato aos endpoints;
+- [x] executar migration e seed em Preview na preparacao anterior;
+- [x] criar administrador e organizer separados em Preview;
+- [x] conectar leitura publica, inscricao e contato aos endpoints;
 - [ ] validar upload real JPEG/PNG/WebP e recusas;
 - [ ] testar todas as rotas no dominio de Preview;
 - [ ] revisar logs e confirmar ausencia de PII;
