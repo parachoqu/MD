@@ -53,11 +53,11 @@ export const events = [
     sportKey: "handebol",
     featured: true,
     demo: false,
-    status: "soon",
+    status: "open",
     summary:
       "Primeira edição da Taça Vale do Mucuri de Handebol Júnior, organizada pela M&D Projetos e Eventos Desportivos, nos dias 17 e 18 de outubro de 2026, em Itambacuri/MG.",
     description:
-      "Competição júnior de handebol nas categorias masculina e feminina, com a participação de até 12 equipes, no Ginásio Poliesportivo de Itambacuri/MG, nos dias 17 e 18 de outubro de 2026. A fase classificatória ocorre no sábado; semifinais, disputa de terceiro lugar e final ocorrem no domingo. Período de inscrições, horários e demais informações operacionais permanecem a confirmar.",
+      "Competição júnior de handebol nas categorias masculina e feminina, com a participação de até 12 equipes, no Ginásio Poliesportivo de Itambacuri/MG, nos dias 17 e 18 de outubro de 2026. A fase classificatória ocorre no sábado; semifinais, disputa de terceiro lugar e final ocorrem no domingo. Inscrições abertas com vagas limitadas.",
     date: {
       label: "17 e 18 de outubro de 2026",
       start: "2026-10-17",
@@ -65,9 +65,9 @@ export const events = [
       sort: "2026-10-17",
     },
     registrationPeriod: {
-      start: null,
-      end: null,
-      label: "A confirmar",
+      start: "2026-08-01",
+      end: "2026-10-15",
+      label: "Abertas até 15 de outubro de 2026",
     },
     location: {
       venue: "Ginásio Poliesportivo",
@@ -106,7 +106,7 @@ export const events = [
       feePerTeam: "R$ 350,00 por equipe",
       dualInstitutionFee:
         "R$ 700,00 para duas equipes da mesma instituição, masculino e feminino",
-      period: "A confirmar",
+      period: "Até 15 de outubro de 2026",
       maxMembers: 20,
       maxAthletes: 17,
       maxStaff: 3,
