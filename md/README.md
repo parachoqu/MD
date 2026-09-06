@@ -44,9 +44,9 @@ Títulos (`h1`, `h2`, `h3`, títulos editoriais e títulos dinâmicos de evento)
 
 O estado inicial oculto do reveal só existe sob `html.has-motion`, classe aplicada pelo próprio JS. Sem JavaScript, com JavaScript quebrado ou em `prefers-reduced-motion`, todo o conteúdo permanece visível e nada translada.
 
-## Camada mobile: App Shell M&D
+## Camada mobile e App Shell M&D
 
-Abaixo de 768px o site deixa de ser a composição de desktop empilhada e passa a funcionar como um aplicativo: app bar contextual, navegação inferior persistente, telas com uma prioridade cada, modais em tela cheia, regulamento como visualizador de documento e inscrição como fluxo transacional. Continua sendo o mesmo site estático multipágina — sem PWA, service worker, manifest, SPA, framework ou dependência nova.
+Abaixo de 768px o site passa a funcionar como um aplicativo: app bar contextual, navegação inferior persistente, telas com prioridade única, modais em tela cheia, regulamento como visualizador de documento e inscrição como fluxo transacional. A experiência pública foi unificada em `index.html` com arquitetura consolidada e transição instantânea entre a visão institucional, o catálogo de inscrições e os detalhes de eventos, mantendo o site estático sem framework e com compatibilidade total via redirecionamento de `inscricoes.html` e `evento.html`.
 
 ### Isolamento
 
@@ -56,16 +56,16 @@ O desktop a partir de 768px é referência congelada. Três camadas garantem iss
 2. todo o conteúdo do arquivo vive dentro de `@media (max-width: 767px)`;
 3. a marcação exclusiva do shell nasce com o atributo `hidden`. `js/mobile.js` o remove ao montar e o devolve ao desmontar, então em 768px ou mais o elemento não sai de `display: none`, não recebe foco e não existe na árvore de acessibilidade.
 
-Um script inline no `<head>` das três páginas aplica `html.md-shell` antes do primeiro paint, e é sob essa classe que o espaço das barras fixas é reservado — sem JavaScript a classe não existe, nenhuma faixa vazia aparece e não há CLS.
+Um script inline no `<head>` de `index.html` aplica `html.md-shell` antes do primeiro paint, e é sob essa classe que o espaço das barras fixas é reservado — sem JavaScript a classe não existe, nenhuma faixa vazia aparece e não há CLS.
 
-Consequência útil: um page box A4 mede cerca de 794px, então `mobile.css` nunca alcança a impressão. A impressao continua isolada no `@media print` de `css/regulation.css`, mas a contagem atual precisa ser corrigida de 4 para 3 paginas.
+Consequência útil: um page box A4 mede cerca de 794px, então `mobile.css` nunca alcança a impressão. A impressão continua isolada no `@media print` de `css/regulation.css`.
 
 `js/mobile.js` monta e desmonta por `matchMedia("(max-width: 767px)")`. Ao cruzar o breakpoint remove listeners, desconecta observers, limpa classes de `body`, fecha sheets e restaura atributos e foco. Redimensionar não duplica instância nem listener.
 
-### App shell
+### App shell e Navegação
 
-- **App bar** — `.site-header` reestilizada em 56px mais safe area. Reage ao scroll pela classe `is-scrolled` que `navigation.js` já mantém, sem segundo listener. Slots contextuais por página: identificação compacta na home, rótulo `Eventos` no catálogo e um botão real de voltar no detalhe. O `h1` nunca é duplicado ali.
-- **Tab bar** — quatro destinos que continuam links reais (`index.html#inicio`, `inscricoes.html`, `index.html#projetos`, `index.html#contato`), ícones SVG próprios de traço reto, rótulo sempre visível e estado ativo por forma, peso e cor. Na home o destino ativo espelha, via `MutationObserver`, a classe que o `IntersectionObserver` de `navigation.js` já escreve: uma única fonte de verdade. Recolhe sob `has-event-mobile-cta`, `modal-open` e `md-doc-open` — nunca duas barras inferiores ao mesmo tempo.
+- **App bar** — `.site-header` com identificação visual, slot contextual (`.md-appbar__context`) e botão de retorno contextual (`.md-appbar__back`), agrupados estruturalmente em `.header__start`. No desktop e no mobile, o botão de voltar segue o System Design rigoroso (tipografia mono `var(--font-mono)`, borda sólida `var(--on-dark-line)`, raio geométrico de 4px, hover cinético com deslocamento da seta e active contrastante AA em Laranja Impulso sobre Azul Noite). O `h1` nunca é duplicado ali.
+- **Tab bar** — quatro destinos que utilizam âncoras locais (`#inicio`, `#inscricoes`, `#projetos`, `#contato`), ícones SVG próprios de traço reto, rótulo sempre visível e estado ativo por forma, peso e cor. Na home o destino ativo espelha, via `MutationObserver`, a classe que o `IntersectionObserver` de `navigation.js` já escreve: uma única fonte de verdade. Recolhe sob `has-event-mobile-cta`, `modal-open` e `md-doc-open` — nunca duas barras inferiores ao mesmo tempo.
 - **Menu** — reaproveita `#mainNav` e `#menuToggle`. `navigation.js` segue dono do toggle, do `aria-expanded`, do `body.menu-open` e do Escape; `mobile.js` acrescenta foco preso, foco inicial, retorno de foco, alternância do rótulo do acionador e a linha "Fechar menu" na base do sheet.
 - **Action dock** — `.event-mobile-cta` vira a zona inferior contextual do evento com inscrição aberta e substitui a tab bar. O botão principal duplicado dentro do painel lateral é ocultado; status, data e categorias permanecem.
 - **Visualizador de regulamento** — `mobile.js` observa a classe `is-expanded` que `regulation.js` já escreve e converte a seção em tela cheia com toolbar própria. Fechar e imprimir acionam `#regulationToggle` e `#regulationPrint`: nenhuma lógica duplicada. Escape, retorno de foco, `#regulamento` e o botão voltar do navegador funcionam; o documento, o texto e o redirecionamento antigo permanecem intocados.
@@ -102,21 +102,21 @@ http://127.0.0.1:4173/
 
 Se a porta estiver ocupada, use outra porta e mantenha o mesmo caminho da pasta.
 
-## Páginas
+## Páginas e Arquitetura Consolidada
 
-- `index.html`: homepage institucional com eventos em destaque.
-- `inscricoes.html`: catálogo/listagem pública de eventos, busca e filtros.
-- `evento.html`: template único de detalhe, usando query string.
-- `regulamento-taca-vale-handebol-2026.html`: redirecionamento de compatibilidade para o regulamento dentro do evento.
+- `index.html`: documento único consolidado com a home institucional, catálogo público de eventos com busca e filtros (`#inscricoes`) e o container dinâmico de detalhe de evento (`#eventDetailSection`).
+- `inscricoes.html`: redirecionamento imediato de compatibilidade para `index.html#inscricoes`.
+- `evento.html`: redirecionamento imediato de compatibilidade para `index.html?evento=<slug>`.
+- `regulamento-taca-vale-handebol-2026.html`: redirecionamento imediato de compatibilidade para `index.html?evento=taca-vale-handebol-2026#regulamento`.
 
-Exemplo:
+Exemplo de navegação de evento:
 
 ```text
-evento.html?evento=taca-vale-handebol-2026
-evento.html?evento=taca-vale-handebol-2026#regulamento
+index.html?evento=taca-vale-handebol-2026
+index.html?evento=taca-vale-handebol-2026#regulamento
 ```
 
-Não há páginas individuais por competição: o detalhe de qualquer evento vem sempre de `data/events.js`. O regulamento pertence exclusivamente ao registro da Taça Vale e é renderizado dentro do mesmo detalhe dinâmico.
+Não há páginas individuais por competição: o detalhe de qualquer evento vem sempre de `data/events.js`. O regulamento pertence exclusivamente ao registro da Taça Vale e é renderizado dentro do mesmo detalhe dinâmico consolidado em `index.html`.
 
 ## Estrutura
 
@@ -197,7 +197,7 @@ Na interface: `open` recebe Teal, `soon` recebe Âmbar, `closed`/`finished`/`ful
 
 ## Regulamento
 
-O regulamento oficial da 1ª Taça Vale do Mucuri de Handebol Júnior é renderizado dentro de `evento.html?evento=taca-vale-handebol-2026#regulamento`: Capítulos I a VIII, artigos 1º a 19º e as três folhas do documento original. Não há `iframe`, backend ou PDF hospedado; "salvar em PDF" usa o diálogo nativo de impressão.
+O regulamento oficial da 1ª Taça Vale do Mucuri de Handebol Júnior é renderizado dentro de `index.html?evento=taca-vale-handebol-2026#regulamento`: Capítulos I a VIII, artigos 1º a 19º e as três folhas do documento original. Não há `iframe`, backend ou PDF hospedado; "salvar em PDF" usa o diálogo nativo de impressão.
 
 Integração:
 
@@ -208,7 +208,7 @@ Integração:
 
 Estilo e impressão:
 
-- `css/regulation.css` é carregado apenas por `evento.html` e todo seletor visual fica sob `.event-regulation`, usando somente tokens de `variables.css`.
+- `css/regulation.css` e `css/registration.css` são carregados diretamente por `index.html` e todo seletor visual fica sob `.event-regulation`, usando somente tokens de `variables.css`.
 - `js/regulation.js` controla expansão/recolhimento, `#regulamento`, tabela responsiva e o ciclo `beforeprint`/`afterprint`, restaurando o estado anterior da interface.
 - `@media print` usa `@page { size: A4 }`, esconde header, footer, breadcrumb, hero, barra de ações, WhatsApp e barra de progresso, e força quebra após as folhas 1 e 2. A verificacao automatizada de 28/08/2026 gerou **4 paginas A4**, portanto o requisito de exatamente 3 paginas esta reprovado e precisa de correcao visual antes de Production.
 
