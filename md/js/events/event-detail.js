@@ -12,24 +12,101 @@ import { getRegistrationsByEvent } from "../registration/registration-storage.js
 import { revealScope } from "../motion.js";
 import { getRegulationRenderer } from "./regulations/index.js";
 
-const CONTACT_URL = "index.html#contato";
+const CONTACT_URL = "#contato";
+const DEFAULT_TITLE = "M&D Projetos e Eventos Desportivos | Movimento que organiza, conecta e transforma";
+const DEFAULT_DESCRIPTION = "Planejamento e realização profissional de projetos e eventos esportivos para empresas, escolas, comunidades e parceiros.";
+
+let isInitialized = false;
 
 export function initEventDetail() {
   const root = document.getElementById("eventDetailRoot");
+  const detailSection = document.getElementById("eventDetailSection");
+  const mainViews = document.getElementById("mainViews");
+  const backButton = document.querySelector(".md-appbar__back");
   if (!root) return;
 
-  const params = new URLSearchParams(window.location.search);
-  const slug = params.get("evento");
-  const event = slug ? getEventBySlug(slug) : null;
+  const syncRoute = () => {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("evento");
 
-  if (!event) {
-    document.body.classList.remove("has-event-mobile-cta");
-    renderNotFound(root);
-    return;
+    if (!slug) {
+      if (detailSection) detailSection.hidden = true;
+      if (mainViews) mainViews.hidden = false;
+      if (backButton) backButton.hidden = true;
+      document.body.classList.remove("has-event-mobile-cta");
+      document.title = DEFAULT_TITLE;
+      const desc = document.querySelector("meta[name='description']");
+      if (desc) desc.setAttribute("content", DEFAULT_DESCRIPTION);
+      root.replaceChildren();
+      return;
+    }
+
+    const event = getEventBySlug(slug);
+
+    if (mainViews) mainViews.hidden = true;
+    if (detailSection) detailSection.hidden = false;
+    if (backButton) {
+      backButton.hidden = false;
+      backButton.href = "#inscricoes";
+    }
+
+    if (!event) {
+      document.body.classList.remove("has-event-mobile-cta");
+      renderNotFound(root);
+      return;
+    }
+
+    updateMeta(event);
+    renderEvent(root, event);
+  };
+
+  syncRoute();
+
+  if (!isInitialized) {
+    isInitialized = true;
+
+    window.addEventListener("popstate", () => {
+      syncRoute();
+      import("../regulation.js").then((m) => m.initRegulation?.());
+    });
+
+    document.addEventListener("click", (e) => {
+      const link = e.target.closest("a");
+      if (!link) return;
+
+      const href = link.getAttribute("href");
+      if (!href) return;
+
+      if (href.startsWith("?evento=") || href.includes("index.html?evento=") || href.includes("evento.html?evento=")) {
+        e.preventDefault();
+        const targetUrl = new URL(link.href, window.location.href);
+        const slug = targetUrl.searchParams.get("evento");
+        if (slug) {
+          history.pushState({ evento: slug }, "", `?evento=${encodeURIComponent(slug)}`);
+          syncRoute();
+          import("../regulation.js").then((m) => m.initRegulation?.());
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+        return;
+      }
+
+      const activeDetail = document.getElementById("eventDetailSection");
+      if (activeDetail && !activeDetail.hidden) {
+        if (link.matches(".md-appbar__back") || href === "#inscricoes" || href === "#inicio" || href === "inscricoes.html" || href === "index.html") {
+          const targetHash = href.startsWith("#") ? href : "#inscricoes";
+          e.preventDefault();
+          history.pushState({}, "", `index.html${targetHash}`);
+          syncRoute();
+          const targetElement = document.querySelector(targetHash);
+          if (targetElement) {
+            targetElement.scrollIntoView({ behavior: "smooth" });
+          } else {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        }
+      }
+    });
   }
-
-  updateMeta(event);
-  renderEvent(root, event);
 }
 
 function renderNotFound(root) {
@@ -44,7 +121,7 @@ function renderNotFound(root) {
 
   const link = document.createElement("a");
   link.className = "btn btn--primary";
-  link.href = "inscricoes.html";
+  link.href = "#inscricoes";
   link.textContent = "Ver todos os eventos";
   wrapper.append(link);
   root.replaceChildren(wrapper);
@@ -71,8 +148,8 @@ function renderBreadcrumb(event) {
   nav.className = "breadcrumb container";
   nav.setAttribute("aria-label", "Caminho");
 
-  const home = breadcrumbLink("index.html", "Início");
-  const events = breadcrumbLink("inscricoes.html", "Inscrições");
+  const home = breadcrumbLink("#inicio", "Início");
+  const events = breadcrumbLink("#inscricoes", "Inscrições");
   const current = document.createElement("span");
   current.textContent = event.shortTitle || event.title;
   current.setAttribute("aria-current", "page");
@@ -136,7 +213,7 @@ function renderHeroActions(event, status, registrationModal) {
 
   const back = document.createElement("a");
   back.className = "link-action link-action--dark";
-  back.href = "inscricoes.html";
+  back.href = "#inscricoes";
   back.textContent = "Ver todos os eventos";
   back.dataset.eventAction = "back";
   actions.append(back);

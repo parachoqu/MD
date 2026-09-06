@@ -20,6 +20,7 @@ const SECTION_TO_TAB = {
   sobre: "inicio",
   atuacao: "inicio",
   eventos: "eventos",
+  inscricoes: "eventos",
   projetos: "projetos",
   impacto: "projetos",
   contato: "contato",
@@ -109,13 +110,19 @@ function mount() {
  * acessibilidade, e sem JavaScript nada é inserido no layout.
  */
 function revealShell(cleanups) {
+  const back = document.querySelector(".md-appbar__back");
+  const eventDetail = document.getElementById("eventDetailSection");
   const elements = [
     document.getElementById("mdTabBar"),
-    document.querySelector(".md-appbar__back"),
+    back,
     document.querySelector(".md-appbar__context"),
   ].filter(Boolean);
 
   elements.forEach((element) => {
+    if (element === back) {
+      element.hidden = !eventDetail || eventDetail.hidden;
+      return;
+    }
     element.hidden = false;
   });
 
@@ -146,19 +153,18 @@ function initTabs(tabbar, observe) {
     });
   };
 
-  // Catálogo e detalhe pertencem sempre ao destino Eventos.
-  if (!document.getElementById("featuredEvents")) {
-    setActive("eventos");
-    return;
-  }
-
   const navLinks = Array.from(document.querySelectorAll("#mainNav a"));
-  if (!navLinks.length) {
-    setActive("inicio");
-    return;
-  }
+  const eventDetail = document.getElementById("eventDetailSection");
 
   const readActive = () => {
+    if (eventDetail && !eventDetail.hidden) {
+      setActive("eventos");
+      return;
+    }
+    if (!document.getElementById("featuredEvents")) {
+      setActive("eventos");
+      return;
+    }
     const active = navLinks.find((link) => link.classList.contains("is-active"));
     const section = active?.hash ? active.hash.slice(1) : "";
     setActive(SECTION_TO_TAB[section] || "inicio");
@@ -167,6 +173,10 @@ function initTabs(tabbar, observe) {
   navLinks.forEach((link) => {
     observe(link, readActive, { attributes: true, attributeFilter: ["class"] });
   });
+
+  if (eventDetail) {
+    observe(eventDetail, readActive, { attributes: true, attributeFilter: ["hidden"] });
+  }
 
   readActive();
 }

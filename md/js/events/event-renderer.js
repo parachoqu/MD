@@ -17,7 +17,7 @@ const MONTH_ABBR = {
 };
 
 export function eventUrl(event) {
-  return `evento.html?evento=${encodeURIComponent(event.slug)}`;
+  return `?evento=${encodeURIComponent(event.slug)}`;
 }
 
 export function statusBadge(event) {

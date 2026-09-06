@@ -16,6 +16,8 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/sections.css">
   <link rel="stylesheet" href="css/events.css">
+  <link rel="stylesheet" href="css/registration.css">
+  <link rel="stylesheet" href="css/regulation.css">
   <link rel="stylesheet" href="css/mobile.css" media="(max-width: 767px)">
   <!-- Imagem do primeiro slide da hero: é o LCP da home. O preload precisa
        repetir srcset/sizes do <img> para o navegador escolher o mesmo degrau. -->
@@ -34,23 +36,31 @@
 
   <header class="site-header" id="siteHeader">
     <div class="container header__inner">
+      <a class="md-appbar__back" href="#inscricoes" aria-label="Voltar para eventos" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M14 5 7 12l7 7"/></svg>
+        <span>Eventos</span>
+      </a>
+
       <a class="brand" href="#inicio" aria-label="M&D Projetos e Eventos Desportivos - Início">
         <img src="assets/logo/logo.png" alt="M&D Projetos e Eventos Desportivos" width="40" height="40">
         <span class="brand__text">M&amp;D <span>Projetos e Eventos</span></span>
       </a>
+
+      <span class="md-appbar__context" hidden>Eventos</span>
 
       <nav class="nav" id="mainNav" aria-label="Navegação principal">
         <a href="#inicio" class="is-active">Início</a>
         <a href="#sobre">Sobre</a>
         <a href="#atuacao">Atuação</a>
         <a href="#eventos">Eventos</a>
+        <a href="#inscricoes">Inscrições</a>
         <a href="#projetos">Projetos</a>
         <a href="#impacto">Impacto</a>
         <a href="#contato">Contato</a>
       </nav>
 
       <div class="header__actions">
-        <a class="btn btn--primary" href="inscricoes.html">Inscrições</a>
+        <a class="btn btn--primary" href="#inscricoes">Inscrições</a>
         <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="mainNav" aria-label="Abrir menu">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
             <path d="M4 7h16M4 12h16M4 17h16"></path>
@@ -61,6 +71,13 @@
   </header>
 
   <main id="conteudo">
+    <!-- Visualização de Detalhe do Evento (ativa ao selecionar evento) -->
+    <section id="eventDetailSection" class="event-detail-section" hidden>
+      <div id="eventDetailRoot"></div>
+    </section>
+
+    <!-- Visão Principal Consolidada (Home e Catálogo de Inscrições) -->
+    <div id="mainViews" class="main-views">
     <section class="hero" id="inicio" aria-labelledby="heroTitle">
       <div class="container hero__inner">
         <p class="hero__meta">
@@ -73,7 +90,7 @@
           <div class="hero__track" data-hero-track tabindex="0" role="group" aria-roledescription="carousel" aria-label="Destaque: 1ª Taça Vale do Mucuri de Handebol Júnior">
             <div class="hero__slide hero__slide--visual" data-hero-slide id="heroSlide-0" data-animate role="group" aria-roledescription="slide" aria-label="1 de 2: imagem do evento em destaque">
               <div class="hero-card hero-card--event media-frame">
-                <a class="hero-card__link" href="evento.html?evento=taca-vale-handebol-2026" aria-label="Ver regulamento e detalhes da 1ª Taça Vale do Mucuri de Handebol Júnior"></a>
+                <a class="hero-card__link" href="?evento=taca-vale-handebol-2026" aria-label="Ver regulamento e detalhes da 1ª Taça Vale do Mucuri de Handebol Júnior"></a>
                 <img src="assets/img/generated/evento-taca-vale-handebol-junior-ficticio.webp"
                      srcset="assets/img/generated/evento-taca-vale-handebol-junior-ficticio-768.webp 768w, assets/img/generated/evento-taca-vale-handebol-junior-ficticio-1152.webp 1152w, assets/img/generated/evento-taca-vale-handebol-junior-ficticio.webp 1536w"
                      sizes="(max-width: 767px) calc(100vw - 32px), (max-width: 1199px) 90vw, 1240px"
@@ -94,7 +111,7 @@
                         <span>Ver regulamento e detalhes</span>
                         <span aria-hidden="true">→</span>
                       </span>
-                      <a class="hero-card__cta" href="inscricoes.html">Inscreva-se</a>
+                      <a class="hero-card__cta" href="#inscricoes">Inscreva-se</a>
                     </div>
                   </div>
                 </div>
@@ -138,11 +155,11 @@
                     </h1>
                     <p class="hero-card__support">Planejamento e realização de projetos, eventos, recreação e lazer para empresas, escolas e comunidades.</p>
                     <div class="hero-card__cta-row">
-                      <a class="hero-card__action" href="evento.html?evento=taca-vale-handebol-2026">
+                      <a class="hero-card__action" href="?evento=taca-vale-handebol-2026">
                         <span>Ver evento em destaque</span>
                         <span aria-hidden="true">→</span>
                       </a>
-                      <a class="hero-card__cta" href="inscricoes.html">Inscreva-se</a>
+                      <a class="hero-card__cta" href="#inscricoes">Inscreva-se</a>
                     </div>
                   </div>
                 </div>
@@ -237,7 +254,51 @@
         <div class="events-list" id="featuredEvents" aria-live="polite"></div>
 
         <div class="home-events__footer">
-          <a class="btn btn--secondary" href="inscricoes.html">Ver todos os eventos</a>
+          <a class="btn btn--secondary" href="#inscricoes">Ver todos os eventos</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--white events-catalog" id="inscricoes" aria-labelledby="eventsListTitle">
+      <div class="container">
+        <div class="section-heading section-heading--events-catalog">
+          <div>
+            <span class="section-index">[ 02.1 ] Inscrições</span>
+            <h2 class="section-title" id="eventsListTitle">Eventos disponíveis</h2>
+          </div>
+          <p class="section-copy">Use busca e filtros em conjunto para encontrar eventos por nome, modalidade, categoria ou status.</p>
+        </div>
+
+        <form class="events-tools" role="search" aria-label="Filtros de eventos">
+          <div class="events-tools__search">
+            <label for="eventSearch">Buscar evento</label>
+            <input id="eventSearch" type="search" placeholder="Nome, modalidade ou categoria">
+          </div>
+          <div class="events-tools__select events-tools__select--status" data-status="all">
+            <label for="eventStatus">Status</label>
+            <select id="eventStatus">
+              <option value="all">Todos</option>
+              <option value="open">Inscrições abertas</option>
+              <option value="soon">Em breve</option>
+              <option value="closed">Encerrados</option>
+            </select>
+          </div>
+          <div class="events-tools__select">
+            <label for="eventSport">Modalidade</label>
+            <select id="eventSport">
+              <option value="all">Todas as modalidades</option>
+            </select>
+          </div>
+          <button class="btn btn--ghost" type="button" data-clear-event-filters hidden>Limpar filtros</button>
+        </form>
+
+        <p class="events-count" id="eventsCount" aria-live="polite"></p>
+        <div class="events-list" id="eventsList"></div>
+
+        <div class="events-empty" id="eventsEmpty" hidden>
+          <h3>Nenhum evento encontrado.</h3>
+          <p>Tente alterar os filtros ou consultar todos os eventos.</p>
+          <button class="btn btn--primary" type="button" data-clear-event-filters hidden>Limpar filtros</button>
         </div>
       </div>
     </section>
@@ -471,6 +532,7 @@
         </div>
       </div>
     </section>
+    </div><!-- /#mainViews -->
   </main>
 
   <footer class="site-footer">
@@ -488,7 +550,8 @@
           <div class="footer-links">
             <a href="#sobre">Sobre</a>
             <a href="#atuacao">Atuação</a>
-            <a href="inscricoes.html">Eventos</a>
+            <a href="#eventos">Eventos</a>
+            <a href="#inscricoes">Inscrições</a>
             <a href="#projetos">Projetos</a>
             <a href="#impacto">Impacto</a>
             <a href="#contato">Contato</a>
@@ -562,19 +625,19 @@
        atributo hidden a mantém fora do layout e da árvore de
        acessibilidade. js/mobile.js a libera apenas no mobile. -->
   <nav class="md-tabbar" id="mdTabBar" aria-label="Navegação principal do aplicativo" hidden>
-    <a href="index.html#inicio" data-md-tab="inicio">
+    <a href="#inicio" data-md-tab="inicio">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M3 10.5 12 4l9 6.5"/><path d="M6 11v8h12v-8"/><path d="M4 20h16" stroke-width="3"/></svg>
       <span>Início</span>
     </a>
-    <a href="inscricoes.html" data-md-tab="eventos">
+    <a href="#inscricoes" data-md-tab="eventos">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M4 6h16v14H4z"/><path d="M4 10.5h16"/><path d="M8.5 3v4M15.5 3v4"/><rect x="6.5" y="13" width="5" height="4" fill="currentColor" stroke="none"/></svg>
       <span>Eventos</span>
     </a>
-    <a href="index.html#projetos" data-md-tab="projetos">
+    <a href="#projetos" data-md-tab="projetos">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M4 6.5h16"/><path d="M4 12h12"/><path d="M4 17.5h8"/><rect x="16" y="15.5" width="4" height="4" fill="currentColor" stroke="none"/></svg>
       <span>Projetos</span>
     </a>
-    <a href="index.html#contato" data-md-tab="contato">
+    <a href="#contato" data-md-tab="contato">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9.5h8"/><path d="M8 12.5h5"/></svg>
       <span>Contato</span>
     </a>
