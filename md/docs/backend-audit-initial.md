@@ -1,5 +1,10 @@
 # Auditoria inicial do backend temporario
 
+> **Documento historico.** Este arquivo registra a linha de base de 28/08/2026
+> antes da implementacao e da reconciliacao. Para a estrutura vigente, consulte
+> [`estrutura-atual-geral.md`](estrutura-atual-geral.md) e o
+> [`relatorio-vercel-neon-md.md`](../../relatorio-vercel-neon-md.md).
+
 Data: 2026-08-28 (America/Sao_Paulo)
 
 ## Baseline Git

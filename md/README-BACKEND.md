@@ -2,24 +2,35 @@
 
 Backend Node.js para o site estatico M&D, executado em Vercel Functions, com Neon Postgres para dados relacionais e Vercel Blob para imagens administraveis. O frontend continua em HTML, CSS e ES Modules, sem framework.
 
-> Operacao atual (06/09/2026): somente Preview/staging, no projeto `colaresdev/mdprojetos`. Runtime usa `DATABASE_URL` pooled; manutencao exige `DATABASE_URL_UNPOOLED` direta da branch `preview/staging`, sem fallback e sem arquivo local. O Neon autorizado e `withered-moon-82282924` / `neon-coquelicot-dog`, branch `br-hidden-poetry-ac5a7r03`; `neon-purple-marble`, Production e Blob real ficam fora deste escopo. Consulte o [procedimento de staging](docs/configuracao-backend-vercel-neon-pendencias.md).
+> Operacao atual (06/09/2026): o merge `23e4dcf` foi publicado em
+> `staging` e o Preview Git de `colaresdev/mdprojetos` esta `READY`, em `gru1`,
+> com quatro Functions Node 24. Runtime usa `DATABASE_URL` pooled; manutencao
+> exige `DATABASE_URL_UNPOOLED` direta da branch `preview/staging`, sem fallback
+> e sem arquivo local. O Neon autorizado e `withered-moon-82282924` /
+> `neon-coquelicot-dog`, branch `br-hidden-poetry-ac5a7r03`; `neon-purple-marble`,
+> Production e Blob real ficam fora deste escopo. Consulte a
+> [estrutura atual geral](docs/estrutura-atual-geral.md) e o
+> [procedimento de staging](docs/configuracao-backend-vercel-neon-pendencias.md).
 
-## Estado objetivo
+## Estado atual
 
 | Area | Estado | Evidencia ou pendencia |
 |---|---|---|
-| Vercel Functions | Validado localmente | `vercel build --target=preview` deve gerar 4 Functions `nodejs24.x` |
-| Rotas profundas | Validado no build | rewrites levam todas as rotas admin/public aos dois roteadores internos |
-| Saida estatica | Validada | 86 arquivos publicos; sem `server/`, `scripts/`, migrations, testes ou docs |
-| Migrations | Validado local e no Preview anterior | banco vazio, repeticao idempotente, checksum, constraints e rollback |
+| Vercel Functions | Validado local e remotamente | Preview `READY` no SHA `23e4dcf`; 4 Functions `nodejs24.x` |
+| Rotas profundas | Validado no build e por testes HTTP | rewrites levam todas as rotas admin/public aos dois roteadores internos |
+| Saida estatica | Validada | 96 arquivos publicos; sem `server/`, scripts operacionais, migrations, testes ou docs |
+| Migrations | Validado local e no Preview | 001 e 002 registradas uma vez, checksums identicos aos arquivos locais |
 | Seed | Validado em PGlite | 3 eventos, 3 projetos, 2 paginas, configuracoes e 16 midias estaticas |
 | Autenticacao | Validada localmente | scrypt, sessao por hash, cookie seguro, CSRF, expiracao, revogacao e rate limit |
 | Editorial | Validado localmente | rascunho separado, snapshot publicado e conflito otimista `409` |
 | Inscricoes e contato | Integrados | API prioritaria, fallback bloqueado, idempotencia, protocolo no servidor e painel |
 | Vercel Blob | Fluxo testado com doubles | upload real depende de criar/configurar o Blob no ambiente |
 | Neon real | Isolado em Preview | projeto, regiao e branch proprios identificados; revalidar antes de cada SQL |
-| Preview real | Em validacao final | somente deployment Git de `staging`; SHA e health precisam coincidir |
+| Preview real | Publicado | deployment Git `READY`, branch `staging`, SHA `23e4dcf`, regiao `gru1` |
 | Integracao do site publico | Concluida em codigo | bootstrap prioritario, inscricao e contato same-origin; fallback somente leitura |
+| Snapshot Taça Vale no Preview | Validado | Atualizado para `open`, 01/08 a 15/10/2026 (rev 2), alinhado à fonte estática |
+| Health do Preview | Validado | HTTP 200 via bypass autorizado; `database: reachable` e SHA `23e4dcf` |
+| PR `staging` para `main` | Pronta para abertura | Link de comparação e template gerados para revisão humana |
 | Impressao do regulamento | Reprovada | Chromium gerou 4 paginas A4; o requisito e exatamente 3 |
 | Privacidade para uso real | Pendente | exige politica aprovada de retencao, exclusao, backup e revisao de seguranca |
 
@@ -345,7 +356,9 @@ GET /api/admin/contact-messages/:id
 PUT /api/admin/contact-messages/:id/status
 ```
 
-Inscricoes e mensagens ja possuem API administrativa, mas ainda nao possuem telas grandes dedicadas no painel.
+Inscricoes possuem view dedicada, filtros, metricas, detalhe e alteracao de
+status no painel. Mensagens de contato possuem API administrativa, mas ainda nao
+possuem uma view grande dedicada.
 
 ### Inscricoes no painel
 
@@ -594,16 +607,21 @@ O frontend conhece apenas `/api/auth/*`, `/api/admin/*` e `/api/public/*`. Para 
 
 Nenhum componente do navegador importa SDK Neon ou acessa `DATABASE_URL`.
 
-## Checklist antes de chamar de pronto
+## Checklist operacional atual
 
 - [x] isolar o Neon e a branch de Preview;
-- [ ] criar Blob e configurar token do ambiente;
-- [ ] configurar todas as variaveis sem compartilhar Production;
+- [x] publicar `staging` no Preview correto, com SHA e quatro Functions conferidos;
 - [x] executar migration e seed em Preview na preparacao anterior;
 - [x] criar administrador e organizer separados em Preview;
 - [x] conectar leitura publica, inscricao e contato aos endpoints;
+- [x] validar localmente 94 testes, build, sintaxe e dependencias;
+- [x] publicar no Neon o snapshot da Taca Vale como `open`, de 01/08 a 15/10/2026;
+- [x] revalidar `/api/health` com acesso autorizado atraves da protecao Vercel;
+- [x] executar o E2E remoto completo e registrar latencias, replay, RBAC e limpeza;
+- [ ] revisar por que o commit recebe checks de tres projetos Vercel (preservado como excecao a pedido do usuario);
+- [x] preparar a PR `staging` para `main` com URL e template, sem merge automatico;
+- [ ] criar Blob e configurar token do ambiente;
 - [ ] validar upload real JPEG/PNG/WebP e recusas;
-- [ ] testar todas as rotas no dominio de Preview;
 - [ ] revisar logs e confirmar ausencia de PII;
 - [ ] validar UI em 320, 390, 767, 768, 1024 e 1440 px;
 - [ ] confirmar regulamento em exatamente 3 paginas A4;

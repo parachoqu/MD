@@ -8,12 +8,25 @@ O checkout ativo da aplicação é esta pasta `md/`. O projeto Vercel é vincula
 
 A branch `staging` é o ambiente de validação. Production continua vinculada a `main` e não faz parte deste fluxo.
 
+Estado observado em 06/09/2026:
+
+- `origin/staging` está no merge commit `23e4dcf1fb811ae69247207503ea1248ec511567`;
+- o Preview Git de `mdprojetos` está `READY`, em `gru1`, com o mesmo SHA e quatro Functions Node 24;
+- `main` e Production permanecem em `de430ffea24c1c95098171337ee3632205e42787`;
+- a árvore reconciliada e o remoto `staging` são idênticos;
+- não há PR aberta de `staging` para `main`.
+
 - Vercel: somente `colaresdev/mdprojetos`, ambiente Preview da branch `staging`.
 - Neon de Preview: projeto `withered-moon-82282924` (`neon-coquelicot-dog`), região Brasil, branch `br-hidden-poetry-ac5a7r03` (`preview/staging`).
 - Nunca usar o projeto `neon-purple-marble` em testes, migrations ou dados de Preview.
 - Runtime HTTP usa `DATABASE_URL` pooled.
 - Migrations e manutenção exigem `DATABASE_URL_UNPOOLED` direta, sem fallback.
 - Blob real, Production, retenção/exclusão, criptografia de PII, backup/PITR e aprovação de inscrições reais permanecem fora do escopo.
+
+O snapshot público da Taça Vale no Preview foi atualizado e publicado no Neon
+como `open`, de 01/08 a 15/10/2026 (revisão 2), alinhado à fonte estática e
+revalidado pela API. O healthcheck `/api/health` foi revalidado com 200 OK
+(`database: reachable`) e o fluxo E2E remoto foi executado e concluído com sucesso.
 
 ## Executar e validar
 
@@ -134,21 +147,28 @@ O processo de manutenção recusa `DATABASE_URL_UNPOOLED` ausente, inválida ou 
 ## Estrutura principal
 
 ```text
-md/
-├── index.html
-├── admin/
-├── api/
-├── css/
-├── data/
-├── db/migrations/
-├── js/
-├── server/
-├── scripts/
-├── test/
-├── .env.example
-├── package.json
-└── vercel.json
+MD/
+├── .github/workflows/ci.yml
+├── md/
+│   ├── index.html
+│   ├── admin/
+│   ├── api/
+│   ├── assets/
+│   ├── css/
+│   ├── data/
+│   ├── db/migrations/
+│   ├── js/
+│   ├── server/
+│   ├── scripts/
+│   ├── test/
+│   ├── .env.example
+│   ├── package.json
+│   └── vercel.json
+└── relatorio-vercel-neon-md.md
 ```
+
+A descrição completa das camadas, fluxos e fontes de verdade está em
+[`docs/estrutura-atual-geral.md`](docs/estrutura-atual-geral.md).
 
 ## Conteúdo, visual e acessibilidade
 
@@ -160,6 +180,8 @@ O regulamento oficial é renderizado no detalhe da Taça Vale. A paginação A4 
 
 ## Documentação operacional
 
+- `docs/estrutura-atual-geral.md`: referência canônica da arquitetura e do estado atual.
 - `README-BACKEND.md`: arquitetura e operação do backend.
 - `docs/configuracao-backend-vercel-neon-pendencias.md`: procedimento vigente e histórico da auditoria.
 - `../relatorio-vercel-neon-md.md`: evidências da reconciliação e do Preview.
+- `docs/backend-audit-initial.md` e `docs/relatorio-preview-staging-2026-09-05.md`: registros históricos, não o estado corrente.

@@ -1,5 +1,10 @@
 # Backend Preview/staging — execucao de 05/09/2026
 
+> **Documento historico.** Este relatorio comprova o estado do Preview em
+> 05/09/2026, antes da integracao publica e da reconciliacao final. Para o estado
+> vigente, consulte [`estrutura-atual-geral.md`](estrutura-atual-geral.md) e o
+> [`relatorio-vercel-neon-md.md`](../../relatorio-vercel-neon-md.md).
+
 **PRONTO PARA INICIAR A INTEGRACAO DO FORMULARIO E DO PAINEL DE INSCRICOES**
 
 O codigo local foi concluido e validado. A autenticacao Neon foi concluida e

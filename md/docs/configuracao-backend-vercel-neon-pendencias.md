@@ -1,163 +1,81 @@
 # Configuracao do backend Vercel, Neon e Blob: estado e proximos passos
 
-## Procedimento vigente: reconciliacao final de Preview/staging (06/09/2026)
+## Estado vigente apos a reconciliacao (06/09/2026)
 
-Esta secao prevalece sobre todo o registro historico abaixo. A missao reconcilia
-o frontend de `main` com o backend e RBAC de `staging`, publica exclusivamente
-a branch Git `staging` e termina com uma PR para `main`, sem merge.
+Esta secao prevalece sobre o registro historico abaixo. A arquitetura completa
+esta em [`estrutura-atual-geral.md`](estrutura-atual-geral.md) e a evidencia
+detalhada em [`../../relatorio-vercel-neon-md.md`](../../relatorio-vercel-neon-md.md).
 
-Limites imutaveis:
+### Concluido e confirmado
 
-- Vercel: equipe `colaresdev`, projeto `mdprojetos`, Root Directory `md`,
-  Node 24, Functions em `gru1`, ambiente Preview da branch `staging`.
-- Production continua em `main`. Nao executar `--prod`, `promote`, mudanca
-  de dominio ou qualquer mutacao de Production.
-- Neon autorizado: projeto `withered-moon-82282924`
+- O merge de `main` em `staging` foi publicado no commit
+  `23e4dcf1fb811ae69247207503ea1248ec511567`.
+- `origin/staging` e a worktree de reconciliacao possuem a mesma arvore e nao
+  ha conflitos ou alteracoes locais anteriores a esta atualizacao documental.
+- O Preview Git de `colaresdev/mdprojetos` esta `READY`, em `gru1`, com o mesmo
+  SHA e quatro Functions Node 24.
+- `main` e o deployment de Production permanecem em
+  `de430ffea24c1c95098171337ee3632205e42787`.
+- O Neon autorizado continua sendo `withered-moon-82282924`
   (`neon-coquelicot-dog`), regiao `aws-sa-east-1`, branch
   `br-hidden-poetry-ac5a7r03` (`preview/staging`).
-- Nunca consultar ou conectar ao projeto `neon-purple-marble`.
-- Blob real, politicas de retencao/exclusao, criptografia de PII, backup/PITR,
-  restore e aprovacao para inscricoes reais permanecem fora do escopo.
-- Credenciais, senhas, tokens e strings de conexao nunca entram em arquivos,
-  comandos exibidos, logs ou documentacao.
+- As migrations 001 e 002 estao registradas uma vez cada e os checksums remotos
+  conferem com os SQL locais.
+- Ha uma conta ativa `admin` e uma `organizer`; a verificacao usou apenas
+  contagens, sem consultar PII.
+- A validacao local atual passou com 136 arquivos JavaScript, 94 testes, build,
+  audit sem vulnerabilidades e artefato com quatro Functions Node 24.
 
-### 1. Git e worktree isolado
+### Status das validacoes operacionais de staging
 
-1. Execute `git fetch --all --prune`.
-2. Confirme os heads, merge-base e divergencia. Avanco normal exige recalculo;
-   reescrita inesperada interrompe a missao.
-3. Crie `backup/staging-before-reconcile-20260906` no head original.
-4. Crie uma nova worktree na branch `reconcile/main-staging-20260906`, a partir
-   de `origin/staging`.
-5. Execute `git merge --no-commit --no-ff origin/main` e resolva conflitos por
-   comportamento.
-6. Nao mova, limpe, resete ou use o worktree `MD-preview-staging`, que contem
-   um relatorio staged independente.
+1. **Taça Vale (Item 1 - Concluido):** Atualizada no banco Neon Preview para o
+   status `open`, datas de 01/08 a 15/10/2026 (`publishedRevision: 2`),
+   alinhada a fonte estatica e confirmada ao vivo via `GET /api/public/events`.
+2. **Health protegido (Item 2 - Concluido):** Revalidado via bypass autorizado
+   (`x-vercel-protection-bypass`): HTTP 200, `database: reachable` e SHA
+   `23e4dcf1fb811ae69247207503ea1248ec511567`.
+3. **E2E remoto completo (Item 3 - Concluido):** Executado contra o Preview
+   remoto, com inscricao (protocolo emitido no servidor), replay idempotente
+   (`idempotency-replayed: true`), mensagem de contato com replay, auditoria no
+   banco e limpeza com cancelamento dos dados de teste.
+4. **Integracoes Vercel extras (Item 4 - Excecao mantida):** Mantido inalterado
+   por instrucao expressa do usuario para revisao externa posterior.
+5. **PR staging para main (Item 5 - Pronta):** URL de comparacao e template
+   prontos para abertura e revisao humana (`https://github.com/parachoqu/MD/compare/main...staging?expand=1`),
+   sem merge automatico.
+6. **Worktree antigo (Item 6 - Preservado):** `MD-preview-staging` preservado
+   intacto (`ahead 1, behind 9`), sem qualquer alteracao local.
 
-O merge deve preservar a pagina consolidada de `main` e, de `staging`, API
-publica, RBAC, idempotencia, cursores, polling, detalhes autenticados e conexao
-direta de manutencao.
+### Limites que continuam validos
 
-### 2. Contratos de codigo
+- Nao executar `--prod`, `promote`, mudanca de dominio ou mutacao de
+  Production sem autorizacao especifica.
+- Nunca usar `neon-purple-marble` neste fluxo.
+- Runtime usa `DATABASE_URL` pooled; toda manutencao exige
+  `DATABASE_URL_UNPOOLED` direta da branch correta, sem fallback.
+- Nao usar `vercel env run` como prova da branch Neon de manutencao.
+- Credenciais, tokens, senhas e strings de conexao nao entram em arquivos,
+  comandos compartilhados, logs ou documentacao.
+- Blob real, retencao/exclusao, criptografia de PII, backup/PITR, restore,
+  monitoramento, impressao A4 e inscricoes reais permanecem fora do escopo
+  concluido.
 
-- `GET /api/public/bootstrap` e a fonte prioritaria. Fallback estatico e
-  somente leitura e sempre bloqueia inscricao.
-- Inscricao usa `Idempotency-Key`, protocolo do servidor e replay com o mesmo
-  protocolo. Rascunho expira em sete dias, conserva a chave entre tentativas e
-  so e apagado depois de `201`.
-- A listagem administrativa aceita `limit`, `cursor`, `sync`, `query`,
-  `status`, `eventId` e `categoryId`.
-- A listagem e a pesquisa nao acessam PII: pesquisa apenas protocolo/equipe;
-  nomes pessoais, contatos, nascimento, responsaveis e atletas ficam no detalhe.
-- Organizer lista, abre e altera inscricoes, mas recebe `403` para conteudo,
-  eventos, projetos, configuracoes, midia/upload, auditoria e contatos.
-- Polling padrao de 4 segundos, pausa em aba oculta, sincronizacao imediata no
-  foco, exclusao mutua, backoff ate 60 segundos, reconciliacao completa e
-  teardown no unmount.
-- A migration 002 e imutavel.
-
-### 3. Validacao local obrigatoria
-
-Na pasta `md`:
+### Gates antes da PR ser considerada pronta
 
 ```bash
+cd md
 npm ci
 npm run check
 npm test
 npm run build
 npm audit --omit=dev
+cd ..
+git diff --check
 ```
 
-A suite precisa ter no minimo 89 testes, sem falhas e sem skips. Na raiz, rode
-`git diff --check`.
-
-Valide tambem desktop e mobile no navegador: pagina consolidada, redirects,
-navegacao, filtros, detalhe, modal, fallback offline, foco, teclado, overflow e
-console.
-
-### 4. Build de Preview antes do push
-
-Na raiz da worktree, vincule ou confira somente o projeto `mdprojetos`.
-Prepare o contexto Preview da branch `staging` sem gravar env em `md/` e
-execute:
-
-```bash
-vercel build --target=preview
-npm --prefix md run check:vercel-output
-```
-
-O artefato deve conter exatamente quatro Functions `nodejs24.x`. O estatico
-nao pode conter servidor, testes, migrations, scripts operacionais, relatorios,
-documentacao ou secrets.
-
-### 5. Publicacao Git e Preview
-
-1. Revise o diff e crie um merge commit funcional descritivo.
-2. Faça push normal apenas de `HEAD:staging`; nunca use force e nao toque em
-   `main`.
-3. Aguarde o deployment Git ficar `READY` como Preview.
-4. Confira SHA exato, quatro Functions e `GET /api/health` com
-   `database: reachable` e a mesma versao.
-5. Deployment/SHA incorreto interrompe todas as etapas seguintes.
-
-### 6. Neon e migration
-
-Nao use `vercel env run` como fonte de manutencao: a integracao pode resolver
-a branch principal do Neon.
-
-Antes de SQL, reconfirme projeto, regiao, branch, endpoint gravavel e o par
-pooled/direto. Obtenha as duas URLs explicitamente para
-`br-hidden-poetry-ac5a7r03`, confirme que a direta nao possui `-pooler` e
-injete-a apenas no processo filho.
-
-Execute `npm run db:migrate` duas vezes. Confirme migration 002 registrada uma
-vez, checksum versionado intacto e nenhuma mudanca na segunda execucao.
-Reutilize admin e organizer existentes; so crie organizer se consulta segura
-provar ausencia ou inatividade. Senhas entram apenas em terminal privado.
-
-### 7. E2E real e limpeza
-
-Use tres sessoes efemeras e isoladas: `md-public-e2e`, `md-admin-e2e` e
-`md-organizer-e2e`.
-
-Crie um evento `TESTE PREVIEW — Reconciliação <shortSHA>`, slug unico, janela
-aberta relativa a data do teste, capacidade quatro e categoria sintetica. Use
-somente nomes marcados como teste, e-mails `.invalid`, telefone e nascimento
-ficticios.
-
-Prove:
-
-- duas inscricoes e paginacao keyset real com `limit=1`;
-- replay da principal com mesmo protocolo/header e uma unica linha no Neon;
-- nova inscricao e status na outra sessao sem reload em ate cinco segundos;
-- listagem sem PII, detalhe com PII, metricas, filtros e pesquisa;
-- conflito concorrente `409 revision_conflict`;
-- organizer `200` nas rotas permitidas e `403` nas proibidas;
-- contato sintetico e arquivamento;
-- desktop 1280 px, mobile 390x844, console/rede, teclado, foco e offline.
-
-Finalize por fluxo normal: cancele inscricoes, arquive contato e evento, preserve
-auditoria, limpe cookies/storage e feche as sessoes. Confirme que o evento saiu
-da API publica e nao restou chave pessoal no navegador.
-
-### 8. Handoff
-
-Atualize `relatorio-vercel-neon-md.md` separando evidencias de codigo, local,
-deployment, migration, E2E, latencias, RBAC, idempotencia, privacidade e limpeza.
-Publique um commit documental, espere o Preview final e prove que o runtime nao
-mudou entre os commits funcional e documental.
-
-Abra PR pronta para revisao de `staging` para `main`, aguarde CI verde e nao
-mescle.
-
-Sucesso final:
-
-`PREVIEW VALIDADO — PRONTO PARA REVISÃO, MAIN E PRODUCTION INTACTAS`
-
-Se endpoint Neon, conexao direta, autenticacao, testes, deployment/SHA ou as
-tres sessoes nao puderem ser comprovados, pare e registre:
-
-`BLOQUEADO — AÇÃO HUMANA NECESSÁRIA`
+Depois, concluir as pendencias 1 a 4, atualizar o relatorio operacional, abrir
+a PR e aguardar a CI. O estado `READY` do deployment nao substitui health,
+contratos E2E, isolamento de integracoes ou revisao humana.
 
 ## Registro historico da auditoria de 04/09/2026
 
