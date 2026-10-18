@@ -1,4 +1,4 @@
-import { events, getFeaturedEvents, getSports } from "../../data/events.js";
+import { getEvents, getFeaturedEvents, getSports, fetchPublicEvents } from "../../data/events.js";
 import { createEventRow } from "./event-renderer.js";
 import { revealScope } from "../motion.js";
 
@@ -7,6 +7,22 @@ const STATUS_FILTERS = new Set(["open", "soon", "closed"]);
 export function initEventList() {
   renderFeaturedEvents();
   initCatalog();
+
+  fetchPublicEvents().then((loaded) => {
+    if (loaded && loaded.length) {
+      renderFeaturedEvents();
+      const sport = document.getElementById("eventSport");
+      if (sport) {
+        const current = sport.value;
+        const firstOption = sport.firstElementChild;
+        sport.replaceChildren(firstOption);
+        populateSports(sport);
+        sport.value = current;
+      }
+      const search = document.getElementById("eventSearch");
+      search?.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  });
 }
 
 function renderFeaturedEvents() {
@@ -119,7 +135,7 @@ function populateSports(select) {
 }
 
 function filterEvents(state) {
-  return events
+  return getEvents()
     .filter((event) => {
       const matchesSearch = !state.query || eventSearchText(event).includes(state.query);
       const matchesStatus = state.status === "all" || event.status === state.status;

@@ -34,7 +34,7 @@ if (
   throw new Error("Production exige --confirm-production=IMPORTAR-PRODUCAO e confirmacao humana explicita.");
 }
 
-const database = getDatabase();
+const database = getDatabase({ unpooled: true });
 try {
   await migrateDatabase(database);
   const result = await importAdminExport(database, parsed, {

@@ -50,7 +50,7 @@ try {
   const errors = validatePasswordStrength(password);
   if (errors.length) throw new Error(errors.join(" "));
 
-  database = getDatabase();
+  database = getDatabase({ unpooled: true });
   await migrateDatabase(database);
   const existing = await database.query("SELECT id FROM admin_users WHERE email = $1 LIMIT 1", [email]);
   if (existing.rows.length) {

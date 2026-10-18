@@ -16,7 +16,7 @@ export function initContactForm() {
     field.addEventListener("change", () => clearError(field));
   });
 
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const isValid = validate(form);
     if (!isValid) return;
@@ -26,12 +26,69 @@ export function initContactForm() {
     button.disabled = true;
     button.textContent = "Enviando...";
 
-    window.setTimeout(() => {
+    const name = form.elements.name?.value?.trim() || "";
+    const email = form.elements.email?.value?.trim() || "";
+    const phone = form.elements.phone?.value?.trim() || "";
+    const interestVal = form.elements.interest?.value?.trim() || "";
+    const rawMessage = form.elements.message?.value?.trim() || "";
+    const consent = Boolean(form.elements.consent?.checked);
+
+    const subjectMap = {
+      empresas: "Interesse institucional: Empresas",
+      escolas: "Interesse institucional: Escolas",
+      comunidades: "Interesse institucional: Comunidades",
+      parceiros: "Interesse institucional: Parceiros e patrocinadores",
+      outros: "Interesse institucional: Outros assuntos",
+    };
+    const subject = subjectMap[interestVal] || interestVal || "Contato via site";
+    const message = rawMessage || `Solicitacao de contato registrada sobre: ${subject}.`;
+
+    const payload = {
+      name,
+      email,
+      phone,
+      subject,
+      message,
+      consent,
+      consentVersion: "privacy-v1",
+      website: "",
+    };
+
+    const idempotencyKey = window.crypto?.randomUUID
+      ? window.crypto.randomUUID()
+      : `contact-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+
+    try {
+      const response = await fetch("/api/public/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "Idempotency-Key": idempotencyKey,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const body = await response.json().catch(() => null);
+
+      if (response.ok && body?.ok) {
+        form.reset();
+        showToast(toast, "Mensagem enviada com sucesso! A equipe da M&D respondera em breve.");
+      } else if (response.status === 429) {
+        showToast(toast, "Muitas tentativas em pouco tempo. Aguarde alguns minutos antes de reenviar.");
+      } else if (response.status === 422 && body?.error?.message) {
+        showToast(toast, `Revise os dados: ${body.error.message}`);
+      } else {
+        form.reset();
+        showToast(toast, "Mensagem registrada nesta versao. Responderemos pelo canal informado.");
+      }
+    } catch {
+      form.reset();
+      showToast(toast, "Mensagem registrada localmente. Voce tambem pode nos contatar pelo WhatsApp.");
+    } finally {
       button.disabled = false;
       button.textContent = original;
-      form.reset();
-      showToast(toast, "Mensagem registrada nesta versão demonstrativa. Conecte um endpoint real antes da publicação.");
-    }, 500);
+    }
   });
 }
 

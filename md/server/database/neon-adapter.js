@@ -18,7 +18,7 @@ function wrapClient(client) {
   };
 }
 
-export function createNeonDatabase(connectionString = process.env.DATABASE_URL) {
+export function createNeonDatabase(connectionString = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL) {
   if (!connectionString) {
     throw new Error("DATABASE_URL nao configurada");
   }

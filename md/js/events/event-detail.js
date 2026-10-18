@@ -51,8 +51,23 @@ export function initEventDetail() {
     }
 
     if (!event) {
-      document.body.classList.remove("has-event-mobile-cta");
-      renderNotFound(root);
+      fetch(`/api/public/events/${encodeURIComponent(slug)}`, {
+        headers: { Accept: "application/json" },
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((body) => {
+          if (body?.ok && body.data) {
+            updateMeta(body.data);
+            renderEvent(root, body.data);
+          } else {
+            document.body.classList.remove("has-event-mobile-cta");
+            renderNotFound(root);
+          }
+        })
+        .catch(() => {
+          document.body.classList.remove("has-event-mobile-cta");
+          renderNotFound(root);
+        });
       return;
     }
 

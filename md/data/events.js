@@ -164,21 +164,43 @@ export const events = [
   },
 ];
 
+let currentEvents = [...events];
+
+export function getEvents() {
+  return currentEvents;
+}
+
+export async function fetchPublicEvents() {
+  try {
+    const response = await fetch("/api/public/events", {
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) return currentEvents;
+    const body = await response.json();
+    if (body?.ok && Array.isArray(body.data) && body.data.length > 0) {
+      currentEvents = body.data;
+    }
+  } catch {
+    // Mantem dados locais de fallback sem quebrar a execucao
+  }
+  return currentEvents;
+}
+
 export function getEventStatus(status) {
   return EVENT_STATUS[status] || EVENT_STATUS.soon;
 }
 
 export function getEventBySlug(slug) {
-  return events.find((event) => event.slug === slug) || null;
+  return currentEvents.find((event) => event.slug === slug) || null;
 }
 
 export function getFeaturedEvents(limit = 3) {
-  return events.filter((event) => event.featured).slice(0, limit);
+  return currentEvents.filter((event) => event.featured).slice(0, limit);
 }
 
 export function getSports() {
   return Array.from(
-    new Map(events.map((event) => [event.sportKey, event.sport])).entries()
+    new Map(currentEvents.map((event) => [event.sportKey, event.sport])).entries()
   )
     .map(([value, label]) => ({ value, label }))
     .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));

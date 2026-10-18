@@ -15,7 +15,7 @@ function defaultOutput() {
 }
 
 const output = argument("output") || defaultOutput();
-const database = getDatabase();
+const database = getDatabase({ unpooled: true });
 
 try {
   const exported = await createAdminExport(database);
