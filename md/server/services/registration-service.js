@@ -2,6 +2,7 @@ import { AppError, conflictError, notFoundError, validationError } from "../http
 import { randomToken } from "../security/crypto.js";
 import { registrationSubmissionSchema } from "../validation/submissions.js";
 import { completeIdempotency, idempotencyHashes, reserveIdempotency } from "./idempotency-service.js";
+import { sendRegistrationNotification } from "./email-service.js";
 
 const ACTIVE_STATUSES = ["new", "reviewing", "confirmed"];
 
@@ -75,7 +76,8 @@ export function createRegistrationService(database, config, options = {}) {
     const now = clock();
     const hashes = idempotencyHashes("registration", idempotencyKey, submission, config.ipHashSecret);
 
-    return database.transaction(async (tx) => {
+    let publishedEvent = null;
+    const result = await database.transaction(async (tx) => {
       const reservation = await reserveIdempotency(tx, {
         scope: "registration",
         ...hashes,
@@ -96,6 +98,7 @@ export function createRegistrationService(database, config, options = {}) {
       const row = eventResult.rows[0];
       if (!row) throw notFoundError("Evento publicado nao encontrado.");
       const event = row.published_data;
+      publishedEvent = event;
       assertRegistrationRules(event, submission, now);
 
       if (event.capacity?.teams) {
@@ -198,6 +201,19 @@ export function createRegistrationService(database, config, options = {}) {
       });
       return { status: 201, data: response, replayed: false };
     });
+
+    if (result.status === 201 && !result.replayed && publishedEvent) {
+      sendRegistrationNotification({
+        registration: result.data,
+        submission,
+        event: publishedEvent,
+        config,
+      }).catch((err) => {
+        console.error("[RegistrationService] Falha ao enviar email de notificacao:", err?.message || err);
+      });
+    }
+
+    return result;
   }
 
   return { submit };
