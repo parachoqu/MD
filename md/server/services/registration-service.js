@@ -203,14 +203,16 @@ export function createRegistrationService(database, config, options = {}) {
     });
 
     if (result.status === 201 && !result.replayed && publishedEvent) {
-      sendRegistrationNotification({
-        registration: result.data,
-        submission,
-        event: publishedEvent,
-        config,
-      }).catch((err) => {
+      try {
+        await sendRegistrationNotification({
+          registration: result.data,
+          submission,
+          event: publishedEvent,
+          config,
+        });
+      } catch (err) {
         console.error("[RegistrationService] Falha ao enviar email de notificacao:", err?.message || err);
-      });
+      }
     }
 
     return result;

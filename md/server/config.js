@@ -34,6 +34,9 @@ export function getConfig(options = {}) {
     csrfSecret: readSecret("CSRF_SECRET", requireSecrets),
     ipHashSecret: readSecret("IP_HASH_SECRET", requireSecrets),
     piiEncryptionKey: process.env.PII_ENCRYPTION_KEY || "",
+    resendApiKey: process.env.RESEND_API_KEY || "",
+    notificationEmailTo: process.env.NOTIFICATION_EMAIL_TO || "mdprojetoseeventos@gmail.com",
+    notificationEmailFrom: process.env.NOTIFICATION_EMAIL_FROM || "M&D Notificações <onboarding@resend.dev>",
     commitSha: process.env.VERCEL_GIT_COMMIT_SHA || "local",
   });
 }
