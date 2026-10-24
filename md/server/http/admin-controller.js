@@ -196,8 +196,15 @@ async function handleSubmissions(request, segments, runtime, session) {
     );
   }
   if (!action) {
+    if (registrations) {
+      requireMethod(request, "GET", "DELETE");
+      if (request.method === "DELETE") {
+        return success(await service.deleteRegistration(id, session.user_id));
+      }
+      return success(await service.getRegistration(id));
+    }
     requireMethod(request, "GET");
-    return success(registrations ? await service.getRegistration(id) : await service.getContact(id));
+    return success(await service.getContact(id));
   }
   if (action === "status") {
     requireMethod(request, "PUT");

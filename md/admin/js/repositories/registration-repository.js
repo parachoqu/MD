@@ -28,4 +28,10 @@ export const registrationRepository = {
       body: { status, updatedAt: expectedUpdatedAt || null },
     });
   },
+
+  async delete(id) {
+    return apiRequest(`/api/admin/registrations/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+  },
 };

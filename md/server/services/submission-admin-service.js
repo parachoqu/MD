@@ -145,6 +145,32 @@ export function createSubmissionAdminService(database) {
     });
   }
 
+  async function deleteRegistration(id, actorUserId) {
+    return database.transaction(async (tx) => {
+      const existing = await tx.query(
+        `SELECT id, protocol, team_data->>'name' AS team_name FROM registrations WHERE id = $1`,
+        [id]
+      );
+      if (!existing.rows.length) throw notFoundError();
+      const reg = existing.rows[0];
+
+      await tx.query("DELETE FROM registration_responsibles WHERE registration_id = $1", [id]);
+      await tx.query("DELETE FROM registration_members WHERE registration_id = $1", [id]);
+      await tx.query("DELETE FROM registration_consents WHERE registration_id = $1", [id]);
+      await tx.query("DELETE FROM registrations WHERE id = $1", [id]);
+
+      await recordAudit(tx, {
+        actorUserId,
+        action: "registration.delete",
+        entityType: "registration",
+        entityId: id,
+        metadata: { protocol: reg.protocol, teamName: reg.team_name },
+      });
+
+      return { id, deleted: true, protocol: reg.protocol };
+    });
+  }
+
   async function listContacts(filters = {}) {
     const values = [];
     const where = [];
@@ -223,6 +249,7 @@ export function createSubmissionAdminService(database) {
     listRegistrations,
     getRegistration,
     updateRegistrationStatus,
+    deleteRegistration,
     listContacts,
     getContact,
     updateContactStatus,

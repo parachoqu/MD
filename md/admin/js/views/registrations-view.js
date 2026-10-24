@@ -279,7 +279,36 @@ function openDetailDialog(dialogRoot, registrationId, shell, onUpdated) {
         root.appendChild(body);
 
         // Footer Actions
+        const deleteInDialogBtn = element("button", {
+          type: "button",
+          className: "admin-btn admin-btn--danger",
+          text: "Excluir inscrição",
+          style: "margin-right: auto;",
+          onClick: async () => {
+            const confirmed = await showConfirmDialog(dialogRoot, {
+              title: "Excluir Inscrição",
+              message: `Tem certeza que deseja excluir definitivamente a inscrição ${reg.protocol}${reg.team?.name ? ` (${reg.team.name})` : ""}? Esta ação é irreversível.`,
+              confirmLabel: "Excluir definitivamente",
+              destructive: true,
+            });
+            if (!confirmed) return;
+            deleteInDialogBtn.disabled = true;
+            deleteInDialogBtn.textContent = "Excluindo...";
+            const res = await registrationRepository.delete(reg.id);
+            if (res.ok) {
+              shell.showToast(`Inscrição ${reg.protocol} excluída.`);
+              close();
+              onUpdated();
+            } else {
+              deleteInDialogBtn.disabled = false;
+              deleteInDialogBtn.textContent = "Excluir inscrição";
+              shell.showToast(res.error?.message || "Erro ao excluir inscrição.");
+            }
+          },
+        });
+
         const footer = element("div", { className: "admin-dialog__actions" }, [
+          deleteInDialogBtn,
           element("button", {
             type: "button",
             className: "admin-btn admin-btn--secondary",
@@ -330,6 +359,33 @@ function buildRow(item, shell, refresh) {
         )
       : null;
 
+  const deleteButton = element(
+    "button",
+    {
+      type: "button",
+      className: "admin-icon-btn admin-icon-btn--danger",
+      "aria-label": `Excluir inscrição ${item.protocol}`,
+      title: "Excluir inscrição",
+      onClick: async () => {
+        const confirmed = await showConfirmDialog(shell.getDialogRoot(), {
+          title: "Excluir Inscrição",
+          message: `Tem certeza que deseja excluir a inscrição ${item.protocol}${item.teamName ? ` (${item.teamName})` : ""}? Esta ação é irreversível.`,
+          confirmLabel: "Excluir definitivamente",
+          destructive: true,
+        });
+        if (!confirmed) return;
+        const res = await registrationRepository.delete(item.id);
+        if (res.ok) {
+          shell.showToast(`Inscrição ${item.protocol} excluída.`);
+          refresh();
+        } else {
+          shell.showToast(res.error?.message || "Erro ao excluir inscrição.");
+        }
+      },
+    },
+    [createIcon("trash", { size: 16 })]
+  );
+
   const teamDisplay = item.teamName ? `${item.protocol} · ${item.teamName}` : item.protocol;
   const metaParts = [
     item.eventTitle || item.eventSlug,
@@ -345,7 +401,7 @@ function buildRow(item, shell, refresh) {
       element("span", { className: "admin-row__meta", text: metaParts.join(" · ") }),
     ]),
     element("div", { className: "admin-row__badges" }, [statusBadge(item.status)]),
-    element("div", { className: "admin-row__actions" }, [viewDetailButton, quickConfirmBtn]),
+    element("div", { className: "admin-row__actions" }, [viewDetailButton, quickConfirmBtn, deleteButton]),
   ]);
 }
 

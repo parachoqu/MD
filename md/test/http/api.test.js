@@ -309,4 +309,31 @@ test("inscricao publica e listada, consultada em detalhe e atualizada no painel 
   const statusAudit = activities.find((a) => a.action === "registration.status.update");
   assert.ok(statusAudit);
   assert.equal(statusAudit.entity_id, submitData.registrationId);
+
+  // 7. Admin exclui inscrição de teste com CSRF
+  const deleteRes = await api.admin(
+    request(`/api/admin/registrations/${submitData.registrationId}`, {
+      method: "DELETE",
+      headers: { Cookie: session.cookie, "X-CSRF-Token": session.csrfToken },
+    })
+  );
+  assert.equal(deleteRes.status, 200);
+  const deleteData = (await body(deleteRes)).data;
+  assert.equal(deleteData.deleted, true);
+
+  // 8. Verifica que lista de inscrições está vazia
+  const listAfterDelete = await api.admin(
+    request("/api/admin/registrations", { headers: { Cookie: session.cookie } })
+  );
+  assert.equal(listAfterDelete.status, 200);
+  assert.equal((await body(listAfterDelete)).data.length, 0);
+
+  // 9. Verifica log de auditoria de exclusão
+  const activityAfterDelete = await api.admin(
+    request("/api/admin/activity", { headers: { Cookie: session.cookie } })
+  );
+  const activitiesAfter = (await body(activityAfterDelete)).data;
+  const deleteAudit = activitiesAfter.find((a) => a.action === "registration.delete");
+  assert.ok(deleteAudit);
+  assert.equal(deleteAudit.entity_id, submitData.registrationId);
 });
