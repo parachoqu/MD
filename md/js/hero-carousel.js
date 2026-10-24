@@ -31,14 +31,16 @@ export function initHeroCarousel() {
   function syncHeight() {
     const slide = slides[activeIndex];
     if (!slide) return;
-    track.style.setProperty("--hero-track-h", `${slide.scrollHeight}px`);
+    const parentH = track.parentElement ? track.parentElement.clientHeight : 0;
+    const h = Math.max(slide.scrollHeight, parentH);
+    track.style.setProperty("--hero-track-h", `${h}px`);
   }
 
-  function goToSlide(index) {
+  function goToSlide(index, instant = false) {
     activeIndex = index;
     track.scrollTo({
       left: index * track.clientWidth,
-      behavior: reduceMotion ? "auto" : "smooth",
+      behavior: instant || reduceMotion ? "auto" : "smooth",
     });
     syncHeight();
   }
@@ -99,6 +101,14 @@ export function initHeroCarousel() {
 
   enableMouseDrag(track, syncHeight);
   syncHeight();
+
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const requestedSlide = parseInt(urlParams.get("slide"), 10);
+    if (!isNaN(requestedSlide) && requestedSlide >= 0 && requestedSlide < slides.length) {
+      goToSlide(requestedSlide, true);
+    }
+  } catch {}
 }
 
 function enableMouseDrag(track, syncHeight) {

@@ -197,11 +197,33 @@
 
 /* --- Hero -------------------------------------------------------------- */
 .hero {
-  padding-top: calc(var(--header-height) + var(--space-32));
-  padding-bottom: var(--space-64);
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  padding-top: var(--header-height);
+  padding-bottom: 0;
+  display: flex;
+  flex-direction: column;
   background: var(--structure-deep);
   color: var(--on-dark);
   overflow: hidden;
+}
+
+.hero__inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  position: relative;
+}
+
+.hero__meta-wrap {
+  width: 100%;
+  flex-shrink: 0;
+  z-index: 3;
 }
 
 .hero__meta {
@@ -209,8 +231,8 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: var(--space-8) var(--space-24);
-  padding-bottom: var(--space-12);
-  margin-bottom: clamp(var(--space-32), 5vw, var(--space-64));
+  padding-bottom: var(--space-8);
+  margin-block: var(--space-8) var(--space-12);
   border-bottom: var(--line-soft) solid var(--on-dark-line);
   color: var(--on-dark-muted);
   font-family: var(--font-mono);
@@ -221,11 +243,20 @@
 
 .hero__carousel {
   position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
 }
 
 .hero__track {
   display: flex;
-  align-items: start;
+  align-items: stretch;
+  flex: 1;
+  width: 100%;
+  height: 100% !important;
+  min-height: 0;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   /* Contém o gesto na trilha: sem isto o swipe que chega ao fim do
@@ -233,10 +264,6 @@
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  /* Altura do slide ativo, escrita por js/hero-carousel.js. Sem o script
-     (ou sem ResizeObserver) o valor não existe e a trilha volta a `auto`. */
-  height: var(--hero-track-h, auto);
-  transition: height var(--motion-step) var(--ease-out);
 }
 
 .hero__track::-webkit-scrollbar {
@@ -254,24 +281,23 @@
 }
 
 .hero__slide {
-  /* Token no slide, não no card: os dois slides o leem, cada breakpoint
-     redefine um valor só e ninguém disputa especificidade. */
-  --hero-card-ratio: 21 / 9;
   flex: 0 0 100%;
-  min-width: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
   scroll-snap-align: start;
   scroll-snap-stop: always;
 }
 
-/* Os dois slides são o mesmo card: fotografia num, desenho no outro.
-   Mesma moldura, mesma proporção, mesmas zonas - por isso compartilham
-   estas regras em vez de terem cada um a sua cópia. */
 .hero__slide--visual,
 .hero__slide--content {
-  display: grid;
-  gap: var(--space-12);
-  align-content: center;
-  justify-items: start;
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+  justify-items: stretch;
 }
 
 .hero__title-strong {
@@ -294,56 +320,54 @@
 
 .hero-card {
   position: relative;
-  display: block;
-  border-color: var(--on-dark-line);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: none;
+  border-radius: 0;
   text-decoration: none;
   overflow: hidden;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
-  transition: border-color var(--motion-feedback) var(--ease-out),
-    box-shadow var(--motion-feedback) var(--ease-out),
-    transform var(--motion-feedback) var(--ease-out);
+  box-shadow: none;
 }
 
 .hero-card img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s var(--ease-out);
+  object-position: center 36%;
+  transition: transform 0.6s var(--ease-out);
 }
 
-/* As duas variantes vêm depois da regra base de propósito: `display`,
-   `aspect-ratio` e fundo são redefinidos aqui, e com a mesma especificidade
-   quem fica por último vence. Invertida, a ordem devolvia `display: block`
-   ao card de manifesto e derrubava o piso de altura. */
-
-/* A proporção viaja como token para que cada breakpoint só a redefina,
-   em vez de disputar especificidade com um seletor de duas classes. */
 .hero-card--event {
-  aspect-ratio: var(--hero-card-ratio, 21 / 9);
+  aspect-ratio: unset;
   width: 100%;
-  max-width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--structure-deep);
 }
 
-/* O card de manifesto não pode ser cortado como uma foto: o texto tem de
-   caber. A proporção entra como piso, num item de grade que só empresta
-   altura - quando o conteúdo passa disso (telas estreitas), a linha cresce
-   e o card acompanha em vez de recortar o rodapé. */
 .hero-card--statement {
-  display: grid;
+  aspect-ratio: unset;
   width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   background-color: var(--structure-deep);
   background-image: linear-gradient(var(--on-dark-surface), var(--on-dark-surface));
 }
 
 .hero-card--statement::before {
-  content: "";
-  grid-area: 1 / 1;
-  align-self: start;
-  aspect-ratio: var(--hero-card-ratio, 21 / 9);
+  display: none;
 }
 
 .hero-card--statement .hero-card__overlay {
-  grid-area: 1 / 1;
+  height: 100%;
 }
 
 /* Sem .kinetic-line aqui, de propósito: sobre a foto a diagonal é o único
@@ -362,28 +386,13 @@
   height: 100%;
   color: var(--on-dark-line);
   pointer-events: none;
-  /* O canto inferior esquerdo é onde moram as duas linhas em mono: o olho
-     ciano e o link de ação. Contra o fundo do card elas medem 5,6:1 e 5,7:1,
-     mas um traço da quadra atravessando derruba o pixel local para 3,2:1.
-     A máscara apaga o desenho exatamente ali - onde ele já ficava escondido
-     atrás do h1 - e o mantém inteiro no resto do card. Sem suporte a mask a
-     quadra volta inteira, que é o pior caso descrito acima, não uma quebra. */
   -webkit-mask-image: radial-gradient(58% 78% at 0% 100%, transparent 0 72%, #000 100%);
   mask-image: radial-gradient(58% 78% at 0% 100%, transparent 0 72%, #000 100%);
 }
 
-/* O realce de card inteiro pertence só ao slide do evento, que é um link
-   do topo ao rodapé. O de manifesto não leva a lugar nenhum sozinho: levantá-lo
-   no hover prometeria um clique que não existe. */
 @media (hover: hover) and (pointer: fine) {
-  .hero-card--event:hover {
-    border-color: var(--action);
-    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--action);
-    transform: translateY(-3px);
-  }
-
   .hero-card--event:hover img {
-    transform: scale(1.04);
+    transform: scale(1.02);
   }
 }
 
@@ -394,31 +403,41 @@
 }
 
 .hero-card__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 2;
+  padding: 0;
+  pointer-events: none;
+}
+
+.hero-card--event .hero-card__overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(7, 23, 47, 0.45) 0%,
+    rgba(7, 23, 47, 0.08) 35%,
+    rgba(7, 23, 47, 0.72) 65%,
+    rgba(7, 23, 47, 0.96) 100%
+  );
+}
+
+.hero-card__container {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  /* Com space-between o gap vira piso: quando o conteúdo enche o card
-     (telas estreitas), os selos ainda não encostam no bloco de texto. */
-  gap: var(--space-16);
-  padding: var(--space-20);
-  z-index: 2;
+  height: 100%;
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  padding-block: clamp(var(--space-16), 3vw, var(--space-32)) clamp(var(--space-32), 6vw, var(--space-64));
+  box-sizing: border-box;
 }
 
-/* Sobre foto o texto precisa de um escurecimento; sobre o desenho da quadra,
-   não - lá o fundo já é o azul da seção e o traço vive a 18% de branco. */
-.hero-card--event .hero-card__overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(7, 23, 47, 0.5) 0%,
-    rgba(7, 23, 47, 0.08) 35%,
-    rgba(7, 23, 47, 0.82) 70%,
-    rgba(7, 23, 47, 0.96) 100%
-  );
-  /* Deixa o clique/hover passar para .hero-card__link por baixo;
-     só o botão de inscrição (pointer-events:auto) reage a eventos aqui dentro. */
-  pointer-events: none;
+.hero-card__badges,
+.hero-card__body {
+  pointer-events: auto;
 }
 
 .hero-card__badges {
@@ -549,12 +568,12 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-12);
-  margin-top: var(--space-8);
+  gap: var(--space-16);
+  margin-top: var(--space-12);
 }
 
 .hero-card__cta {
+  order: -1;
   position: relative;
   z-index: 1;
   pointer-events: auto;
@@ -597,48 +616,20 @@
 }
 
 .hero__note {
-  max-width: 40ch;
-  padding-left: var(--space-12);
-  border-left: var(--line-strong) solid var(--action);
-  color: var(--on-dark-muted);
-  font-family: var(--font-mono);
-  font-size: var(--text-meta);
-  line-height: 1.45;
+  display: none;
 }
 
-/* A nota do manifesto carrega dois destinos em vez de uma frase: a medida de
-   leitura de 40ch a quebraria no separador. */
-.hero__slide--content .hero__note {
-  max-width: none;
-}
-
-/* O padding vertical é o que transforma uma linha de 17px num alvo de toque
-   de 44px sem tirar os links do fluxo do parágrafo. */
-.hero__note a {
-  display: inline-block;
-  padding-block: 14px;
-  color: var(--on-dark-link);
-  text-decoration-color: var(--on-dark-line);
-  text-underline-offset: 3px;
-  transition: color var(--motion-feedback) var(--ease-out),
-    text-decoration-color var(--motion-feedback) var(--ease-out);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .hero__note a:hover {
-    color: var(--motion);
-    text-decoration-color: var(--motion);
-  }
-}
-
-/* O alvo de 44px já embute 18px de folga acima do traço: a margem conta
-   só o que falta para o respiro pretendido, não os 24px cheios. */
 .hero__dots {
+  position: absolute;
+  bottom: var(--space-24);
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   justify-content: center;
   align-items: center;
   gap: var(--space-4);
-  margin-top: var(--space-8);
+  margin: 0;
+  z-index: 5;
 }
 
 /* O botão inteiro é o alvo de toque; o traço visual mora no ::before.

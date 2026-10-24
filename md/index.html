@@ -81,12 +81,14 @@
     <!-- Visão Principal Consolidada (Home e Catálogo de Inscrições) -->
     <div id="mainViews" class="main-views">
     <section class="hero" id="inicio" aria-labelledby="heroTitle">
-      <div class="container hero__inner">
-        <p class="hero__meta">
-          <span>M&amp;D · Projetos e Eventos Desportivos</span>
-          <span>Empresas · Escolas · Comunidades</span>
-          <span>Portal de eventos e inscrições</span>
-        </p>
+      <div class="hero__inner">
+        <div class="container hero__meta-wrap">
+          <p class="hero__meta">
+            <span>M&amp;D · Projetos e Eventos Desportivos</span>
+            <span>Empresas · Escolas · Comunidades</span>
+            <span>Portal de eventos e inscrições</span>
+          </p>
+        </div>
 
         <div class="hero__carousel" data-hero-carousel>
           <div class="hero__track" data-hero-track tabindex="0" role="group" aria-roledescription="carousel" aria-label="Destaque: 1ª Taça Vale do Mucuri de Handebol Juvenil">
@@ -95,25 +97,27 @@
                 <a class="hero-card__link" href="?evento=taca-vale-handebol-2026" aria-label="Ver regulamento e detalhes da 1ª Taça Vale do Mucuri de Handebol Juvenil"></a>
                 <img src="assets/img/generated/evento-taca-vale-handebol-junior-ficticio.webp"
                      srcset="assets/img/generated/evento-taca-vale-handebol-junior-ficticio-768.webp 768w, assets/img/generated/evento-taca-vale-handebol-junior-ficticio-1152.webp 1152w, assets/img/generated/evento-taca-vale-handebol-junior-ficticio.webp 1536w"
-                     sizes="(max-width: 767px) calc(100vw - 32px), (max-width: 1199px) 90vw, 1240px"
+                     sizes="100vw"
                      alt="1ª Taça Vale do Mucuri de Handebol Juvenil em Itambacuri/MG" width="1536" height="1024"
                      fetchpriority="high" decoding="async">
                 <span class="kinetic-line hero__line" aria-hidden="true"></span>
                 <div class="hero-card__overlay">
-                  <div class="hero-card__badges">
-                    <span class="hero-card__badge hero-card__badge--solid">Handebol</span>
-                    <span class="hero-card__badge hero-card__badge--status">Inscrições abertas</span>
-                  </div>
-                  <div class="hero-card__body">
-                    <span class="hero-card__eyebrow">12 e 13 de Dezembro de 2026</span>
-                    <strong class="hero-card__title">1ª Taça Vale do Mucuri de Handebol Juvenil</strong>
-                    <p class="hero-card__support">Ginásio Poliesportivo · Itambacuri/MG</p>
-                    <div class="hero-card__cta-row">
-                      <span class="hero-card__action">
-                        <span>Ver regulamento e detalhes</span>
-                        <span aria-hidden="true">→</span>
-                      </span>
-                      <a class="hero-card__cta" href="#inscricoes">Inscreva-se</a>
+                  <div class="container hero-card__container">
+                    <div class="hero-card__badges">
+                      <span class="hero-card__badge hero-card__badge--solid">Handebol</span>
+                      <span class="hero-card__badge hero-card__badge--status">Inscrições abertas</span>
+                    </div>
+                    <div class="hero-card__body">
+                      <span class="hero-card__eyebrow">12 e 13 de Dezembro de 2026</span>
+                      <strong class="hero-card__title">1ª Taça Vale do Mucuri de Handebol Juvenil</strong>
+                      <p class="hero-card__support">Ginásio Poliesportivo · Itambacuri/MG</p>
+                      <div class="hero-card__cta-row">
+                        <span class="hero-card__action">
+                          <span>Ver regulamento e detalhes</span>
+                          <span aria-hidden="true">→</span>
+                        </span>
+                        <a class="hero-card__cta" href="#inscricoes">Inscreva-se</a>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -146,22 +150,24 @@
                   </g>
                 </svg>
                 <div class="hero-card__overlay">
-                  <div class="hero-card__badges">
-                    <span class="hero-card__badge hero-card__badge--solid">Projetos e eventos</span>
-                  </div>
-                  <div class="hero-card__body">
-                    <span class="hero-card__eyebrow">Da ideia à operação em campo</span>
-                    <h1 class="hero-card__title hero-card__title--display" id="heroTitle">
-                      <span class="hero__title-strong">Movimento que organiza,</span>
-                      <span class="hero__title-thin">conecta e transforma.</span>
-                    </h1>
-                    <p class="hero-card__support">Planejamento e realização de projetos, eventos, recreação e lazer para empresas, escolas e comunidades.</p>
-                    <div class="hero-card__cta-row">
-                      <a class="hero-card__action" href="?evento=taca-vale-handebol-2026">
-                        <span>Ver evento em destaque</span>
-                        <span aria-hidden="true">→</span>
-                      </a>
-                      <a class="hero-card__cta" href="#inscricoes">Inscreva-se</a>
+                  <div class="container hero-card__container">
+                    <div class="hero-card__badges">
+                      <span class="hero-card__badge hero-card__badge--solid">Projetos e eventos</span>
+                    </div>
+                    <div class="hero-card__body">
+                      <span class="hero-card__eyebrow">Da ideia à operação em campo</span>
+                      <h1 class="hero-card__title hero-card__title--display" id="heroTitle">
+                        <span class="hero__title-strong">Movimento que organiza,</span>
+                        <span class="hero__title-thin">conecta e transforma.</span>
+                      </h1>
+                      <p class="hero-card__support">Planejamento e realização de projetos, eventos, recreação e lazer para empresas, escolas e comunidades.</p>
+                      <div class="hero-card__cta-row">
+                        <a class="hero-card__action" href="?evento=taca-vale-handebol-2026">
+                          <span>Ver evento em destaque</span>
+                          <span aria-hidden="true">→</span>
+                        </a>
+                        <a class="hero-card__cta" href="#inscricoes">Inscreva-se</a>
+                      </div>
                     </div>
                   </div>
                 </div>
