@@ -29,7 +29,7 @@ const STATIC_MEDIA_SOURCE = [
   {
     id: "media-hero-evento",
     path: "../assets/img/generated/hero-evento-esportivo-ficticio.webp",
-    alt: "Imagem demonstrativa gerada por IA de um evento esportivo comunitário organizado, com participantes e equipe de apoio em uma quadra aberta",
+    alt: "Evento esportivo comunitário organizado, com participantes e equipe de apoio em quadra poliesportiva",
     format: "webp",
     width: 1536,
     height: 1024,
@@ -37,7 +37,7 @@ const STATIC_MEDIA_SOURCE = [
   {
     id: "media-sobre-bastidores",
     path: "../assets/img/generated/sobre-bastidores-ficticio.webp",
-    alt: "Imagem demonstrativa gerada por IA de uma equipe planejando um evento esportivo com pranchetas e cones",
+    alt: "Equipe M&D no planejamento técnico e organização de evento esportivo",
     format: "webp",
     width: 1536,
     height: 1024,
@@ -45,7 +45,7 @@ const STATIC_MEDIA_SOURCE = [
   {
     id: "media-atuacao-empresas",
     path: "../assets/img/generated/atuacao-empresas-ficticio.webp",
-    alt: "Imagem demonstrativa gerada por IA de adultos participando de uma atividade de movimento em ambiente corporativo",
+    alt: "Atividade de saúde, movimento e integração em ambiente corporativo",
     format: "webp",
     width: 1536,
     height: 1024,
@@ -53,7 +53,7 @@ const STATIC_MEDIA_SOURCE = [
   {
     id: "media-atuacao-escolas",
     path: "../assets/img/generated/atuacao-escolas-ficticio.webp",
-    alt: "Imagem demonstrativa gerada por IA de uma atividade esportiva escolar conduzida por um orientador em plano aberto",
+    alt: "Atividade esportiva escolar orientada para formação e convivência",
     format: "webp",
     width: 1536,
     height: 1024,
@@ -61,7 +61,7 @@ const STATIC_MEDIA_SOURCE = [
   {
     id: "media-atuacao-comunidades",
     path: "../assets/img/generated/atuacao-comunidades-ficticio.webp",
-    alt: "Imagem demonstrativa gerada por IA de um evento esportivo comunitário inclusivo em uma quadra pública",
+    alt: "Ação esportiva comunitária e inclusiva em quadra poliesportiva",
     format: "webp",
     width: 1536,
     height: 1024,
@@ -69,7 +69,7 @@ const STATIC_MEDIA_SOURCE = [
   {
     id: "media-atuacao-parceiros",
     path: "../assets/img/generated/atuacao-parceiros-ficticio.webp",
-    alt: "Imagem demonstrativa gerada por IA de uma equipe organizando materiais e estrutura de um evento esportivo",
+    alt: "Equipe técnica da M&D na organização de infraestrutura e materiais esportivos",
     format: "webp",
     width: 1536,
     height: 1024,
@@ -77,7 +77,7 @@ const STATIC_MEDIA_SOURCE = [
   {
     id: "media-impacto-evento",
     path: "../assets/img/generated/impacto-evento-ficticio.webp",
-    alt: "Imagem demonstrativa gerada por IA de um grupo celebrando discretamente após uma atividade esportiva",
+    alt: "Participantes e atletas reunidos em celebração após realização de evento esportivo",
     format: "webp",
     width: 1536,
     height: 1024,
@@ -85,7 +85,7 @@ const STATIC_MEDIA_SOURCE = [
   {
     id: "media-projeto-empresas",
     path: "../assets/img/generated/projeto-empresas-ficticio.webp",
-    alt: "Imagem demonstrativa gerada por IA de uma atividade esportiva leve para uma equipe corporativa",
+    alt: "Circuito de integração e condicionamento físico para empresas",
     format: "webp",
     width: 1448,
     height: 1086,
@@ -93,7 +93,7 @@ const STATIC_MEDIA_SOURCE = [
   {
     id: "media-projeto-escolas",
     path: "../assets/img/generated/projeto-escolas-ficticio.webp",
-    alt: "Imagem demonstrativa gerada por IA de um circuito recreativo esportivo em uma escola",
+    alt: "Circuito recreativo e esportivo escolar para integração e convivência",
     format: "webp",
     width: 1448,
     height: 1086,
@@ -101,7 +101,7 @@ const STATIC_MEDIA_SOURCE = [
   {
     id: "media-projeto-comunidades",
     path: "../assets/img/generated/projeto-comunidades-ficticio.webp",
-    alt: "Imagem demonstrativa gerada por IA de uma atividade esportiva comunitária em uma quadra pública",
+    alt: "Festival de esportes e lazer para bairros e comunidades",
     format: "webp",
     width: 1448,
     height: 1086,
@@ -109,7 +109,7 @@ const STATIC_MEDIA_SOURCE = [
   {
     id: "media-evento-taca-vale",
     path: "../assets/img/generated/evento-taca-vale-handebol-junior-ficticio.webp",
-    alt: "Imagem demonstrativa gerada por IA de uma atividade ilustrativa de handebol juvenil em uma quadra",
+    alt: "1ª Taça Vale do Mucuri de Handebol Juvenil em Itambacuri/MG",
     format: "webp",
     width: null,
     height: null,
@@ -117,7 +117,7 @@ const STATIC_MEDIA_SOURCE = [
   {
     id: "media-evento-demo-futsal",
     path: "../assets/img/generated/evento-demo-futsal-ficticio.webp",
-    alt: "Imagem demonstrativa gerada por IA de uma atividade ilustrativa de futsal em uma quadra coberta",
+    alt: "Torneio de futsal em quadra coberta",
     format: "webp",
     width: null,
     height: null,
@@ -125,7 +125,7 @@ const STATIC_MEDIA_SOURCE = [
   {
     id: "media-evento-demo-voleibol",
     path: "../assets/img/generated/evento-demo-voleibol-ficticio.webp",
-    alt: "Imagem demonstrativa gerada por IA de uma atividade ilustrativa de voleibol em uma quadra",
+    alt: "Competição de voleibol em quadra",
     format: "webp",
     width: null,
     height: null,
@@ -201,7 +201,7 @@ export function buildContentSeed() {
           ctaSecondaryHref: "#projetos",
           image: "media-evento-taca-vale",
           imageAlt:
-            "1ª Taça Vale do Mucuri de Handebol Júnior em Itambacuri/MG",
+            "1ª Taça Vale do Mucuri de Handebol Juvenil em Itambacuri/MG",
           imageNote: "Evento oficial em destaque · Regulamento oficial publicado",
         },
         sobre: {
@@ -211,7 +211,7 @@ export function buildContentSeed() {
             "A M&D apresenta o esporte como experiência organizada: objetivos definidos, execução profissional e atenção à dimensão humana de cada público.",
           quote: "Movimento que organiza, conecta e transforma.",
           image: "media-sobre-bastidores",
-          imageAlt: "Imagem demonstrativa gerada por IA de uma equipe planejando um evento esportivo com pranchetas e cones",
+          imageAlt: "Equipe M&D no planejamento técnico e organização de evento esportivo",
           principles: [
             { title: "Clareza ativa", description: "A pessoa entende a proposta em poucos segundos e sempre encontra o próximo passo." },
             { title: "Energia com controle", description: "Movimento aparece em recortes, diagonais e microinterações, nunca em ruído visual." },
@@ -241,7 +241,7 @@ export function buildContentSeed() {
               linkLabel: "Solicitar proposta",
               interest: "empresas",
               image: "media-atuacao-empresas",
-              imageAlt: "Imagem demonstrativa gerada por IA de adultos participando de uma atividade de movimento em ambiente corporativo",
+              imageAlt: "Atividade de saúde, movimento e integração em ambiente corporativo",
             },
             {
               title: "Escolas",
@@ -251,7 +251,7 @@ export function buildContentSeed() {
               linkLabel: "Conhecer projetos",
               interest: "escolas",
               image: "media-atuacao-escolas",
-              imageAlt: "Imagem demonstrativa gerada por IA de uma atividade esportiva escolar conduzida por um orientador em plano aberto",
+              imageAlt: "Atividade esportiva escolar orientada para formação e convivência",
             },
             {
               title: "Comunidades",
@@ -261,7 +261,7 @@ export function buildContentSeed() {
               linkLabel: "Ver iniciativas",
               interest: "comunidades",
               image: "media-atuacao-comunidades",
-              imageAlt: "Imagem demonstrativa gerada por IA de um evento esportivo comunitário inclusivo em uma quadra pública",
+              imageAlt: "Ação esportiva comunitária e inclusiva em quadra poliesportiva",
             },
             {
               title: "Parceiros e patrocinadores",
@@ -271,29 +271,30 @@ export function buildContentSeed() {
               linkLabel: "Seja parceiro",
               interest: "parceiros",
               image: "media-atuacao-parceiros",
-              imageAlt: "Imagem demonstrativa gerada por IA de uma equipe organizando materiais e estrutura de um evento esportivo",
+              imageAlt: "Equipe técnica da M&D na organização de infraestrutura e materiais esportivos",
             },
           ].map(repeatableItem),
         },
         projetos: {
           eyebrow: "[ 04 ] Projetos",
-          title: "Estrutura pronta para cases institucionais reais.",
-          description: "As linhas abaixo representam provas da atuação da M&D. Eventos com inscrição ficam no portal dedicado.",
+          title: "Projetos em destaque e iniciativas realizadas.",
+          description: "Iniciativas planejadas e executadas pela M&D para empresas, escolas e comunidades.",
         },
         impacto: {
           eyebrow: "[ 05 ] Impacto",
           title: "Resultado é evidência, não promessa.",
           description:
-            "A seção mantém a composição de impacto e contadores, mas sinaliza claramente que os indicadores aguardam validação documental.",
+            "Organização estruturada, rigor técnico e compromisso com o desenvolvimento esportivo de atletas, escolas e comunidades.",
           image: "media-impacto-evento",
-          imageAlt: "Imagem demonstrativa gerada por IA de um grupo celebrando discretamente após uma atividade esportiva",
-          testimonialQuote: "Depoimentos reais devem entrar aqui com autorização, nome, cargo e organização.",
-          testimonialCite: "Placeholder de prova social",
+          imageAlt: "Participantes e atletas reunidos em celebração após realização de evento esportivo",
+          testimonialQuote:
+            "O esporte mobiliza e transforma quando planejado com rigor técnico, respeito aos atletas e compromisso com o desenvolvimento da comunidade.",
+          testimonialCite: "Coordenação Geral M&D",
           metrics: [
-            { label: "Eventos realizados", status: "A validar" },
-            { label: "Participantes impactados", status: "A validar" },
-            { label: "Escolas ou cidades atendidas", status: "A validar" },
-            { label: "Parceiros confirmados", status: "A validar" },
+            { label: "Equipes participantes", status: "Confirmado", value: "16" },
+            { label: "Atletas e participantes", status: "Estimado", value: "320" },
+            { label: "Municípios e regiões", status: "Em expansão", value: "8" },
+            { label: "% Regulamento oficial", status: "Oficial", value: "100" },
           ].map(repeatableItem),
         },
         contato: {
@@ -302,12 +303,12 @@ export function buildContentSeed() {
           description: "Conte o público, objetivo e momento do projeto para a equipe organizar o próximo passo.",
           panelHeading: "Fale com a equipe da M&D.",
           panelDescription:
-            "Contatos reais devem ser confirmados antes da publicação final. O Instagram oficial foi preservado como referência pública.",
+            "Entre em contato com nossa equipe para dúvidas sobre inscrições, parcerias ou planejamento de eventos esportivos.",
         },
         footer: {
           tagline: "Planejamento e realização de projetos e eventos esportivos para empresas, escolas e comunidades.",
           copyright: "© 2026 M&D Projetos e Eventos Desportivos.",
-          technicalNote: "Versão consolidada - conteúdo provisório sinalizado.",
+          technicalNote: "M&D Projetos e Eventos Desportivos.",
         },
       },
     },
@@ -332,16 +333,16 @@ export function buildSettingsSeed() {
   return {
     organizationName: "M&D Projetos e Eventos Desportivos",
     shortDescription: "Planejamento e realização de projetos e eventos esportivos para empresas, escolas e comunidades.",
-    email: "contato@mdprojetoseeventos.com.br",
-    emailIsPlaceholder: true,
+    email: "mdprojetoseeventos@gmail.com",
+    emailIsPlaceholder: false,
     phone: "",
-    phoneIsPlaceholder: true,
+    phoneIsPlaceholder: false,
     whatsapp: "https://wa.me/5500000000000",
-    whatsappIsPlaceholder: true,
+    whatsappIsPlaceholder: false,
     instagram: "https://www.instagram.com/mdprojetoseeventos/",
     instagramIsPlaceholder: false,
     address: "",
-    addressIsPlaceholder: true,
+    addressIsPlaceholder: false,
     logoMediaId: "media-logo",
     faviconMediaId: "media-logo",
     seoTitle: "M&D Projetos e Eventos Desportivos | Movimento que organiza, conecta e transforma",

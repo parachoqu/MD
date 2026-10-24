@@ -1,6 +1,6 @@
 /**
  * Regulamento incorporado ao detalhe do evento: expansão acessível,
- * deep link, tabela responsiva e impressão isolada em três folhas A4.
+ * deep link, tabelas responsivas e impressão isolada em folhas A4.
  */
 export function initRegulation() {
   const section = document.querySelector(".event-regulation");

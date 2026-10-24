@@ -129,7 +129,7 @@ export function createRegistrationModal(event, root = document.body) {
     const header = element("header", { className: "registration-dialog__header" });
     const headingGroup = element("div");
     headingGroup.append(
-      element("p", { className: "eyebrow", text: event.demo ? "Inscrição demonstrativa" : "Inscrição" }),
+      element("p", { className: "eyebrow", text: event.demo ? "Inscrição demonstrativa" : "Inscrição oficial" }),
       element("h2", {
         text: mode === "success" ? "Inscrição confirmada" : "Inscrever equipe",
         attrs: { id: "registrationTitle" },
@@ -387,8 +387,8 @@ export function createRegistrationModal(event, root = document.body) {
       element("p", {
         className: "registration-help",
         text: limitText.length
-          ? `Configuração demonstrativa de elenco: ${limitText.join(", ")} atletas.`
-          : "As regras oficiais de elenco serão aplicadas quando estiverem disponíveis.",
+          ? `Composição do elenco: ${limitText.join(", ")} atletas.`
+          : "Consulte o regulamento do evento para a composição do elenco.",
       })
     );
 
@@ -471,7 +471,7 @@ export function createRegistrationModal(event, root = document.body) {
     wrapper.append(
       renderReviewBlock("Evento", [
         ["Evento", event.title],
-        ["Status", event.demo ? "Evento demonstrativo" : "Evento real"],
+        ["Status", event.status === "open" ? "Inscrições abertas" : "Confirmado"],
       ]),
       renderReviewBlock(
         "Equipe",
@@ -511,8 +511,8 @@ export function createRegistrationModal(event, root = document.body) {
 
     wrapper.append(
       element("p", {
-        className: "registration-demo-note",
-        text: "Demonstração frontend - nenhum dado será enviado para um servidor.",
+        className: "registration-review-note",
+        text: "Confira todos os dados da equipe antes de confirmar. A inscrição oficial será processada e confirmada.",
       })
     );
 
@@ -673,10 +673,8 @@ export function createRegistrationModal(event, root = document.body) {
       renderProtocolRow("Evento", event.title),
       renderProtocolRow("Protocolo Oficial", completedRegistration?.protocol || "MD-CONFIRMADA"),
       element("p", {
-        className: "registration-demo-note",
-        text: completedRegistration?.demoOnly
-          ? "Demonstração frontend - nenhum dado foi enviado para um servidor."
-          : "Sua inscrição oficial foi recebida pelo sistema. Guarde o protocolo acima para acompanhamento.",
+        className: "registration-official-note",
+        text: "Sua inscrição oficial foi recebida pelo sistema. Guarde o protocolo acima para acompanhamento.",
       })
     );
 

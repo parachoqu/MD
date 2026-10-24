@@ -47,7 +47,7 @@ export const events = [
   {
     id: "evt-taca-vale-handebol-2026",
     slug: "taca-vale-handebol-2026",
-    title: "1ª Taça Vale do Mucuri de Handebol Júnior",
+    title: "1ª Taça Vale do Mucuri de Handebol Juvenil",
     shortTitle: "Taça Vale do Mucuri",
     sport: "Handebol",
     sportKey: "handebol",
@@ -55,19 +55,19 @@ export const events = [
     demo: false,
     status: "open",
     summary:
-      "Primeira edição da Taça Vale do Mucuri de Handebol Júnior, organizada pela M&D Projetos e Eventos Desportivos, nos dias 17 e 18 de outubro de 2026, em Itambacuri/MG.",
+      "Primeira edição da Taça Vale do Mucuri de Handebol Juvenil, organizada pela M&D Projetos e Eventos Desportivos, nos dias 12 e 13 de dezembro de 2026, em Itambacuri/MG.",
     description:
-      "Competição júnior de handebol nas categorias masculina e feminina, com a participação de até 12 equipes, no Ginásio Poliesportivo de Itambacuri/MG, nos dias 17 e 18 de outubro de 2026. A fase classificatória ocorre no sábado; semifinais, disputa de terceiro lugar e final ocorrem no domingo. Inscrições abertas com vagas limitadas.",
+      "Competição juvenil de handebol nas categorias masculina e feminina, destinada a atletas de 12 a 17 anos completados em 2026 (nascidos entre 2009 e 2014), com a participação de até 16 equipes, no Ginásio Poliesportivo de Itambacuri/MG, nos dias 12 e 13 de dezembro de 2026. A fase classificatória ocorre no sábado; semifinais, disputa de terceiro lugar e final ocorrem no domingo. Inscrições abertas com vagas limitadas.",
     date: {
-      label: "17 e 18 de outubro de 2026",
-      start: "2026-10-17",
-      end: "2026-10-18",
-      sort: "2026-10-17",
+      label: "12 e 13 de dezembro de 2026",
+      start: "2026-12-12",
+      end: "2026-12-13",
+      sort: "2026-12-12",
     },
     registrationPeriod: {
       start: "2026-08-01",
-      end: "2026-10-15",
-      label: "Abertas até 15 de outubro de 2026",
+      end: "2026-12-10",
+      label: "Abertas até 10 de dezembro de 2026",
     },
     location: {
       venue: "Ginásio Poliesportivo",
@@ -75,30 +75,30 @@ export const events = [
       state: "MG",
     },
     capacity: {
-      teams: 12,
-      label: "Até 12 equipes",
+      teams: 16,
+      label: "Até 16 equipes",
     },
     categories: [
       {
         id: "junior-masculino",
-        name: "Júnior Masculino",
-        division: "Júnior (2005 a 2013)",
+        name: "Juvenil Masculino",
+        division: "Juvenil (2009 a 2014)",
         gender: "Masculino",
       },
       {
         id: "junior-feminino",
-        name: "Júnior Feminino",
-        division: "Júnior (2005 a 2013)",
+        name: "Juvenil Feminino",
+        division: "Juvenil (2009 a 2014)",
         gender: "Feminino",
       },
     ],
     schedule: [
       {
-        label: "Sábado - 17/10",
+        label: "Sábado - 12/12",
         value: "Fase classificatória: divisão em chaves, com jogos em turno único.",
       },
       {
-        label: "Domingo - 18/10",
+        label: "Domingo - 13/12",
         value: "Semifinais, disputa de 3º lugar e Grande Final no sistema mata-mata.",
       },
     ],
@@ -106,7 +106,7 @@ export const events = [
       feePerTeam: "R$ 350,00 por equipe",
       dualInstitutionFee:
         "R$ 700,00 para duas equipes da mesma instituição, masculino e feminino",
-      period: "Até 15 de outubro de 2026",
+      period: "Até 10 de dezembro de 2026",
       maxMembers: 20,
       maxAthletes: 17,
       maxStaff: 3,
@@ -117,27 +117,29 @@ export const events = [
       id: "taca-vale-handebol-2026",
       title: "Regulamento oficial",
       label: "Ler regulamento completo",
-      pages: 3,
+      pages: 4,
+      version: "2026-10-23",
+      publishedAt: "2026-10-23",
     },
     highlights: [
       {
         title: "1º lugar por naipe",
         detail:
-          "Troféu de Campeão, medalhas de ouro para até 17 atletas e 3 membros da comissão, mais R$ 3.000,00 (três mil reais).",
+          "Troféu, medalhas de ouro e R$ 1.200,00 para o campeão de cada naipe (masculino e feminino).",
       },
       {
         title: "2º lugar por naipe",
         detail:
-          "Medalhas de prata para até 17 atletas e 3 membros da comissão, mais R$ 1.200,00 (mil e duzentos reais).",
+          "Medalhas de prata e R$ 800,00 para o vice-campeão de cada naipe (masculino e feminino).",
       },
       {
         title: "3º lugar por naipe",
-        detail: "Medalhas de bronze para até 17 atletas e 3 membros da comissão.",
+        detail: "Medalhas de bronze.",
       },
       {
         title: "Destaques individuais e coletivos",
         detail:
-          "MVP por partida, troféu de goleador ou artilheiro, troféu de defesa menos vazada e Seleção do Campeonato com 7 atletas por naipe.",
+          "Certificado de MVP por partida; certificados e troféus aos melhores jogadores; troféus de artilheiro e defesa menos vazada; medalhas para a Seleção do Campeonato, com 7 atletas por naipe.",
       },
     ],
     sponsors: [],
@@ -149,8 +151,7 @@ export const events = [
       "taça vale do mucuri",
       "mucuri",
       "itambacuri",
-      "júnior",
-      "junior",
+      "juvenil",
       "masculino",
       "feminino",
       "regulamento",
@@ -159,7 +160,7 @@ export const events = [
       label: "Taça Vale",
       accent: "handebol",
       image: "assets/img/generated/evento-taca-vale-handebol-junior-ficticio.webp",
-      imageAlt: "Imagem demonstrativa gerada por IA de uma atividade ilustrativa de handebol juvenil em uma quadra",
+      imageAlt: "1ª Taça Vale do Mucuri de Handebol Juvenil em Itambacuri/MG",
     },
   },
 ];

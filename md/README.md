@@ -197,7 +197,7 @@ Na interface: `open` recebe Teal, `soon` recebe Âmbar, `closed`/`finished`/`ful
 
 ## Regulamento
 
-O regulamento oficial da 1ª Taça Vale do Mucuri de Handebol Júnior é renderizado dentro de `index.html?evento=taca-vale-handebol-2026#regulamento`: Capítulos I a VIII, artigos 1º a 19º e as três folhas do documento original. Não há `iframe`, backend ou PDF hospedado; "salvar em PDF" usa o diálogo nativo de impressão.
+O regulamento oficial da 1ª Taça Vale do Mucuri de Handebol Juvenil é renderizado dentro de `index.html?evento=taca-vale-handebol-2026#regulamento`: Capítulos I a VIII e artigos 1º a 26º, conforme o novo arquivo fornecido pela organização em 23/10/2026. O conteúdo foi distribuído em quatro folhas. Não há `iframe`, backend ou PDF hospedado; "salvar em PDF" usa o diálogo nativo de impressão.
 
 Integração:
 
@@ -210,13 +210,13 @@ Estilo e impressão:
 
 - `css/regulation.css` e `css/registration.css` são carregados diretamente por `index.html` e todo seletor visual fica sob `.event-regulation`, usando somente tokens de `variables.css`.
 - `js/regulation.js` controla expansão/recolhimento, `#regulamento`, tabela responsiva e o ciclo `beforeprint`/`afterprint`, restaurando o estado anterior da interface.
-- `@media print` usa `@page { size: A4 }`, esconde header, footer, breadcrumb, hero, barra de ações, WhatsApp e barra de progresso, e força quebra após as folhas 1 e 2. A verificacao automatizada de 28/08/2026 gerou **4 paginas A4**, portanto o requisito de exatamente 3 paginas esta reprovado e precisa de correcao visual antes de Production.
+- `@media print` usa `@page { size: A4 }`, esconde header, footer, breadcrumb, hero, barra de ações, WhatsApp e barra de progresso, e força quebra entre as folhas do regulamento. A renderização isolada do módulo com os estilos atuais e fontes Inter/Sora carregadas foi conferida em 23/10/2026: quatro páginas A4, com os 26 artigos completos e sem cortes. A margem negativa do estilo móvel é zerada durante a impressão.
 
-O texto foi migrado literalmente. Termos, valores e numerações do arquivo de origem foram preservados sem correção jurídica, esportiva ou gramatical.
+Termos, valores e numerações do arquivo de origem foram preservados sem correção jurídica, esportiva ou gramatical. Os quatro cadastros de restaurantes ainda sem nomes, endereços ou telefones foram apresentados como lista a confirmar.
 
 ## Conteúdo atual
 
-- 1ª Taça Vale do Mucuri de Handebol Júnior: evento real. Nome, data (17 e 18 de outubro de 2026), local (Ginásio Poliesportivo, Itambacuri/MG), limite de 12 equipes, categorias masculina e feminina e faixa de nascimento 2005–2013 são informações confirmadas pelo regulamento oficial. Status `soon`. Dados ainda ausentes aparecem como `A confirmar` ou ficam condicionais.
+- 1ª Taça Vale do Mucuri de Handebol Juvenil: evento real. Data atualizada pela organização para 12 e 13 de dezembro de 2026, com inscrições até 10 de dezembro de 2026. O novo regulamento confirma local (Ginásio Poliesportivo, Itambacuri/MG), limite de 16 equipes, categorias masculina e feminina e atletas de 12 a 17 anos completados em 2026 (nascidos entre 2009 e 2014). Premiação por naipe: R$ 1.200,00 ao campeão e R$ 800,00 ao vice, além de troféus, medalhas e destaques previstos no documento. Os IDs internos das categorias foram mantidos por compatibilidade com inscrições existentes. Status `open`. Dados ainda ausentes aparecem como `A confirmar` ou ficam condicionais.
 - Evento Demonstrativo - Inscrições Abertas: registro fictício para testar inscrição completa.
 - Evento Demonstrativo - Inscrições Encerradas: registro fictício para testar estado encerrado.
 
@@ -277,7 +277,7 @@ Validar antes de publicação:
 - contatos definitivos;
 - integracao final do formulario publico com o backend de inscricao.
 
-O regulamento da Taça Vale, a data, a cidade, o local e as regras de elenco deixaram de ser pendências: estão confirmados pelo documento oficial publicado. O regulamento define o valor de inscrição (R$ 350,00 por equipe), mas nenhum fluxo de pagamento existe nesta fase.
+O novo regulamento confirma a categoria Juvenil, a data, a cidade, o local, a faixa etária e o limite de 16 equipes. As taxas de inscrição já cadastradas (R$ 350,00 por equipe e R$ 700,00 para duas equipes da mesma instituição) e os limites de elenco foram preservados, pois o novo arquivo não redefine esses valores e limites. Nenhum fluxo de pagamento existe nesta fase. A lista de restaurantes credenciados ainda precisa ser preenchida pela organização.
 
 ## Comportamentos preservados
 
@@ -286,7 +286,7 @@ O regulamento da Taça Vale, a data, a cidade, o local e as regras de elenco dei
 - menu mobile;
 - busca, filtros, estado vazio e contagem do catálogo;
 - detalhe por query string e status semânticos;
-- regulamento oficial condicional dentro do detalhe da Taça Vale, com impressao isolada atualmente reprovada em 4 paginas A4;
+- regulamento oficial condicional dentro do detalhe da Taça Vale, com renderização isolada de impressão conferida em quatro páginas A4;
 - inscrição em quatro etapas, validações, consentimento, revisão, rascunho e protocolo local;
 - filtros e modal de projetos institucionais, com Escape, foco preso e retorno de foco;
 - formulário de contato e toast;

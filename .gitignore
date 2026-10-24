@@ -10,6 +10,7 @@ md/.vercel-static/
 # Artefatos gerados localmente.
 node_modules/
 coverage/
+output/
 *.local
 .env*
 posts insta/

@@ -70,7 +70,7 @@ export function createEventFigure(event, className = "event-hero__visual", { eag
 
   const image = document.createElement("img");
   image.src = event.visual?.image || "";
-  image.alt = event.visual?.imageAlt || `Imagem demonstrativa do evento ${event.title}`;
+  image.alt = event.visual?.imageAlt || `Imagem do evento ${event.title}`;
   image.width = 1536;
   image.height = 1024;
   if (!eager) image.loading = "lazy";

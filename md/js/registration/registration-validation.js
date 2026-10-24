@@ -66,7 +66,7 @@ function validateParticipants(errors, state, event) {
   }
 
   if (max && state.participants.length > max) {
-    errors.participants = `Este evento demonstrativo aceita no máximo ${max} atletas.`;
+    errors.participants = `Este evento aceita no máximo ${max} atletas.`;
   }
 
   state.participants.forEach((participant) => {

@@ -446,9 +446,8 @@ function renderSponsors(event) {
 }
 
 function renderQuestions(event) {
-  const text = event.demo
-    ? "Este evento existe apenas para teste do fluxo de inscrição. Em produção, dúvidas devem usar os canais oficiais da M&D."
-    : "Dúvidas sobre o período de inscrição, horários e demais informações operacionais devem ser encaminhadas pelos canais oficiais da M&D.";
+  const text =
+    "Dúvidas sobre o período de inscrição, horários e demais informações operacionais devem ser encaminhadas pelos canais oficiais da M&D.";
 
   const link = document.createElement("a");
   link.className = "link-action";
@@ -473,8 +472,8 @@ function renderStoredRegistrations(registrations) {
   });
 
   return contentBlock(
-    "Inscrições demonstrativas salvas",
-    [textElement("p", "", "Registros locais encontrados neste navegador."), list],
+    "Inscrições salvas neste dispositivo",
+    [textElement("p", "", "Registros de inscrição encontrados neste navegador."), list],
     "evt-inscricoes-salvas"
   );
 }
